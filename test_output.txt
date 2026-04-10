@@ -1,0 +1,11 @@
+=== Heuristic Scorer Test ===
+Import OK
+Scorer created. NLP loaded: True, ST loaded: True
+T1 (actionable): {'clarity': 0.9, 'specificity': 0.0, 'semantic_preservation': 1.0, 'total': 0.56, 'rejected': False}
+T2 (vague):      {'clarity': 0.0, 'specificity': 0.0, 'semantic_preservation': 1.0, 'total': 0.2, 'rejected': False}
+T3 (specific):   {'clarity': 0.9, 'specificity': 1.0, 'semantic_preservation': 1.0, 'total': 0.96, 'rejected': False}
+T4 (pair, good): {'clarity': 0.88, 'specificity': 0.4, 'semantic_preservation': 0.5694, 'total': 0.6259, 'rejected': True}
+T5 (empty):      {'clarity': 0.0, 'specificity': 0.0, 'semantic_preservation': 1.0, 'total': 0.2, 'rejected': False}
+T6 (low sim):    {'clarity': 0.8667, 'specificity': 0.3333, 'semantic_preservation': 0.1202, 'total': 0.504, 'rejected': True}
+
+All tests completed successfully.
