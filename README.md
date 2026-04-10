@@ -1,0 +1,76 @@
+# Promptee
+
+Promptee is a strict, rule-based Prompt Optimization Backend that autonomously refines user prompts using locally fine-tuned LoRA models (like Qwen2.5-7B-Instruct).
+
+## Architecture
+
+The project strictly follows a structured multi-layer architecture defined in its Project Constitution.
+- **Layer 1 (Architecture)**: Standard Operating Procedures (SOPs) governing logic, goals, and constraints.
+- **Layer 2 (Navigation)**: Routing pipelines orchestrating data between SOPs and executable tools.
+- **Layer 3 (Tools)**: Deterministic Python modules encapsulating business logic (`tools/`). Temporary ephemera occurs exclusively in `.tmp/`.
+
+### Core Safety Rules
+
+1. **Semantic Preservation Constraint**: All optimized prompts must strictly pass `cosine_similarity(original, optimized) >= threshold` via `sentence-transformers` models (`all-MiniLM-L6-v2`). Violations trigger an immediate rejection, falling back to the raw prompt.
+2. **Restricted Transformation Role**: Transformers serve solely as prompt refinement engines. They act strictly on data generation/optimization and never run as chatbots or autonomous task solvers.
+3. **No External LLM Bleed**: External LLMs (Claude, OpenAI, Gemini) are used strictly as benchmarking comparatives and are never invoked during primary Prompt Refinement or for synthesizing training data.
+4. **Environment Isolation**: The prompt optimization REST API operates independently. During runtime, it is forbidden for the backend to execute adapter weight training or modify tokenizers. The `training/` standalone folder handles all data generation and Direct Preference Optimization (DPO).
+
+## Interfaces & API
+The backend interacts securely using fixed data schemas.
+
+### Runtime Endpoint: `POST /optimize_prompt`
+
+**Request Payload:**
+```json
+{
+  "prompt": "The raw user prompt to be optimized."
+}
+```
+
+**Response Payload:**
+```json
+{
+  "raw_prompt": "...",
+  "optimized_prompt": "...",
+  "raw_score": {
+    "clarity": 0.0,
+    "specificity": 0.0,
+    "semantic_preservation": 1.0,
+    "total": 0.0
+  },
+  "optimized_score": {
+    "clarity": 0.0,
+    "specificity": 0.0,
+    "semantic_preservation": 0.0,
+    "total": 0.0
+  },
+  "external_llm_response_raw": "...",
+  "external_llm_response_optimized": "...",
+  "improvement_score": 0.0
+}
+```
+
+## Setup & Dependencies
+
+Promptee is built on robust Python data pipelines involving `transformers`, `torch`, `peft`, `trl`, `fastapi`, and more.
+
+1. Create your isolated virtual environment:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Or `.venv\Scripts\activate` on Windows
+```
+
+2. Install runtime dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Setup your environment variable config:
+Create a `.env` file at the root containing the necessary API keys or configurations. **Important**: `.env` is omitted from version control to prevent unauthorized key exposures. Keep your active keys out of repository history!
+
+4. Running tests standalone:
+The test modules are unified under the `tests/` directory.
+
+### Project Note
+Adhering to the *Self-Annealing (Repair Loop)* policy: any bugs or errors discovered using this API strictly mandate patched and documented analysis inside the `architecture/` repository paths.
