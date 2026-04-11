@@ -194,7 +194,10 @@ Reward structured prompts such as:
 Instead of hard rejection, scale improvement using semantic similarity.
 
 ```
-final_score = quality_improvement * semantic
+if semantic < 0.40:
+    rejected = True
+else:
+    final_score = quality_improvement * semantic
 ```
 
 **Purpose:**
