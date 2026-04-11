@@ -38,7 +38,7 @@ with open(log_file, "w") as f:
 
         # Test 5: Empty
         r5 = scorer.evaluate("")
-        f.write(f"T5 (empty):      {r5}\n")
+        f.write(f"T5 (empty):      {r5}\n") #TODO: EXception handling (must not accept raw)
         
         # Test 6: Low similarity pair
         r6 = scorer.evaluate(
@@ -47,6 +47,37 @@ with open(log_file, "w") as f:
         )
         f.write(f"T6 (low sim):    {r6}\n")
         
+        # Test 7: Ambiguity Penalty
+        r7 = scorer.evaluate("tell me maybe probably something somehow about stuff and things")
+        f.write(f"T7 (ambiguity):  {r7}\n")
+
+        # Test 8: Redundancy Penalty
+        r8 = scorer.evaluate("Output output output very very very very detailed specific specific specific")
+        f.write(f"T8 (redundancy): {r8}\n")
+
+        # Test 9: Short Length Penalty
+        r9 = scorer.evaluate("write")
+        f.write(f"T9 (short):      {r9}\n")
+
+        # Test 10: Structural Bonus
+        r10 = scorer.evaluate(
+            "Act as an expert python developer.\n"
+            "Create a script with the following steps:\n"
+            "1. First define imports\n"
+            "2. Second write the class\n"
+            "- make it neat\n"
+            "Output format: Python code block only."
+        )
+        f.write(f"T10 (structure): {r10}\n")
+
+        # Test 11: Soft semantic penalty (score between 0.4 and 0.70)
+        # Choosing a candidate that is related but maybe drifts a bit more
+        r11 = scorer.evaluate(
+            "how to make my computer faster",
+            "What are the recommended software and hardware troubleshooting steps to improve the performance of a slow Windows desktop computer?"
+        )
+        f.write(f"T11 (soft sim):  {r11}\n")
+
         f.write("\nAll tests completed successfully.\n")
     except Exception as e:
         f.write(f"\nERROR: {e}\n")
