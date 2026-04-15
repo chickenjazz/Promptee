@@ -37,6 +37,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import spacy
 from sentence_transformers import SentenceTransformer, util
+from spellchecker import SpellChecker
 
 # Configure structured logging
 logger = logging.getLogger("promptee.heuristic_scorer")
@@ -116,6 +117,12 @@ class ScorerConfig:
 
         # ── Structural bonus ──────────────────────────────────────────
         structural_bonus_cap: float = 0.10,
+
+        # ── Clarity scoring tuning ────────────────────────────────────
+        weak_verb_weight: float = 0.5,
+        noun_orphan_penalty_factor: float = 0.10,
+        typo_penalty_per_token: float = 0.005,
+        enable_typo_penalty: bool = False,
     ):
         # ── Validate weight normalization assumption ──────────────────
         # Weights must be positive; they will be dynamically normalised
@@ -132,6 +139,10 @@ class ScorerConfig:
         self.redundancy_max_penalty = redundancy_max_penalty
         self.min_tokens_for_full_score = min_tokens_for_full_score
         self.structural_bonus_cap = structural_bonus_cap
+        self.weak_verb_weight = weak_verb_weight
+        self.noun_orphan_penalty_factor = noun_orphan_penalty_factor
+        self.typo_penalty_per_token = typo_penalty_per_token
+        self.enable_typo_penalty = enable_typo_penalty
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -160,6 +171,62 @@ _STRUCTURAL_PATTERNS: List = [
     re.compile(r"\b(?:format|output)\s*:", re.I),              # Output format instructions
     re.compile(r"\b(?:step\s+\d+|first|second|third|finally)\b", re.I),  # Sequential markers
 ]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Clarity — Verb Classification Sets
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Modal verbs that indicate instructional intent even in declarative form.
+MODAL_VERBS: frozenset = frozenset({
+    "should", "must", "shall", "ought", "need",
+})
+
+# Strong action verbs — full weight (1.0) in clarity scoring.
+STRONG_VERBS: frozenset = frozenset({
+    "explain", "generate", "create", "compare", "analyze", "analyse",
+    "implement", "define", "list", "describe", "summarize", "summarise",
+    "classify", "evaluate", "compute", "build", "design", "optimize",
+    "optimise", "write", "produce", "develop", "construct", "extract",
+    "identify", "transform", "convert", "calculate", "derive", "outline",
+    "specify", "translate", "rewrite", "revise", "edit", "format",
+    "organize", "organise", "categorize", "categorise", "rank", "sort",
+    "filter", "validate", "verify", "test", "debug", "refactor",
+    "diagram", "illustrate", "demonstrate", "prove", "solve",
+})
+
+# Weak action verbs — reduced weight in clarity scoring.
+WEAK_VERBS: frozenset = frozenset({
+    "discuss", "talk", "consider", "think", "wonder", "mention",
+    "touch", "look", "see", "try", "feel", "seem", "appear",
+    "note", "recall", "remember", "ponder", "reflect",
+})
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Clarity — Implicit Command Detection
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Detects structural implicit commands like "Step 1: Data preprocessing"
+IMPLICIT_COMMAND_PATTERN = re.compile(
+    r"^\s*(?:step|phase|task|part|stage)\s+\d+\s*[:.\-\u2013\u2014]\s*",
+    re.IGNORECASE,
+)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Clarity — Sentence Fragment Indicators
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Tokens/patterns that indicate a sentence is a fragment to be attached
+# to the previous sentence rather than counted independently.
+FRAGMENT_INDICATORS: frozenset = frozenset({
+    # Single-word fragment starters
+    "using", "including", "especially", "particularly",
+    "namely", "specifically",
+    # Two-word fragment starters (checked as "word1 word2")
+    "such as", "for example", "for instance",
+    # Abbreviation forms
+    "e.g.", "i.e.",
+})
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -197,6 +264,7 @@ class HeuristicScorer:
         # Instance-level model references (no global mutable state)
         self._nlp: Optional[Any] = None
         self._st_model: Optional[Any] = None
+        self._spellchecker: Optional[Any] = None
         self._load_models()
 
     # ── Model Loading ─────────────────────────────────────────────────
@@ -218,83 +286,227 @@ class HeuristicScorer:
         except Exception as e:
             logger.error(f"SentenceTransformer failed to load: {e}")
 
+        # Load pyspellchecker for optional typo detection
+        try:
+            self._spellchecker = SpellChecker()
+            logger.info("SpellChecker loaded successfully.")
+        except Exception as e:
+            logger.warning(f"SpellChecker failed to load: {e}")
+            self._spellchecker = None
+
     # ═══════════════════════════════════════════════════════════════════
     # Stage 1: Clarity Scoring
     # ═══════════════════════════════════════════════════════════════════
 
-    def _score_clarity(self, prompt: str) -> float:
+    def _score_clarity(self, prompt: str) -> Dict[str, Any]:
         """
-        SOP §3A — Clarity Score (0.0–1.0).
+        SOP §3A — Improved Clarity Score (0.0–1.0) with diagnostics.
 
-        Per-sentence analysis:
-          1. A sentence is "actionable" if:
-             a) It contains a ROOT verb with at least one dobj child (strict), OR
-             b) It contains a ROOT verb in imperative mood — no subject required
-                (Checklist §6: allows "Explain clearly", "Be concise", "Act as an expert").
-          2. Ratio = actionable_sentences / total_sentences.
-          3. Penalty: noun chunks that have no verb correlation reduce the score.
+        v2 improvements over original:
+          - Modal verb detection (should, must, need to, shall, ought)
+          - Passive instruction detection ("The response should include…")
+          - Implicit command detection ("Step 1: Data preprocessing")
+          - Multi-verb per sentence (counts all actionable verbs, not just 1)
+          - Token-weighted ratio (reduces long-prompt bias)
+          - Verb strength weighting (strong=1.0, weak=configurable)
+          - Sentence fragment attachment (merges fragments to prior sentence)
+          - Imperative-like verb counting (not ROOT-only)
+          - Reduced noun-chunk penalty (fully orphaned groups only)
+          - Optional typo penalty via pyspellchecker
 
-        Assumption: We detect imperative mood heuristically by checking whether
-        the ROOT verb has no explicit subject (nsubj/nsubjpass). This is an
-        approximation; a true imperative detector would require morphological
-        analysis not available in en_core_web_sm.
+        Returns:
+            dict with 'score' (float 0.0–1.0) and diagnostic counters:
+              verb_count, modal_count, passive_count, implicit_commands
         """
+        empty_result: Dict[str, Any] = {
+            'score': 0.0, 'verb_count': 0, 'modal_count': 0,
+            'passive_count': 0, 'implicit_commands': 0,
+        }
+
         if not self._nlp or not prompt.strip():
-            return 0.0
+            return empty_result
 
         doc = self._nlp(prompt)
-        sentences = list(doc.sents)
-        if not sentences:
-            return 0.0
+        raw_sents = list(doc.sents)
+        if not raw_sents:
+            return empty_result
 
-        actionable_count: int = 0
+        # ── Stage A: Fragment Attachment ──────────────────────────────
+        # Merge sentences starting with fragment indicators into the
+        # previous sentence's span, preventing ratio dilution.
+        merged_sentences: List = []
+        for sent in raw_sents:
+            first_token = sent[0].text.lower() if len(sent) > 0 else ""
+            first_two = (
+                f"{sent[0].text.lower()} {sent[1].text.lower()}"
+                if len(sent) > 1 else first_token
+            )
+
+            is_fragment = (
+                first_token in FRAGMENT_INDICATORS
+                or first_two in FRAGMENT_INDICATORS
+            )
+
+            if is_fragment and merged_sentences:
+                # Extend previous sentence span to include this fragment
+                prev = merged_sentences[-1]
+                merged_sentences[-1] = doc[prev.start:sent.end]
+            else:
+                merged_sentences.append(sent)
+
+        # ── Stage B: Per-Sentence Multi-Verb Analysis ─────────────────
+        total_token_count: int = 0
+        weighted_action_sum: float = 0.0
+        total_verb_count: int = 0
+        total_modal_count: int = 0
+        total_passive_count: int = 0
+        total_implicit_commands: int = 0
         total_noun_chunks: int = 0
-        correlated_noun_chunks: int = 0
+        fully_orphaned_chunks: int = 0
 
-        for sent in sentences:
-            root_verb = None
-            has_dobj: bool = False
-            has_subject: bool = False
-            sent_verbs: Set = set()
+        for sent in merged_sentences:
+            sent_tokens = [t for t in sent if not t.is_punct and not t.is_space]
+            sent_token_count = len(sent_tokens)
+            total_token_count += sent_token_count
+
+            if sent_token_count == 0:
+                continue
+
+            # ── Check for implicit commands ───────────────────────
+            sent_text = sent.text.strip()
+            is_implicit_command = bool(IMPLICIT_COMMAND_PATTERN.match(sent_text))
+            if is_implicit_command:
+                total_implicit_commands += 1
+
+            # ── Collect all verbs and their properties ────────────
+            sentence_verb_weights: List[float] = []
+            has_any_verb: bool = False
+            sent_verb_tokens: Set = set()
 
             for token in sent:
-                # Find the ROOT of the sentence and check if it's a verb
-                if token.dep_ == "ROOT" and token.pos_ == "VERB":
-                    root_verb = token
-                    sent_verbs.add(token)
-                # Track all verbs in the sentence for noun-chunk correlation
                 if token.pos_ == "VERB":
-                    sent_verbs.add(token)
-                # Check for direct objects
-                if token.dep_ == "dobj":
-                    has_dobj = True
-                # Check for explicit subjects (to detect imperative mood)
-                if token.dep_ in ("nsubj", "nsubjpass"):
-                    has_subject = True
+                    has_any_verb = True
+                    sent_verb_tokens.add(token)
 
-            # Improvement §6: Accept imperative verbs without dobj.
-            # A sentence is actionable if:
-            #   (a) ROOT verb + direct object (original strict rule), OR
-            #   (b) ROOT verb with no explicit subject (imperative heuristic)
-            if root_verb and (has_dobj or not has_subject):
-                actionable_count += 1
+                    # Check if this verb is imperative-like (no subject)
+                    has_subject = any(
+                        child.dep_ in ("nsubj", "nsubjpass")
+                        for child in token.children
+                    )
+                    is_imperative = not has_subject
 
-            # Noun-chunk penalty: chunks whose head is NOT a verb are "orphaned"
+                    # Check for direct object
+                    has_dobj = any(
+                        child.dep_ == "dobj" for child in token.children
+                    )
+
+                    # Determine verb strength
+                    lemma = token.lemma_.lower()
+                    if lemma in STRONG_VERBS:
+                        strength = 1.0
+                    elif lemma in WEAK_VERBS:
+                        strength = self.config.weak_verb_weight
+                    else:
+                        strength = 0.75  # Neutral verbs
+
+                    # A verb is "actionable" if it has a dobj, is
+                    # imperative-like, or is the ROOT verb
+                    is_actionable = (
+                        has_dobj or is_imperative or token.dep_ == "ROOT"
+                    )
+
+                    if is_actionable:
+                        sentence_verb_weights.append(strength)
+                        total_verb_count += 1
+
+                # ── Modal verb detection ──────────────────────────
+                if token.pos_ == "AUX" and token.lemma_.lower() in MODAL_VERBS:
+                    total_modal_count += 1
+                    # Modal verbs make the governed main verb actionable
+                    has_governed_verb = any(
+                        child.pos_ == "VERB" for child in token.children
+                    ) or (
+                        token.head.pos_ == "VERB"
+                    )
+                    if has_governed_verb:
+                        sentence_verb_weights.append(0.85)
+                        total_verb_count += 1
+
+                # ── Passive instruction detection ─────────────────
+                if token.dep_ == "nsubjpass" and token.head.pos_ == "VERB":
+                    total_passive_count += 1
+
+            # ── Compute sentence action score ─────────────────────
+            if sentence_verb_weights:
+                # Average of weighted verb strengths, capped at 1.0
+                sentence_action_score = min(
+                    sum(sentence_verb_weights) / max(len(sentence_verb_weights), 1),
+                    1.0,
+                )
+            elif is_implicit_command:
+                # Implicit commands without verbs get partial credit
+                sentence_action_score = 0.7
+            else:
+                sentence_action_score = 0.0
+
+            # ── Token-weighted contribution ───────────────────────
+            weighted_action_sum += sentence_action_score * sent_token_count
+
+            # ── Stage D: Noun-chunk penalty (fully orphaned only) ─
             for chunk in sent.noun_chunks:
                 total_noun_chunks += 1
-                if chunk.root.head in sent_verbs:
-                    correlated_noun_chunks += 1
+                chunk_head_is_verb = chunk.root.head in sent_verb_tokens
+                sentence_has_verb = has_any_verb or is_implicit_command
 
-        # Base ratio: actionable sentences / total sentences
-        ratio: float = actionable_count / len(sentences)
+                # Fully orphaned: head is NOT a verb AND no verb in sentence
+                if not chunk_head_is_verb and not sentence_has_verb:
+                    fully_orphaned_chunks += 1
 
-        # Penalty for excessive uncorrelated noun chunks
+        # ── Stage C: Token-Weighted Ratio ─────────────────────────────
+        if total_token_count == 0:
+            return empty_result
+
+        ratio: float = weighted_action_sum / total_token_count
+
+        # ── Noun-chunk penalty (reduced aggressiveness) ───────────────
         if total_noun_chunks > 0:
-            orphan_ratio: float = 1.0 - (correlated_noun_chunks / total_noun_chunks)
-            penalty: float = orphan_ratio * 0.2  # Max 20% penalty
+            orphan_ratio: float = fully_orphaned_chunks / total_noun_chunks
+            penalty: float = orphan_ratio * self.config.noun_orphan_penalty_factor
             ratio = max(ratio - penalty, 0.0)
 
-        return min(ratio, 1.0)
+        # ── Optional typo penalty ─────────────────────────────────────
+        if self.config.enable_typo_penalty and self._spellchecker is not None:
+            content_words = [
+                t.text.lower() for t in doc
+                if not t.is_punct and not t.is_space
+                and not t.like_num and not t.is_stop
+                and len(t.text) > 2  # Skip very short tokens
+                and not t.ent_type_  # Skip named entities
+            ]
+            if content_words:
+                misspelled = self._spellchecker.unknown(content_words)
+                typo_count = len(misspelled)
+                typo_penalty = min(
+                    typo_count * self.config.typo_penalty_per_token,
+                    0.15,  # Cap typo penalty at 15%
+                )
+                ratio = max(ratio - typo_penalty, 0.0)
+
+        score: float = min(ratio, 1.0)
+
+        logger.debug(
+            f"Clarity analysis: score={score:.4f}, verbs={total_verb_count}, "
+            f"modals={total_modal_count}, passive={total_passive_count}, "
+            f"implicit_cmds={total_implicit_commands}"
+        )
+
+        return {
+            'score': round(score, 4),
+            'verb_count': total_verb_count,
+            'modal_count': total_modal_count,
+            'passive_count': total_passive_count,
+            'implicit_commands': total_implicit_commands,
+        }
 
     # ═══════════════════════════════════════════════════════════════════
     # Stage 2: Specificity Scoring
@@ -560,14 +772,17 @@ class HeuristicScorer:
     # Internal: Score a single prompt for quality components
     # ═══════════════════════════════════════════════════════════════════
 
-    def _score_prompt(self, prompt: str) -> Dict[str, float]:
+    def _score_prompt(self, prompt: str) -> Dict[str, Any]:
         """
         Compute all quality components for a single prompt.
 
         Returns a dict with: clarity, specificity, ambiguity_penalty,
-        redundancy_penalty, length_penalty, structural_bonus, quality.
+        redundancy_penalty, length_penalty, structural_bonus, quality,
+        and clarity diagnostics (verb_count, modal_count, passive_count,
+        implicit_commands).
         """
-        clarity: float = self._score_clarity(prompt)
+        clarity_result = self._score_clarity(prompt)
+        clarity: float = clarity_result['score']
         specificity: float = self._score_specificity(prompt)
         ambiguity_penalty: float = self._compute_ambiguity_penalty(prompt)
         redundancy_penalty: float = self._compute_redundancy_penalty(prompt)
@@ -588,6 +803,11 @@ class HeuristicScorer:
             "length_penalty": length_penalty,
             "structural_bonus": structural_bonus,
             "quality": quality,
+            # Clarity diagnostics
+            "clarity_verb_count": clarity_result['verb_count'],
+            "clarity_modal_count": clarity_result['modal_count'],
+            "clarity_passive_count": clarity_result['passive_count'],
+            "clarity_implicit_commands": clarity_result['implicit_commands'],
         }
 
     # ═══════════════════════════════════════════════════════════════════

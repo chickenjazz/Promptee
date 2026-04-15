@@ -10,3 +10,4 @@ spacy
 fastapi
 uvicorn
 pydantic-settings
+pyspellchecker

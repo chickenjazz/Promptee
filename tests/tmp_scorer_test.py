@@ -77,6 +77,26 @@ with open(log_file, "w") as f:
             "What are the recommended software and hardware troubleshooting steps to improve the performance of a slow Windows desktop computer?"
         )
         f.write(f"T11 (soft sim):  {r11}\n")
+        
+        # Test 7: Usual prompt vs Modularized optimized version
+        usual_prompt = "build a website for my car wash business"
+        optimized_prompt = """# Role
+You are an expert web developer specializing in local business landing pages.
+
+# Objective
+Create a modern, responsive single-page website for a local car wash business that drives customer bookings and clearly showcases services.
+
+# Requirements
+- Use semantic HTML5 and modern CSS (Flexbox/Grid).
+- High contrast, mobile-first design.
+- Include the following sections: Hero (with CTA), Services & Pricing, About Us, and Contact (with a booking form).
+
+# Constraints
+- Do not use any external frameworks like Tailwind or Bootstrap; use raw CSS.
+- Ensure the booking form relies on standard HTML form validation.
+- Output the complete code combining HTML and CSS in a single index.html file."""
+        r7 = scorer.evaluate(usual_prompt, optimized_prompt)
+        f.write(f"T7 (modularized optimized): {r7}\n")
 
         f.write("\nAll tests completed successfully.\n")
     except Exception as e:
