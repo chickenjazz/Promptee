@@ -124,7 +124,9 @@ class PromptOptimizer:
         self, 
         raw_prompt: str, 
         sys_prompt_override: str = None, 
-        user_prompt_template: str = None
+        user_prompt_template: str = None,
+        temperature: float = 0.3,
+        top_p: float = 0.9,
     ) -> str:
         """
         Transform a raw prompt into an optimized version.
@@ -180,7 +182,8 @@ class PromptOptimizer:
                 outputs = self.model.generate(
                     **inputs,
                     max_new_tokens=1024,
-                    temperature=0.3,
+                    temperature=temperature,
+                    top_p=top_p,
                     do_sample=True,
                     pad_token_id=self.tokenizer.eos_token_id,
                 )
