@@ -78,7 +78,7 @@ with open(log_file, "w") as f:
         )
         f.write(f"T11 (soft sim):  {r11}\n")
         
-        # Test 7: Usual prompt vs Modularized optimized version
+        # Test 12: Usual prompt vs Modularized optimized version
         usual_prompt = "build a website for my car wash business"
         optimized_prompt = """# Role
 You are an expert web developer specializing in local business landing pages.
@@ -95,8 +95,8 @@ Create a modern, responsive single-page website for a local car wash business th
 - Do not use any external frameworks like Tailwind or Bootstrap; use raw CSS.
 - Ensure the booking form relies on standard HTML form validation.
 - Output the complete code combining HTML and CSS in a single index.html file."""
-        r7 = scorer.evaluate(usual_prompt, optimized_prompt)
-        f.write(f"T7 (modularized optimized): {r7}\n")
+        r12 = scorer.evaluate(usual_prompt, optimized_prompt)
+        f.write(f"T12 (modularized optimized): {r12}\n")
 
         f.write("\nAll tests completed successfully.\n")
     except Exception as e:
