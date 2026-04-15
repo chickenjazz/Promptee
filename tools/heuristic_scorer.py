@@ -25,7 +25,7 @@ import re
 import sys
 import math
 import logging
-from typing import TypedDict, Optional, Dict, Any, Set, List
+from typing import TypedDict, Optional, Dict, Any, List
 from collections import Counter
 
 # Fix SSL_CERT_FILE pointing to non-existent path (known env issue)
@@ -123,6 +123,12 @@ class ScorerConfig:
         noun_orphan_penalty_factor: float = 0.10,
         typo_penalty_per_token: float = 0.005,
         enable_typo_penalty: bool = False,
+
+        # ── Clarity component weights (v2 structure-aware scoring) ────
+        clarity_actionability_weight: float = 0.35,
+        clarity_structure_weight: float = 0.30,
+        clarity_completeness_weight: float = 0.25,
+        clarity_max_fragment_penalty: float = 0.10,
     ):
         # ── Validate weight normalization assumption ──────────────────
         # Weights must be positive; they will be dynamically normalised
@@ -143,6 +149,10 @@ class ScorerConfig:
         self.noun_orphan_penalty_factor = noun_orphan_penalty_factor
         self.typo_penalty_per_token = typo_penalty_per_token
         self.enable_typo_penalty = enable_typo_penalty
+        self.clarity_actionability_weight = clarity_actionability_weight
+        self.clarity_structure_weight = clarity_structure_weight
+        self.clarity_completeness_weight = clarity_completeness_weight
+        self.clarity_max_fragment_penalty = clarity_max_fragment_penalty
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -230,6 +240,61 @@ FRAGMENT_INDICATORS: frozenset = frozenset({
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Clarity — Structure-Aware Detection Patterns
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Markdown header detection (# Heading, ## Subheading, etc.)
+_HEADER_PATTERN = re.compile(r"^\s*#{1,6}\s+\S", re.MULTILINE)
+
+# Labeled section detection (Role:, Objective:, Requirements:, etc.)
+_LABELED_SECTION_PATTERN = re.compile(
+    r"^\s*(?:role|objective|goal|task|purpose|requirements?"
+    r"|constraints?|limitations?|output|format|context"
+    r"|background|instructions?|deliverables?|criteria"
+    r"|scope|audience|tone|style|examples?)\s*[:]\s*",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+# Bullet item detection (- item, * item, bullet item)
+_BULLET_ITEM_PATTERN = re.compile(r"^\s*[-*\u2022]\s+", re.MULTILINE)
+
+# Numbered item detection (1. item, 2) item)
+_NUMBERED_ITEM_PATTERN = re.compile(r"^\s*\d+[.)]\s+", re.MULTILINE)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Clarity — Completeness Component Patterns
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Each pattern detects a complementary instruction component.
+# Score = detected_count / total_count (5 components).
+_COMPLETENESS_PATTERNS: Dict[str, re.Pattern] = {
+    "role": re.compile(
+        r"\b(?:act\s+as|role|persona|you\s+are|imagine\s+you(?:'re|\s+are))\b",
+        re.IGNORECASE,
+    ),
+    "objective": re.compile(
+        r"\b(?:objective|goal|task|purpose|aim|mission)\b",
+        re.IGNORECASE,
+    ),
+    "requirements": re.compile(
+        r"\b(?:requirements?|must|should|need\s+to|shall|ensure|include)\b",
+        re.IGNORECASE,
+    ),
+    "constraints": re.compile(
+        r"\b(?:constraints?|limit(?:ation)?s?|restrict(?:ion)?s?|within"
+        r"|maximum|minimum|at\s+most|at\s+least|no\s+more\s+than"
+        r"|no\s+fewer\s+than|avoid|do\s+not|don't)\b",
+        re.IGNORECASE,
+    ),
+    "output_format": re.compile(
+        r"\b(?:output|format|return|respond|deliver(?:able)?|provide|present|display)"
+        r"\s*(?:as|in|using|:)?\b",
+        re.IGNORECASE,
+    ),
+}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Improved Heuristic Scorer
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -295,217 +360,321 @@ class HeuristicScorer:
             self._spellchecker = None
 
     # ═══════════════════════════════════════════════════════════════════
-    # Stage 1: Clarity Scoring
+    # Stage 1: Clarity Scoring (v3 — Structure-Aware)
     # ═══════════════════════════════════════════════════════════════════
+
+    def _extract_instruction_units(self, prompt: str) -> List[str]:
+        """
+        Split a prompt into instruction units: individual sentences,
+        bullet items, numbered items, headers, and labeled sections.
+
+        Bullet/numbered/header/labeled lines become their own units.
+        Prose lines are grouped and split into sentences via spaCy,
+        with fragment attachment applied.
+
+        Returns:
+            List of non-empty instruction unit strings.
+        """
+        lines = prompt.split("\n")
+        units: List[str] = []
+        prose_block: List[str] = []
+
+        structural_line = re.compile(
+            r"^\s*(?:[-*\u2022]\s+|\d+[.)]\s+|#{1,6}\s+\S)", re.UNICODE
+        )
+
+        def flush_prose(block: List[str]) -> None:
+            """Parse accumulated prose lines into sentence units."""
+            if not block:
+                return
+            text = " ".join(block)
+            if not text.strip():
+                return
+            doc = self._nlp(text)
+            raw_sents = list(doc.sents)
+            # Fragment attachment
+            merged: List = []
+            for sent in raw_sents:
+                first_token = sent[0].text.lower() if len(sent) > 0 else ""
+                first_two = (
+                    f"{sent[0].text.lower()} {sent[1].text.lower()}"
+                    if len(sent) > 1 else first_token
+                )
+                is_frag = (
+                    first_token in FRAGMENT_INDICATORS
+                    or first_two in FRAGMENT_INDICATORS
+                )
+                if is_frag and merged:
+                    prev = merged[-1]
+                    merged[-1] = doc[prev.start:sent.end]
+                else:
+                    merged.append(sent)
+            for sent in merged:
+                txt = sent.text.strip()
+                if txt:
+                    units.append(txt)
+
+        for line in lines:
+            stripped = line.strip()
+            if not stripped:
+                flush_prose(prose_block)
+                prose_block = []
+            elif structural_line.match(line) or _LABELED_SECTION_PATTERN.match(line):
+                flush_prose(prose_block)
+                prose_block = []
+                units.append(stripped)
+            else:
+                prose_block.append(stripped)
+
+        flush_prose(prose_block)
+        return units
+
+    def _compute_actionability(
+        self, units: List[str]
+    ) -> tuple:
+        """
+        Compute per-unit actionability score (0.0–1.0).
+
+        Each instruction unit is checked for actionable verbs, modal verbs,
+        passive constructions, implicit commands, or labeled section patterns.
+        Score = actionable_units / total_units.
+
+        Returns:
+            (score, diagnostics_dict)
+        """
+        if not units:
+            return 0.0, {
+                'verb_count': 0, 'modal_count': 0, 'passive_count': 0,
+                'implicit_commands': 0, 'actionable_units': 0, 'total_units': 0,
+            }
+
+        total_verb_count = 0
+        total_modal_count = 0
+        total_passive_count = 0
+        total_implicit_commands = 0
+        actionable_units = 0
+
+        for unit_text in units:
+            unit_is_actionable = False
+
+            # Check for labeled section (e.g., "Role:", "Constraints:")
+            if _LABELED_SECTION_PATTERN.match(unit_text):
+                unit_is_actionable = True
+
+            # Check for implicit command (e.g., "Step 1: Data preprocessing")
+            if IMPLICIT_COMMAND_PATTERN.match(unit_text):
+                total_implicit_commands += 1
+                unit_is_actionable = True
+
+            # spaCy analysis for verbs
+            doc = self._nlp(unit_text)
+            for token in doc:
+                if token.pos_ == "VERB":
+                    has_subject = any(
+                        child.dep_ in ("nsubj", "nsubjpass")
+                        for child in token.children
+                    )
+                    has_dobj = any(
+                        child.dep_ == "dobj" for child in token.children
+                    )
+                    is_actionable_verb = (
+                        has_dobj or not has_subject or token.dep_ == "ROOT"
+                    )
+                    if is_actionable_verb:
+                        total_verb_count += 1
+                        unit_is_actionable = True
+
+                if token.pos_ == "AUX" and token.lemma_.lower() in MODAL_VERBS:
+                    total_modal_count += 1
+                    has_governed = any(
+                        child.pos_ == "VERB" for child in token.children
+                    ) or token.head.pos_ == "VERB"
+                    if has_governed:
+                        unit_is_actionable = True
+
+                if token.dep_ == "nsubjpass" and token.head.pos_ == "VERB":
+                    total_passive_count += 1
+
+            if unit_is_actionable:
+                actionable_units += 1
+
+        score = actionable_units / len(units)
+        return min(score, 1.0), {
+            'verb_count': total_verb_count,
+            'modal_count': total_modal_count,
+            'passive_count': total_passive_count,
+            'implicit_commands': total_implicit_commands,
+            'actionable_units': actionable_units,
+            'total_units': len(units),
+        }
+
+    def _compute_structure_score(self, prompt: str) -> tuple:
+        """
+        Compute structure diversity score (0.0–1.0).
+
+        Checks for presence of 5 structural element types:
+          headers, bullets, numbered lists, labeled sections, step patterns.
+        More diverse structure → higher score.
+
+        Returns:
+            (score, diagnostics_dict)
+        """
+        checks = {
+            'has_headers': bool(_HEADER_PATTERN.search(prompt)),
+            'has_bullets': bool(_BULLET_ITEM_PATTERN.search(prompt)),
+            'has_numbered': bool(_NUMBERED_ITEM_PATTERN.search(prompt)),
+            'has_labeled_sections': bool(_LABELED_SECTION_PATTERN.search(prompt)),
+            'has_step_patterns': bool(re.search(
+                r"\b(?:step\s+\d+|first|second|third|finally)\b",
+                prompt, re.IGNORECASE,
+            )),
+        }
+        count = sum(checks.values())
+        # Graduated scoring: more diverse structure types → higher score
+        score_map = [0.0, 0.30, 0.55, 0.75, 0.90, 1.0]
+        score = score_map[min(count, 5)]
+        return score, checks
+
+    def _compute_completeness(self, prompt: str) -> tuple:
+        """
+        Compute instruction completeness score (0.0–1.0).
+
+        Checks for presence of 5 complementary instruction components:
+          role, objective, requirements, constraints, output_format.
+        Score = detected / 5.
+
+        Returns:
+            (score, diagnostics_dict)
+        """
+        detected: Dict[str, bool] = {}
+        for name, pattern in _COMPLETENESS_PATTERNS.items():
+            detected[name] = bool(pattern.search(prompt))
+        count = sum(detected.values())
+        score = count / len(_COMPLETENESS_PATTERNS)
+        return min(score, 1.0), detected
+
+    def _compute_weak_fragment_penalty(
+        self, prompt: str, units: List[str]
+    ) -> tuple:
+        """
+        Compute fragment penalty (0.0–max_penalty).
+
+        Only applies to unstructured prompts. If the prompt contains any
+        structural elements (bullets, headers, labeled sections), no
+        penalty is applied. For unstructured text, penalises units that
+        lack both verbs and structural context.
+
+        Returns:
+            (penalty, diagnostics_dict)
+        """
+        # Check if prompt has structural context
+        is_structured = (
+            bool(_HEADER_PATTERN.search(prompt))
+            or bool(_BULLET_ITEM_PATTERN.search(prompt))
+            or bool(_NUMBERED_ITEM_PATTERN.search(prompt))
+            or bool(_LABELED_SECTION_PATTERN.search(prompt))
+        )
+
+        if is_structured or not units:
+            return 0.0, {'structured': is_structured, 'fragment_count': 0}
+
+        # Count verbless fragments in unstructured text
+        fragment_count = 0
+        for unit_text in units:
+            doc = self._nlp(unit_text)
+            has_verb = any(t.pos_ == "VERB" for t in doc)
+            has_modal = any(
+                t.pos_ == "AUX" and t.lemma_.lower() in MODAL_VERBS
+                for t in doc
+            )
+            is_implicit = bool(IMPLICIT_COMMAND_PATTERN.match(unit_text))
+            if not has_verb and not has_modal and not is_implicit:
+                fragment_count += 1
+
+        ratio = fragment_count / len(units)
+        penalty = ratio * self.config.clarity_max_fragment_penalty
+        return min(penalty, self.config.clarity_max_fragment_penalty), {
+            'structured': False,
+            'fragment_count': fragment_count,
+        }
 
     def _score_clarity(self, prompt: str) -> Dict[str, Any]:
         """
-        SOP §3A — Improved Clarity Score (0.0–1.0) with diagnostics.
+        Structure-Aware Clarity Score (0.0–1.0) with diagnostics.
 
-        v2 improvements over original:
-          - Modal verb detection (should, must, need to, shall, ought)
-          - Passive instruction detection ("The response should include…")
-          - Implicit command detection ("Step 1: Data preprocessing")
-          - Multi-verb per sentence (counts all actionable verbs, not just 1)
-          - Token-weighted ratio (reduces long-prompt bias)
-          - Verb strength weighting (strong=1.0, weak=configurable)
-          - Sentence fragment attachment (merges fragments to prior sentence)
-          - Imperative-like verb counting (not ROOT-only)
-          - Reduced noun-chunk penalty (fully orphaned groups only)
-          - Optional typo penalty via pyspellchecker
+        Measures instructional completeness and execution readiness using
+        a multi-component formula:
+
+          clarity = actionability * w_a + structure * w_s + completeness * w_c
+                  - weak_fragment_penalty
+
+        Components:
+          - actionability: per-unit verb/command detection (not per-token)
+          - structure: diversity of formatting elements (headers, bullets, etc.)
+          - completeness: presence of instruction components (role, objective, etc.)
+          - fragment_penalty: only applied to unstructured verbless text
 
         Returns:
-            dict with 'score' (float 0.0–1.0) and diagnostic counters:
-              verb_count, modal_count, passive_count, implicit_commands
+            dict with 'score' (float 0.0–1.0) and diagnostic counters.
         """
         empty_result: Dict[str, Any] = {
-            'score': 0.0, 'verb_count': 0, 'modal_count': 0,
-            'passive_count': 0, 'implicit_commands': 0,
+            'score': 0.0,
+            'actionability': 0.0, 'structure': 0.0, 'completeness': 0.0,
+            'fragment_penalty': 0.0,
+            'verb_count': 0, 'modal_count': 0, 'passive_count': 0,
+            'implicit_commands': 0, 'actionable_units': 0, 'total_units': 0,
+            'detected_components': {}, 'detected_structures': {},
         }
 
         if not self._nlp or not prompt.strip():
             return empty_result
 
-        doc = self._nlp(prompt)
-        raw_sents = list(doc.sents)
-        if not raw_sents:
+        # Step 1: Extract instruction units
+        units = self._extract_instruction_units(prompt)
+        if not units:
             return empty_result
 
-        # ── Stage A: Fragment Attachment ──────────────────────────────
-        # Merge sentences starting with fragment indicators into the
-        # previous sentence's span, preventing ratio dilution.
-        merged_sentences: List = []
-        for sent in raw_sents:
-            first_token = sent[0].text.lower() if len(sent) > 0 else ""
-            first_two = (
-                f"{sent[0].text.lower()} {sent[1].text.lower()}"
-                if len(sent) > 1 else first_token
-            )
+        # Step 2: Compute each component
+        actionability, act_diag = self._compute_actionability(units)
+        structure, struct_diag = self._compute_structure_score(prompt)
+        completeness, comp_diag = self._compute_completeness(prompt)
+        frag_penalty, frag_diag = self._compute_weak_fragment_penalty(prompt, units)
 
-            is_fragment = (
-                first_token in FRAGMENT_INDICATORS
-                or first_two in FRAGMENT_INDICATORS
-            )
-
-            if is_fragment and merged_sentences:
-                # Extend previous sentence span to include this fragment
-                prev = merged_sentences[-1]
-                merged_sentences[-1] = doc[prev.start:sent.end]
-            else:
-                merged_sentences.append(sent)
-
-        # ── Stage B: Per-Sentence Multi-Verb Analysis ─────────────────
-        total_token_count: int = 0
-        weighted_action_sum: float = 0.0
-        total_verb_count: int = 0
-        total_modal_count: int = 0
-        total_passive_count: int = 0
-        total_implicit_commands: int = 0
-        total_noun_chunks: int = 0
-        fully_orphaned_chunks: int = 0
-
-        for sent in merged_sentences:
-            sent_tokens = [t for t in sent if not t.is_punct and not t.is_space]
-            sent_token_count = len(sent_tokens)
-            total_token_count += sent_token_count
-
-            if sent_token_count == 0:
-                continue
-
-            # ── Check for implicit commands ───────────────────────
-            sent_text = sent.text.strip()
-            is_implicit_command = bool(IMPLICIT_COMMAND_PATTERN.match(sent_text))
-            if is_implicit_command:
-                total_implicit_commands += 1
-
-            # ── Collect all verbs and their properties ────────────
-            sentence_verb_weights: List[float] = []
-            has_any_verb: bool = False
-            sent_verb_tokens: Set = set()
-
-            for token in sent:
-                if token.pos_ == "VERB":
-                    has_any_verb = True
-                    sent_verb_tokens.add(token)
-
-                    # Check if this verb is imperative-like (no subject)
-                    has_subject = any(
-                        child.dep_ in ("nsubj", "nsubjpass")
-                        for child in token.children
-                    )
-                    is_imperative = not has_subject
-
-                    # Check for direct object
-                    has_dobj = any(
-                        child.dep_ == "dobj" for child in token.children
-                    )
-
-                    # Determine verb strength
-                    lemma = token.lemma_.lower()
-                    if lemma in STRONG_VERBS:
-                        strength = 1.0
-                    elif lemma in WEAK_VERBS:
-                        strength = self.config.weak_verb_weight
-                    else:
-                        strength = 0.75  # Neutral verbs
-
-                    # A verb is "actionable" if it has a dobj, is
-                    # imperative-like, or is the ROOT verb
-                    is_actionable = (
-                        has_dobj or is_imperative or token.dep_ == "ROOT"
-                    )
-
-                    if is_actionable:
-                        sentence_verb_weights.append(strength)
-                        total_verb_count += 1
-
-                # ── Modal verb detection ──────────────────────────
-                if token.pos_ == "AUX" and token.lemma_.lower() in MODAL_VERBS:
-                    total_modal_count += 1
-                    # Modal verbs make the governed main verb actionable
-                    has_governed_verb = any(
-                        child.pos_ == "VERB" for child in token.children
-                    ) or (
-                        token.head.pos_ == "VERB"
-                    )
-                    if has_governed_verb:
-                        sentence_verb_weights.append(0.85)
-                        total_verb_count += 1
-
-                # ── Passive instruction detection ─────────────────
-                if token.dep_ == "nsubjpass" and token.head.pos_ == "VERB":
-                    total_passive_count += 1
-
-            # ── Compute sentence action score ─────────────────────
-            if sentence_verb_weights:
-                # Average of weighted verb strengths, capped at 1.0
-                sentence_action_score = min(
-                    sum(sentence_verb_weights) / max(len(sentence_verb_weights), 1),
-                    1.0,
-                )
-            elif is_implicit_command:
-                # Implicit commands without verbs get partial credit
-                sentence_action_score = 0.7
-            else:
-                sentence_action_score = 0.0
-
-            # ── Token-weighted contribution ───────────────────────
-            weighted_action_sum += sentence_action_score * sent_token_count
-
-            # ── Stage D: Noun-chunk penalty (fully orphaned only) ─
-            for chunk in sent.noun_chunks:
-                total_noun_chunks += 1
-                chunk_head_is_verb = chunk.root.head in sent_verb_tokens
-                sentence_has_verb = has_any_verb or is_implicit_command
-
-                # Fully orphaned: head is NOT a verb AND no verb in sentence
-                if not chunk_head_is_verb and not sentence_has_verb:
-                    fully_orphaned_chunks += 1
-
-        # ── Stage C: Token-Weighted Ratio ─────────────────────────────
-        if total_token_count == 0:
-            return empty_result
-
-        ratio: float = weighted_action_sum / total_token_count
-
-        # ── Noun-chunk penalty (reduced aggressiveness) ───────────────
-        if total_noun_chunks > 0:
-            orphan_ratio: float = fully_orphaned_chunks / total_noun_chunks
-            penalty: float = orphan_ratio * self.config.noun_orphan_penalty_factor
-            ratio = max(ratio - penalty, 0.0)
-
-        # ── Optional typo penalty ─────────────────────────────────────
-        if self.config.enable_typo_penalty and self._spellchecker is not None:
-            content_words = [
-                t.text.lower() for t in doc
-                if not t.is_punct and not t.is_space
-                and not t.like_num and not t.is_stop
-                and len(t.text) > 2  # Skip very short tokens
-                and not t.ent_type_  # Skip named entities
-            ]
-            if content_words:
-                misspelled = self._spellchecker.unknown(content_words)
-                typo_count = len(misspelled)
-                typo_penalty = min(
-                    typo_count * self.config.typo_penalty_per_token,
-                    0.15,  # Cap typo penalty at 15%
-                )
-                ratio = max(ratio - typo_penalty, 0.0)
-
-        score: float = min(ratio, 1.0)
+        # Step 3: Weighted combination
+        cfg = self.config
+        score = (
+            actionability * cfg.clarity_actionability_weight
+            + structure * cfg.clarity_structure_weight
+            + completeness * cfg.clarity_completeness_weight
+            - frag_penalty
+        )
+        score = max(min(score, 1.0), 0.0)
 
         logger.debug(
-            f"Clarity analysis: score={score:.4f}, verbs={total_verb_count}, "
-            f"modals={total_modal_count}, passive={total_passive_count}, "
-            f"implicit_cmds={total_implicit_commands}"
+            f"Clarity analysis: score={score:.4f}, "
+            f"actionability={actionability:.4f}, structure={structure:.4f}, "
+            f"completeness={completeness:.4f}, frag_penalty={frag_penalty:.4f}, "
+            f"verbs={act_diag['verb_count']}, modals={act_diag['modal_count']}, "
+            f"passive={act_diag['passive_count']}, "
+            f"implicit_cmds={act_diag['implicit_commands']}"
         )
 
         return {
             'score': round(score, 4),
-            'verb_count': total_verb_count,
-            'modal_count': total_modal_count,
-            'passive_count': total_passive_count,
-            'implicit_commands': total_implicit_commands,
+            'actionability': round(actionability, 4),
+            'structure': round(structure, 4),
+            'completeness': round(completeness, 4),
+            'fragment_penalty': round(frag_penalty, 4),
+            # Legacy diagnostic keys (backward compat)
+            'verb_count': act_diag['verb_count'],
+            'modal_count': act_diag['modal_count'],
+            'passive_count': act_diag['passive_count'],
+            'implicit_commands': act_diag['implicit_commands'],
+            # New diagnostic keys
+            'actionable_units': act_diag['actionable_units'],
+            'total_units': act_diag['total_units'],
+            'detected_components': comp_diag,
+            'detected_structures': struct_diag,
         }
 
     # ═══════════════════════════════════════════════════════════════════
@@ -803,11 +972,18 @@ class HeuristicScorer:
             "length_penalty": length_penalty,
             "structural_bonus": structural_bonus,
             "quality": quality,
-            # Clarity diagnostics
+            # Clarity diagnostics (legacy)
             "clarity_verb_count": clarity_result['verb_count'],
             "clarity_modal_count": clarity_result['modal_count'],
             "clarity_passive_count": clarity_result['passive_count'],
             "clarity_implicit_commands": clarity_result['implicit_commands'],
+            # Clarity diagnostics (v3 structure-aware)
+            "clarity_actionability": clarity_result.get('actionability', 0.0),
+            "clarity_structure": clarity_result.get('structure', 0.0),
+            "clarity_completeness": clarity_result.get('completeness', 0.0),
+            "clarity_fragment_penalty": clarity_result.get('fragment_penalty', 0.0),
+            "clarity_actionable_units": clarity_result.get('actionable_units', 0),
+            "clarity_total_units": clarity_result.get('total_units', 0),
         }
 
     # ═══════════════════════════════════════════════════════════════════
@@ -967,5 +1143,50 @@ if __name__ == "__main__":
     result = scorer.evaluate(optimised_raw, optimised_cand)
     for k, v in result.items():
         print(f"  {k}: {v}")
+
+    # ── Test Case 4: Mandatory validation — structured must beat vague ─
+    raw_vague = "build a website for my car wash business"
+    structured_candidate = (
+        "Act as a senior full-stack web developer.\n"
+        "\n"
+        "## Objective\n"
+        "Build a responsive business website for a car wash service.\n"
+        "\n"
+        "## Requirements\n"
+        "- Hero section with call-to-action button\n"
+        "- Service listing with prices\n"
+        "- Online booking form\n"
+        "- Mobile-first, high-contrast design\n"
+        "- Contact section with embedded Google Maps\n"
+        "\n"
+        "## Constraints\n"
+        "- Output a single HTML file with inline CSS and JS\n"
+        "- Must load under 3 seconds on mobile\n"
+        "- No external frameworks or CDN dependencies\n"
+        "\n"
+        "## Output Format\n"
+        "Deliver the complete HTML file with comments explaining each section."
+    )
+    print("\n[MANDATORY VALIDATION: Structured vs Vague]")
+    print(f"  Raw:       {raw_vague!r}")
+    print(f"  Candidate: {structured_candidate[:80]!r}...")
+    result = scorer.evaluate(raw_vague, structured_candidate)
+    for k, v in result.items():
+        print(f"  {k}: {v}")
+
+    # Compute individual clarity scores for comparison
+    raw_metrics = scorer._score_prompt(raw_vague)
+    cand_metrics = scorer._score_prompt(structured_candidate)
+    print(f"\n  >> Raw clarity:       {raw_metrics['clarity']:.4f}")
+    print(f"  >> Candidate clarity: {cand_metrics['clarity']:.4f}")
+    print(f"  >> Raw quality:       {raw_metrics['quality']:.4f}")
+    print(f"  >> Candidate quality: {cand_metrics['quality']:.4f}")
+    assert cand_metrics['clarity'] > raw_metrics['clarity'], \
+        f"FAIL: candidate clarity ({cand_metrics['clarity']}) must exceed raw clarity ({raw_metrics['clarity']})"
+    assert cand_metrics['quality'] > raw_metrics['quality'], \
+        f"FAIL: candidate quality ({cand_metrics['quality']}) must exceed raw quality ({raw_metrics['quality']})"
+    assert result['final_score'] > 0, \
+        f"FAIL: final_score ({result['final_score']}) must be positive"
+    print("  >> All mandatory assertions PASSED")
 
     print("\n" + "=" * 70)
