@@ -10,6 +10,8 @@ def test_sentence_transformer():
     """
     print("[*] Loading sentence-transformers model 'all-MiniLM-L6-v2' (Downloading if not cached)...")
     try:
+        import torch
+        print(f"[*] System Check | PyTorch CUDA available: {torch.cuda.is_available()}")
         model = SentenceTransformer('all-MiniLM-L6-v2')
         
         # Test sequences

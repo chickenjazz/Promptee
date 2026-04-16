@@ -3,7 +3,7 @@ DPO Trainer — QLoRA + Direct Preference Optimization
 
 SOP Reference: architecture/dpo_training.md §4-5
 
-Loads Qwen2.5-7B-Instruct with 4-bit quantization, attaches LoRA adapters,
+Loads Qwen2.5-3B-Instruct with 4-bit quantization, attaches LoRA adapters,
 and trains via DPO on the preference dataset.
 
 This script is OFFLINE-ONLY. It must never be imported by runtime code.
@@ -31,7 +31,7 @@ logging.basicConfig(
 )
 
 # Defaults from SOP
-BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
+BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" #TODO: Change to 3B
 DATASET_PATH = os.path.join(PROJECT_ROOT, "datasets", "preference_pairs.jsonl")
 CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "training", "checkpoints")
 
@@ -59,6 +59,7 @@ def train(
       - Paged AdamW 8-bit optimizer
       - Gradient checkpointing enabled
     """
+    logger.info(f"System Check | PyTorch CUDA available: {torch.cuda.is_available()}")
 
     # ── 1. Load Tokenizer ────────────────────────────────────────────────
     logger.info(f"Loading tokenizer: {base_model_id}")

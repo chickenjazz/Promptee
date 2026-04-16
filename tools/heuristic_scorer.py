@@ -336,6 +336,9 @@ class HeuristicScorer:
 
     def _load_models(self) -> None:
         """Load spaCy and sentence-transformer models with structured error logging."""
+        import torch
+        logger.info(f"System Check | PyTorch CUDA available: {torch.cuda.is_available()}")
+
         try:
             self._nlp = spacy.load("en_core_web_sm")
             logger.info("spaCy model 'en_core_web_sm' loaded successfully.")
