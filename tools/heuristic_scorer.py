@@ -105,7 +105,11 @@ class ScorerConfig:
         semantic_soft_threshold: float = 0.70,
 
         # ── Specificity tuning ────────────────────────────────────────
-        specificity_ideal_density: float = 0.25,
+        # Raised from 0.25 to 0.50 to account for weighted constraint
+        # signals (entities 1.2×, ranges 1.5×, etc.) in the redesigned
+        # specificity scorer.  The old value caused short prompts with
+        # even one signal to saturate at 1.0.
+        specificity_ideal_density: float = 0.50,
 
         # ── Penalty tuning ────────────────────────────────────────────
         ambiguity_max_penalty: float = 0.15,
@@ -678,6 +682,160 @@ class HeuristicScorer:
         }
 
     # ═══════════════════════════════════════════════════════════════════
+    # Stage 2: Specificity Scoring — Helpers
+    # ═══════════════════════════════════════════════════════════════════
+
+    @staticmethod
+    def _get_informative_tokens(doc) -> list:
+        """
+        Return tokens excluding punctuation, whitespace, stopwords, and
+        symbols.  This produces a clean denominator for constraint density
+        so that filler tokens do not deflate the ratio.
+
+        Numbers are kept — they are informative for specificity.
+        """
+        return [
+            t for t in doc
+            if not t.is_punct
+            and not t.is_space
+            and not t.is_stop
+            and t.pos_ != "SYM"
+        ]
+
+    # ── Regex patterns for constraint detection (compiled once) ──────
+
+    _RE_RANGE_NUMERIC = re.compile(
+        r"\b\d+\s*[-\u2013\u2014]\s*\d+\b"
+    )
+    _RE_BOUND_PHRASE = re.compile(
+        r"\b(?:at\s+least|at\s+most|no\s+more\s+than|no\s+fewer\s+than"
+        r"|between\s+\d+\s+and\s+\d+|up\s+to\s+\d+)\b",
+        re.IGNORECASE,
+    )
+    _RE_FORMAT_INSTRUCTION = re.compile(
+        r"\b(?:return|output|provide|give|deliver|format)"
+        r"\s+(?:as\s+|in\s+|a\s+)?"
+        r"(?:json|csv|markdown|xml|yaml|table|html|plain\s+text"
+        r"|bullet\s+list|structured\s+outline)\b",
+        re.IGNORECASE,
+    )
+    _RE_TOOL_REQUIREMENT = re.compile(
+        r"\b(?:using|in|with)\s+"
+        r"(?:python|javascript|typescript|sql|bash|r|go|java|c\+\+|ruby|rust)\b",
+        re.IGNORECASE,
+    )
+    _RE_FILE_FORMAT = re.compile(
+        r"\.(?:json|csv|xml|yaml|yml|html|md|txt|pdf|png|jpg)\b",
+        re.IGNORECASE,
+    )
+    _RE_STRUCTURAL_EXECUTION = re.compile(
+        r"\b(?:step[- ]by[- ]step|comparison\s+table|numbered\s+(?:list|explanation)"
+        r"|code\s+block|worked\s+example|side[- ]by[- ]side)\b",
+        re.IGNORECASE,
+    )
+
+    def _score_entities_attached(self, doc) -> float:
+        """
+        Score named entities by attachment validation and span length.
+
+        Only entities syntactically connected to a verb or constraint
+        phrase contribute.  Each attached entity token contributes 1.2
+        (higher weight than adjective modifiers at 0.6).
+
+        Unattached entities (pure spam like "Python JSON HTML") score 0.
+        """
+        total: float = 0.0
+        verbal_deps = frozenset({"dobj", "pobj", "attr", "nsubj", "nsubjpass", "compound", "appos"})
+        # Skip numeric entity labels — these are already captured by
+        # nummod (scalar) or range-constraint detectors.  Counting them
+        # again as entities would double-count a single number token.
+        numeric_labels = frozenset({"CARDINAL", "ORDINAL"})
+
+        for ent in doc.ents:
+            if ent.label_ in numeric_labels:
+                continue
+            attached = False
+            for token in ent:
+                # Direct verbal head
+                if token.head.pos_ in ("VERB", "AUX"):
+                    attached = True
+                    break
+                # Dependency relation implying verbal governance
+                if token.dep_ in verbal_deps:
+                    attached = True
+                    break
+                # Walk up to check for a verbal ancestor (max 3 hops)
+                ancestor = token.head
+                for _ in range(3):
+                    if ancestor.pos_ in ("VERB", "AUX"):
+                        attached = True
+                        break
+                    if ancestor == ancestor.head:
+                        break
+                    ancestor = ancestor.head
+                if attached:
+                    break
+            if attached:
+                total += len(ent) * 1.2
+        return total
+
+    def _detect_format_instructions(self, text: str) -> float:
+        """
+        Detect output format requirement phrases.
+
+        Examples: "Return JSON", "output as markdown", "provide a table"
+        Each match contributes weight 1.2.
+        """
+        matches = self._RE_FORMAT_INSTRUCTION.findall(text)
+        return len(matches) * 1.2
+
+    def _detect_range_constraints(self, text: str) -> tuple:
+        """
+        Detect bounded numeric constraints and return (score, range_token_positions).
+
+        Ranges ("3-5") and bound phrases ("at least 3") contribute weight
+        1.5 each.  Also returns character spans of range numbers so the
+        caller can exclude them from the scalar nummod count.
+        """
+        range_matches = self._RE_RANGE_NUMERIC.findall(text)
+        bound_matches = self._RE_BOUND_PHRASE.findall(text)
+        count = len(range_matches) + len(bound_matches)
+
+        # Collect character-level start positions of numbers inside ranges
+        # so the caller can de-duplicate against nummod tokens.
+        range_char_spans: set = set()
+        for m in self._RE_RANGE_NUMERIC.finditer(text):
+            range_char_spans.add((m.start(), m.end()))
+
+        return count * 1.5, range_char_spans
+
+    def _detect_tool_and_deliverable_constraints(self, text: str) -> float:
+        """
+        Detect tool requirements, file format mentions, and structural
+        execution constraints.  Each match contributes weight 1.0.
+        """
+        tool_count = len(self._RE_TOOL_REQUIREMENT.findall(text))
+        file_count = len(self._RE_FILE_FORMAT.findall(text))
+        exec_count = len(self._RE_STRUCTURAL_EXECUTION.findall(text))
+        return (tool_count + file_count + exec_count) * 1.0
+
+    def _compute_local_ambiguity_ratio(self, informative_tokens: list) -> float:
+        """
+        Compute the ratio of ambiguous tokens to informative tokens.
+
+        Reuses the module-level AMBIGUOUS_TOKENS set.  Returns a raw
+        ratio (0.0–1.0) used for the ambiguity dampening interaction
+        inside specificity scoring.
+        """
+        if not informative_tokens:
+            return 0.0
+        ambig_count = sum(
+            1 for t in informative_tokens
+            if t.lemma_.lower() in AMBIGUOUS_TOKENS
+        )
+        return ambig_count / len(informative_tokens)
+
+    # ═══════════════════════════════════════════════════════════════════
     # Stage 2: Specificity Scoring
     # ═══════════════════════════════════════════════════════════════════
 
@@ -685,13 +843,22 @@ class HeuristicScorer:
         """
         SOP §3B — Specificity Score (0.0–1.0).
 
-        Measures constraint density using dependency relations:
-          - amod: adjectival modifiers (e.g., "detailed report", "blue sky")
-          - nummod: numeric modifiers (e.g., "5 paragraphs", "3 examples")
-          - Named entities (ENT): specific references (e.g., "Python", "2024")
+        Measures constraint density across multiple signal types:
+          - amod:  adjectival modifiers with diminishing returns per head noun
+          - nummod: scalar numeric modifiers (weight 1.0)
+          - Entities: attachment-validated, span-length-weighted (weight 1.2)
+          - Range constraints: "3-5", "at least X" (weight 1.5)
+          - Format instructions: "Return JSON", "output table" (weight 1.2)
+          - Tool/deliverable constraints: "using Python", ".csv" (weight 1.0)
 
-        Density = (amod_count + nummod_count + entity_count) / token_count
-        Score = density / ideal_density (capped at 1.0)
+        Density uses informative tokens only (excludes punctuation,
+        stopwords, whitespace, symbols) for a fair denominator.
+
+        Ambiguity dampening (exponential decay) prevents vague-but-numeric
+        prompts from receiving inflated specificity.
+
+        Signal separation: this function never rewards formatting structure
+        (headers, bullets, numbered lists, layout) — those belong to clarity.
         """
         if not self._nlp or not prompt.strip():
             return 0.0
@@ -700,13 +867,77 @@ class HeuristicScorer:
         if len(doc) == 0:
             return 0.0
 
-        # Count dependency-based modifiers (SOP specifies amod and nummod)
-        modifiers = [token for token in doc if token.dep_ in ("amod", "nummod")]
-        ents = list(doc.ents)
+        # ── Informative token denominator (Issues 1, 6) ──────────────
+        informative = self._get_informative_tokens(doc)
+        n = len(informative)
+        if n == 0:
+            return 0.0
 
-        density: float = (len(modifiers) + len(ents)) / max(len(doc), 1.0)
-        score: float = density / self.config.specificity_ideal_density
-        return min(score, 1.0)
+        # ── Range constraints (Issue 9) — detect before nummod ───────
+        range_score, range_char_spans = self._detect_range_constraints(prompt)
+
+        # ── Modifier scoring with diminishing returns (Issues 5, 10) ─
+        #   amod: group by head noun, apply log2 scaling per head, weight 0.6
+        #   nummod: weight 1.0, but exclude tokens inside detected ranges
+        amod_by_head: Dict[int, int] = {}
+        nummod_score: float = 0.0
+
+        for token in doc:
+            if token.dep_ == "amod":
+                # Skip vague adjectives — they belong to ambiguity, not specificity
+                if token.lemma_.lower() in AMBIGUOUS_TOKENS:
+                    continue
+                head_idx = token.head.i
+                amod_by_head[head_idx] = amod_by_head.get(head_idx, 0) + 1
+            elif token.dep_ == "nummod":
+                # Check if this nummod token falls inside a range span
+                token_start = token.idx
+                token_end = token.idx + len(token.text)
+                in_range = any(
+                    rs <= token_start and token_end <= re
+                    for rs, re in range_char_spans
+                )
+                if not in_range:
+                    nummod_score += 1.0
+
+        # Diminishing returns: log2(count+1) per head, capped at 1.5
+        # (effectively rewards at most ~2 adjectives per noun).
+        # Weight 0.4 — adjectives are the weakest specificity signal.
+        amod_score: float = sum(
+            min(math.log2(c + 1), 1.5) for c in amod_by_head.values()
+        ) * 0.4
+
+        # ── Entity scoring — attachment-validated (Issues 2, 4, 8) ───
+        entity_score: float = self._score_entities_attached(doc)
+
+        # ── Format instructions (Issue 7) ─────────────────────────────
+        format_score: float = self._detect_format_instructions(prompt)
+
+        # ── Tool & deliverable constraints (Issues 3, 11) ─────────────
+        tool_deliverable_score: float = self._detect_tool_and_deliverable_constraints(prompt)
+
+        # ── Weighted signal aggregation ───────────────────────────────
+        total_signal: float = (
+            amod_score
+            + nummod_score
+            + entity_score
+            + range_score
+            + format_score
+            + tool_deliverable_score
+        )
+
+        # ── Density & normalisation ───────────────────────────────────
+        density: float = total_signal / n
+        score: float = min(density / self.config.specificity_ideal_density, 1.0)
+
+        # ── Ambiguity dampening (Issue 12) ────────────────────────────
+        # Exponential decay: mild ambiguity → mild reduction,
+        # heavy ambiguity → steep reduction.
+        ambig_ratio: float = self._compute_local_ambiguity_ratio(informative)
+        dampening: float = math.exp(-2.0 * ambig_ratio)
+        score *= dampening
+
+        return max(min(score, 1.0), 0.0)
 
     # ═══════════════════════════════════════════════════════════════════
     # Stage 3: Ambiguity Penalty
