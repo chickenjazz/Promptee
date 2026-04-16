@@ -606,6 +606,9 @@ def build_preference_pairs(
     Returns:
         Number of valid preference pairs generated
     """
+    import torch
+    logger.info(f"System Check | PyTorch CUDA available: {torch.cuda.is_available()}")
+
     # Step 1: Initialize Rewriter
     if strategy == "dynamic":
         logger.info("Using DynamicLLMRewriter (requires GPU)")

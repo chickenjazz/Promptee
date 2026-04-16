@@ -55,6 +55,7 @@ class PromptOptimizer:
         Raises RuntimeError if loading fails critically.
         """
         try:
+            logger.info(f"System Check | PyTorch CUDA available: {torch.cuda.is_available()}")
             logger.info(f"Loading tokenizer: {self.base_model_id}")
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.base_model_id, trust_remote_code=True
