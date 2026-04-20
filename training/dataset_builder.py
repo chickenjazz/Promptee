@@ -219,10 +219,13 @@ def build_atomic_rewrite_instruction(
     """
     # Build the section-token hint list
     if missing_components:
-        missing_sections_text = "\n".join(
-            f"- Add a {SECTION_TOKEN_MAP.get(comp, comp.upper())} section"
-            for comp in missing_components
-        )
+        hints = []
+        for comp in missing_components:
+            hint = f"- Add a {SECTION_TOKEN_MAP.get(comp, comp.upper())} section"
+            if comp == "role":
+                hint += ' (start with "You are an expert..." or a similar persona)'
+            hints.append(hint)
+        missing_sections_text = "\n".join(hints)
         component_block = (
             f"Rewrite the prompt by adding the following missing sections:\n"
             f"{missing_sections_text}\n\n"
