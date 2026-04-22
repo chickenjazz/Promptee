@@ -32,17 +32,25 @@ import os
 import sys
 import csv
 import json
+import random
 import logging
 import argparse
 import re
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from typing import Callable, List, Dict, Any, Optional, Tuple
 
 # Project root for imports
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PROJECT_ROOT)
 
-from tools.heuristic_scorer import HeuristicScorer, _COMPLETENESS_PATTERNS
+from tools.heuristic_scorer import (
+    HeuristicScorer,
+    AMBIGUOUS_TOKENS,
+    _COMPLETENESS_PATTERNS,
+)
+
+# Deterministic sampling across runs
+random.seed(0)
 
 logger = logging.getLogger("promptee.dataset_builder")
 logging.basicConfig(
@@ -60,6 +68,12 @@ MIN_GAIN = 0.15
 REWRITE_TEMPERATURE_BASE = 0.35
 REWRITE_TEMPERATURE_STEP = 0.10
 REWRITE_TOP_P = 0.88
+
+# ── Multi-Negative DPO Expansion Constants ──────────────────────────────
+TARGET_DATASET_SIZE = 1200
+LENGTH_RATIO_MIN = 0.6
+LENGTH_RATIO_MAX = 1.4
+SEMANTIC_FLOOR = 0.40
 
 # ── Instructional Task Filter ────────────────────────────────────────────
 
@@ -206,53 +220,124 @@ SECTION_TOKEN_MAP: Dict[str, str] = {
 }
 
 
-# ── Atomic Rewrite Instruction Builder ──────────────────────────────────
+# ── Diverse Rewrite Instruction Templates ───────────────────────────────
+
+_BASE_RULES = (
+    "Rules:\n"
+    "- Preserve the original task intent and meaning exactly\n"
+    "- Only improve structure and clarity\n"
+    "- Do NOT solve the task or generate the output the prompt requests\n"
+    "- Do NOT include examples, sample inputs, or sample outputs\n"
+    "- Do NOT include placeholder content or generic filler\n"
+    "- Output ONLY the rewritten prompt — no explanations or commentary\n"
+)
+
+
+def _missing_block(missing_components: List[str]) -> str:
+    if not missing_components:
+        return (
+            "The prompt already contains all major structural sections. "
+            "Focus on improving clarity, precision, and organization.\n\n"
+        )
+    lines = "\n".join(
+        f"- Add a {SECTION_TOKEN_MAP.get(c, c.upper())} section"
+        for c in missing_components
+    )
+    return (
+        f"Rewrite the prompt by adding the following missing sections:\n"
+        f"{lines}\n\n"
+    )
+
+
+def clarity_template(raw_prompt: str, missing: List[str]) -> Dict[str, str]:
+    """Original clarity-focused rewrite instruction."""
+    system = (
+        "You are a prompt refinement engine. Your ONLY task is to rewrite the "
+        "user's prompt into a clearer, more specific, and well-structured "
+        "version.\n\n"
+        f"{_missing_block(missing)}{_BASE_RULES}"
+    )
+    user = (
+        f"Rewrite this prompt by adding the missing structural sections "
+        f"to improve clarity and usability:\n\n{raw_prompt}"
+    )
+    return {"system": system, "user": user}
+
+
+def production_template(raw_prompt: str, missing: List[str]) -> Dict[str, str]:
+    """Frame the rewrite as a production-ready spec for an engineering team."""
+    system = (
+        "You are a senior prompt engineer producing a production-ready "
+        "specification for an engineering team. Rewrite the user's prompt as "
+        "a precise, unambiguous brief suitable for handoff.\n\n"
+        f"{_missing_block(missing)}{_BASE_RULES}"
+    )
+    user = (
+        f"Convert this prompt into a production-ready specification with "
+        f"explicit role, objective, requirements, constraints, and output "
+        f"format sections:\n\n{raw_prompt}"
+    )
+    return {"system": system, "user": user}
+
+
+def structured_reasoning_template(raw_prompt: str, missing: List[str]) -> Dict[str, str]:
+    """Frame the rewrite as ordered reasoning steps with an IO contract."""
+    system = (
+        "You are a prompt refinement engine that organises prompts as "
+        "ordered reasoning steps with a clear input/output contract.\n\n"
+        f"{_missing_block(missing)}{_BASE_RULES}"
+    )
+    user = (
+        f"Rewrite this prompt as a numbered sequence of reasoning steps with "
+        f"an explicit input contract and output contract:\n\n{raw_prompt}"
+    )
+    return {"system": system, "user": user}
+
+
+def api_ready_template(raw_prompt: str, missing: List[str]) -> Dict[str, str]:
+    """Frame the rewrite as a structured API-style request."""
+    system = (
+        "You are a prompt refinement engine that produces API-ready prompts. "
+        "Rewrite the user's prompt with explicit labelled fields: ROLE, "
+        "OBJECTIVE, REQUIREMENTS, CONSTRAINTS, OUTPUT FORMAT.\n\n"
+        f"{_missing_block(missing)}{_BASE_RULES}"
+    )
+    user = (
+        f"Rewrite this prompt as a structured API-ready request with each "
+        f"field on its own labelled line:\n\n{raw_prompt}"
+    )
+    return {"system": system, "user": user}
+
+
+def deterministic_execution_template(raw_prompt: str, missing: List[str]) -> Dict[str, str]:
+    """Tighten ambiguity and add measurable acceptance criteria."""
+    system = (
+        "You are a prompt refinement engine focused on deterministic "
+        "execution. Eliminate vague tokens, replace fuzzy quantifiers with "
+        "measurable acceptance criteria, and lock down the output contract.\n\n"
+        f"{_missing_block(missing)}{_BASE_RULES}"
+    )
+    user = (
+        f"Rewrite this prompt to remove ambiguity and add measurable "
+        f"acceptance criteria so the output is deterministic:\n\n{raw_prompt}"
+    )
+    return {"system": system, "user": user}
+
+
+INSTRUCTION_TEMPLATES: List[Callable[[str, List[str]], Dict[str, str]]] = [
+    clarity_template,
+    production_template,
+    structured_reasoning_template,
+    api_ready_template,
+    deterministic_execution_template,
+]
+
 
 def build_atomic_rewrite_instruction(
     raw_prompt: str, missing_components: List[str]
 ) -> Dict[str, str]:
-    """
-    Build a single atomic rewrite instruction targeting all missing components.
-
-    Returns a dict with 'system' and 'user' prompts ready for the optimizer.
-    The instruction adapts dynamically based on which components are missing.
-    """
-    # Build the section-token hint list
-    if missing_components:
-        missing_sections_text = "\n".join(
-            f"- Add a {SECTION_TOKEN_MAP.get(comp, comp.upper())} section"
-            for comp in missing_components
-        )
-        component_block = (
-            f"Rewrite the prompt by adding the following missing sections:\n"
-            f"{missing_sections_text}\n\n"
-        )
-    else:
-        component_block = (
-            "The prompt already contains all major structural sections. "
-            "Focus on improving clarity, precision, and organization.\n\n"
-        )
-
-    system_prompt = (
-        "You are a prompt refinement engine. Your ONLY task is to rewrite the "
-        "user's prompt into a clearer, more specific, and well-structured "
-        "version.\n\n"
-        f"{component_block}"
-        "Rules:\n"
-        "- Preserve the original task intent and meaning exactly\n"
-        "- Only improve structure and clarity\n"
-        "- Do NOT solve the task or generate the output the prompt requests\n"
-        "- Do NOT include examples, sample inputs, or sample outputs\n"
-        "- Do NOT include placeholder content or generic filler\n"
-        "- Output ONLY the rewritten prompt — no explanations or commentary\n"
-    )
-
-    user_prompt = (
-        f"Rewrite this prompt by adding the missing structural sections "
-        f"to improve clarity and usability:\n\n{raw_prompt}"
-    )
-
-    return {"system": system_prompt, "user": user_prompt}
+    """Backward-compatible alias — defaults to the clarity template."""
+    return clarity_template(raw_prompt, missing_components)
 
 
 # ── Candidate Validation ────────────────────────────────────────────────
@@ -480,6 +565,257 @@ class AtomicRewriter:
             return None
 
 
+# ── Negative Candidate Generator ────────────────────────────────────────
+
+# Section keywords used by the section-stripping transformations.
+_SECTION_KEYWORDS: Dict[str, List[str]] = {
+    "constraints": ["constraints", "constraint", "limitations", "restrictions"],
+    "context": ["context", "background", "scenario", "situation"],
+    "output_format": ["output format", "output", "format", "deliverable", "deliverables"],
+}
+
+# Sentence-level patterns used as a fallback when a section header is absent.
+_CONTEXT_SENTENCE_PATTERN = re.compile(
+    r"\b(?:context|background|scenario|given\s+that|assuming|suppose|consider\s+that)\b",
+    re.IGNORECASE,
+)
+
+# Filler / hedge banks for `add_noise`.
+_NOISE_FILLERS = ("as needed", "somehow", "in some way", "as appropriate")
+_NOISE_HEDGES = ("Maybe ", "Probably ", "Kind of ", "Sort of ")
+
+
+class NegativeCandidateGenerator:
+    """
+    Synthesises structurally-degraded variants of a chosen rewrite.
+
+    Each transformation preserves task intent (verified later by the scorer's
+    semantic floor) but removes one quality dimension — structure, specificity,
+    or completeness. Returns None when a transformation is a no-op so the
+    caller can skip emitting trivial duplicates.
+    """
+
+    def __init__(self, nlp):
+        self._nlp = nlp
+        self.transformations: Dict[str, Callable[[str], Optional[str]]] = {
+            "remove_structure": self.remove_structure,
+            "make_vague": self.make_vague,
+            "remove_constraints": self.remove_constraints,
+            "remove_context": self.remove_context,
+            "remove_output_format": self.remove_output_format,
+            "shorten": self.shorten,
+            "add_noise": self.add_noise,
+            "reduce_specificity": self.reduce_specificity,
+        }
+
+    # ── Section / structure stripping helpers ────────────────────────
+
+    def _strip_section(self, text: str, keywords: List[str]) -> Optional[str]:
+        """Remove markdown sections, labelled lines, or sentences for given keywords."""
+        kw_alt = "|".join(re.escape(k) for k in keywords)
+        section_header = re.compile(
+            r"^\s*(?:#{1,6}\s+|\*\*\s*)?(?:" + kw_alt + r")(?:\s*\*\*)?\s*[:]?\s*$",
+            re.IGNORECASE,
+        )
+        next_header = re.compile(
+            r"^\s*(?:#{1,6}\s+\S|\*\*\s*\w+|[A-Z][A-Z _]+:\s*$)"
+        )
+        inline_label = re.compile(
+            r"^\s*(?:" + kw_alt + r")\s*:", re.IGNORECASE
+        )
+
+        lines = text.split("\n")
+        out: List[str] = []
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if section_header.match(line):
+                i += 1
+                while i < len(lines) and not next_header.match(lines[i]):
+                    i += 1
+                continue
+            if inline_label.match(line):
+                i += 1
+                continue
+            out.append(line)
+            i += 1
+
+        result = re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
+        if not result or result == text.strip():
+            return None
+        return result
+
+    # ── Public transformations ───────────────────────────────────────
+
+    def remove_structure(self, chosen: str) -> Optional[str]:
+        text = chosen
+        text = re.sub(r"^\s*#{1,6}\s+", "", text, flags=re.MULTILINE)
+        text = re.sub(r"^\s*[-*\u2022]\s+", "", text, flags=re.MULTILINE)
+        text = re.sub(r"^\s*\d+[.)]\s+", "", text, flags=re.MULTILINE)
+        text = re.sub(r"\n+", " ", text)
+        text = re.sub(r"\s+", " ", text).strip()
+        return text if text and text != chosen.strip() else None
+
+    def make_vague(self, chosen: str) -> Optional[str]:
+        text = re.sub(r"\b\d+\b", "some", chosen)
+        text = re.sub(r"\bspecific\b", "various", text, flags=re.IGNORECASE)
+        text = re.sub(r"\bexactly\b", "approximately", text, flags=re.IGNORECASE)
+        text = re.sub(r"\bmust\b", "should probably", text, flags=re.IGNORECASE)
+        text = re.sub(r"\bprecise(?:ly)?\b", "somewhat", text, flags=re.IGNORECASE)
+        return text if text != chosen else None
+
+    def remove_constraints(self, chosen: str) -> Optional[str]:
+        return self._strip_section(chosen, _SECTION_KEYWORDS["constraints"])
+
+    def remove_context(self, chosen: str) -> Optional[str]:
+        stripped = self._strip_section(chosen, _SECTION_KEYWORDS["context"])
+        base = stripped if stripped is not None else chosen
+        # Drop sentences containing context cues (fallback).
+        doc = self._nlp(base)
+        kept = [
+            s.text.strip() for s in doc.sents
+            if not _CONTEXT_SENTENCE_PATTERN.search(s.text)
+        ]
+        result = " ".join(kept).strip()
+        if not result or result == chosen.strip():
+            return None
+        return result
+
+    def remove_output_format(self, chosen: str) -> Optional[str]:
+        return self._strip_section(chosen, _SECTION_KEYWORDS["output_format"])
+
+    def shorten(self, chosen: str) -> Optional[str]:
+        doc = self._nlp(chosen)
+        sents = [s.text.strip() for s in doc.sents if s.text.strip()]
+        if len(sents) < 2:
+            return None
+        # Keep ~60% to stay above the length floor; clamp to at least 1.
+        keep = max(int(round(len(sents) * 0.6)), 1)
+        if keep >= len(sents):
+            return None
+        result = " ".join(sents[:keep]).strip()
+        return result if result and result != chosen.strip() else None
+
+    def add_noise(self, chosen: str) -> Optional[str]:
+        noise_type = random.choice(("filler", "hedge", "repetition", "typo"))
+
+        if noise_type == "filler":
+            sentences = re.split(r"(?<=[.!?])\s+", chosen)
+            if not sentences:
+                return None
+            idx = random.randrange(len(sentences))
+            sentences[idx] = sentences[idx].rstrip(".!?") + " " + random.choice(_NOISE_FILLERS) + "."
+            result = " ".join(sentences)
+
+        elif noise_type == "hedge":
+            sentences = re.split(r"(?<=[.!?])\s+", chosen)
+            if not sentences or not sentences[0]:
+                return None
+            idx = random.randrange(len(sentences))
+            s = sentences[idx]
+            if s:
+                sentences[idx] = random.choice(_NOISE_HEDGES) + s[0].lower() + s[1:]
+            result = " ".join(sentences)
+
+        elif noise_type == "repetition":
+            words = chosen.split()
+            if len(words) < 4:
+                return None
+            i = random.randint(1, len(words) - 1)
+            words.insert(i, words[i])
+            result = " ".join(words)
+
+        else:  # typo
+            words = chosen.split()
+            long_idx = [i for i, w in enumerate(words) if len(re.sub(r"\W", "", w)) > 4]
+            if not long_idx:
+                return None
+            i = random.choice(long_idx)
+            w = words[i]
+            pos = random.randint(0, len(w) - 2)
+            words[i] = w[:pos] + w[pos + 1] + w[pos] + w[pos + 2:]
+            result = " ".join(words)
+
+        return result if result and result != chosen else None
+
+    def reduce_specificity(self, chosen: str) -> Optional[str]:
+        doc = self._nlp(chosen)
+        drop_indices = set()
+        for token in doc:
+            if token.dep_ == "nummod":
+                drop_indices.add(token.i)
+            elif (
+                token.dep_ == "amod"
+                and token.lemma_.lower() not in AMBIGUOUS_TOKENS
+            ):
+                drop_indices.add(token.i)
+        if not drop_indices:
+            return None
+        parts: List[str] = []
+        for token in doc:
+            if token.i in drop_indices:
+                continue
+            parts.append(token.text + token.whitespace_)
+        result = re.sub(r"\s+", " ", "".join(parts)).strip()
+        return result if result and result != chosen.strip() else None
+
+    # ── Subtle structural contrast ───────────────────────────────────
+
+    def partial_component_dropout(self, chosen: str) -> Optional[str]:
+        """Remove exactly one of {constraints, context, output_format}."""
+        choice = random.choice(("constraints", "context", "output_format"))
+        if choice == "constraints":
+            return self.remove_constraints(chosen)
+        if choice == "context":
+            return self.remove_context(chosen)
+        return self.remove_output_format(chosen)
+
+
+# ── Length & Rejection Validation ───────────────────────────────────────
+
+def _spacy_token_count(text: str, nlp) -> int:
+    """Count informative spaCy tokens (excluding punctuation/whitespace)."""
+    doc = nlp(text)
+    return sum(1 for t in doc if not t.is_punct and not t.is_space)
+
+
+def length_ratio_ok(chosen: str, rejected: str, nlp) -> bool:
+    """True iff the rejected/chosen length ratio is within [0.6, 1.4]."""
+    cn = _spacy_token_count(chosen, nlp)
+    if cn == 0:
+        return False
+    ratio = _spacy_token_count(rejected, nlp) / cn
+    return LENGTH_RATIO_MIN <= ratio <= LENGTH_RATIO_MAX
+
+
+def is_valid_rejection(
+    rejected: str, chosen: str, raw: str, scorer: HeuristicScorer
+) -> tuple:
+    """Validate a synthesised rejection. Returns (ok, reason_or_none)."""
+    if not rejected or not rejected.strip():
+        return False, "empty"
+
+    rej = rejected.strip()
+    rej_n = _normalize_for_dedup(rej)
+    if rej_n == _normalize_for_dedup(chosen):
+        return False, "duplicate_of_chosen"
+    if rej_n == _normalize_for_dedup(raw):
+        return False, "duplicate_of_raw"
+
+    for pattern in _TASK_ANSWER_INDICATORS:
+        if pattern.match(rej):
+            return False, "task_answer_detected"
+
+    if not length_ratio_ok(chosen, rej, scorer._nlp):
+        return False, "length_ratio_out_of_bounds"
+
+    score = scorer.evaluate(raw, rej)
+    if score["semantic_preservation"] < SEMANTIC_FLOOR:
+        return False, "semantic_below_floor"
+
+    return True, None
+
+
 # ── Main Pipeline ────────────────────────────────────────────────────────
 
 def load_raw_prompts(path: str) -> list[str]:
@@ -509,27 +845,26 @@ def build_preference_pairs(
     dry_run_limit: int = 5,
     min_gain: float = MIN_GAIN,
     max_attempts: int = MAX_REWRITE_ATTEMPTS,
+    target_size: int = TARGET_DATASET_SIZE,
 ) -> int:
     """
-    Generate preference pairs using the scorer-guided atomic rewrite pipeline.
+    Generate a multi-negative DPO dataset using the scorer-guided pipeline.
 
     Pipeline per prompt:
-      1. Baseline scoring → detect missing components
-      2. Build atomic rewrite instruction with section-token hints
-      3. Generate up to max_attempts candidates (varied temperature)
-      4. Validate → Score immediately → Track best candidate
-      5. Select highest-quality candidate → Construct DPO pair
-
-    Args:
-        raw_prompts_path: Path to raw prompts CSV or JSONL
-        output_path: Path to write preference pairs JSONL
-        dry_run: If True, process only dry_run_limit prompts and print results
-        dry_run_limit: Number of prompts to process in dry run
-        min_gain: Minimum final_score threshold for acceptance
-        max_attempts: Maximum rewrite attempts per prompt
+      1. Baseline scoring + missing-component detection.
+      2. Per attempt: sample one of 5 instruction templates, generate, score,
+         keep highest-quality accepted candidate as `chosen`.
+      3. Synthesise structured `rejected` variants from the chosen text using
+         `NegativeCandidateGenerator` (8 transformations + partial dropout).
+      4. Always emit a wide-margin (chosen vs raw) baseline rejection per
+         accepted prompt for anchor signal.
+      5. Gate every rejection on length-ratio (0.6–1.4 spaCy tokens) and
+         semantic preservation vs raw (≥ 0.40). Emit one DPO row per passing
+         (chosen, rejected) pair.
+      6. Stop early once `target_size` rows are accumulated.
 
     Returns:
-        Number of valid preference pairs generated
+        Number of preference pairs written.
     """
     import torch
     logger.info(f"System Check | PyTorch CUDA available: {torch.cuda.is_available()}")
@@ -546,20 +881,16 @@ def build_preference_pairs(
     all_prompts = load_raw_prompts(raw_prompts_path)
     logger.info(f"Loaded {len(all_prompts)} total prompts from {raw_prompts_path}")
 
-    # Filter for instructional tasks only
-    instructional = [p for p in all_prompts if is_instructional(p)]
-    logger.info(
-        f"Filtered to {len(instructional)} instructional prompts "
-        f"({len(all_prompts) - len(instructional)} rejected as non-instructional)"
-    )
-
+    # Instructional filter intentionally removed — every raw prompt is processed
+    # to maximise the pool that feeds the multi-negative expansion. Quality is
+    # gated downstream by the scorer + length-ratio + semantic checks.
     if dry_run:
-        instructional = instructional[:dry_run_limit]
+        all_prompts = all_prompts[:dry_run_limit]
 
     # Build indexed records
     records: List[PromptRecord] = [
         PromptRecord(idx=i, raw_prompt=p)
-        for i, p in enumerate(instructional)
+        for i, p in enumerate(all_prompts)
     ]
 
     # Initialize scorer for baseline scoring and component detection
@@ -588,18 +919,20 @@ def build_preference_pairs(
 
     total_attempts = 0
     total_valid = 0
-    pairs = []
+    pairs: List[Dict[str, Any]] = []
     skipped = 0
+    rejection_type_counts: Dict[str, int] = {}
+    accepted_chosen_count = 0
+    target_reached = False
+    negative_generator = NegativeCandidateGenerator(scorer._nlp)
 
     for record in records:
+        if target_reached:
+            break
+
         logger.info(
             f"Rewriting prompt {record.idx + 1}/{len(records)}: "
             f"{record.raw_prompt[:60]}..."
-        )
-
-        # Build a single rewrite instruction for this prompt
-        instruction = build_atomic_rewrite_instruction(
-            record.raw_prompt, record.missing_components
         )
 
         # Track the best candidate across all attempts
@@ -607,12 +940,19 @@ def build_preference_pairs(
         best_score = record.baseline_quality
         best_score_result = None
 
-        # Attempt generation with increasing temperature, score each immediately
+        # Attempt generation with increasing temperature; sample a fresh
+        # instruction template per attempt so the rewrites cover multiple
+        # framing styles (clarity, production-spec, reasoning, API, deterministic).
         for attempt in range(max_attempts):
             temperature = REWRITE_TEMPERATURE_BASE + (attempt * REWRITE_TEMPERATURE_STEP)
             temperature = min(temperature, 0.60)
             total_attempts += 1
             record.attempt_count = attempt + 1
+
+            template_fn = random.choice(INSTRUCTION_TEMPLATES)
+            instruction = template_fn(
+                record.raw_prompt, record.missing_components
+            )
 
             candidate = rewriter.generate_atomic_candidate(
                 record.raw_prompt, instruction, temperature=temperature
@@ -697,13 +1037,66 @@ def build_preference_pairs(
             "components_added": record.missing_components,
             "attempt_count": record.attempt_count,
         }
+        accepted_chosen_count += 1
 
-        pair = {
-            "prompt": record.raw_prompt,
-            "chosen": record.best_candidate,
-            "rejected": record.raw_prompt,
-        }
-        pairs.append(pair)
+        # ── Multi-negative emission ──────────────────────────────────
+        # Always include the wide-margin (chosen vs raw) baseline first.
+        rejected_variants: List[Tuple[str, str]] = [
+            (record.raw_prompt, "raw_baseline"),
+        ]
+
+        # Run all 8 transformations on the chosen text, gating each result.
+        for name, fn in negative_generator.transformations.items():
+            try:
+                candidate_neg = fn(record.best_candidate)
+            except Exception as exc:  # pragma: no cover — defensive
+                logger.debug(f"  Transformation {name} raised: {exc}")
+                continue
+            if candidate_neg is None:
+                continue
+            ok, reason = is_valid_rejection(
+                candidate_neg, record.best_candidate, record.raw_prompt, scorer
+            )
+            if not ok:
+                logger.debug(f"  Rejection '{name}' dropped: {reason}")
+                continue
+            rejected_variants.append((candidate_neg, name))
+
+        # Subtle structural contrast — drop exactly one component.
+        try:
+            dropout_candidate = negative_generator.partial_component_dropout(
+                record.best_candidate
+            )
+        except Exception as exc:  # pragma: no cover — defensive
+            logger.debug(f"  partial_component_dropout raised: {exc}")
+            dropout_candidate = None
+        if dropout_candidate is not None:
+            ok, reason = is_valid_rejection(
+                dropout_candidate, record.best_candidate, record.raw_prompt, scorer
+            )
+            if ok:
+                rejected_variants.append((dropout_candidate, "partial_dropout"))
+            else:
+                logger.debug(f"  Rejection 'partial_dropout' dropped: {reason}")
+
+        # Emit one DPO row per variant.
+        emitted_for_record = 0
+        for rejected_text, rejection_type in rejected_variants:
+            pairs.append({
+                "prompt": record.raw_prompt,
+                "chosen": record.best_candidate,
+                "rejected": rejected_text,
+                "rejection_type": rejection_type,
+            })
+            rejection_type_counts[rejection_type] = (
+                rejection_type_counts.get(rejection_type, 0) + 1
+            )
+            emitted_for_record += 1
+
+        logger.info(
+            f"[{record.idx}] Emitted {emitted_for_record} preference rows "
+            f"(running total: {len(pairs)} / target {target_size})"
+        )
 
         if dry_run:
             print(f"\n{'='*70}")
@@ -717,11 +1110,20 @@ def build_preference_pairs(
             )
             print(f"    y_w quality:       {record.best_candidate_quality:.4f}")
             print(f"    final_score:       {record.best_final_score:.4f}")
-            print(f"    Metadata:          {json.dumps(record.metadata, indent=6)}")
+            print(f"    Rejections:        {emitted_for_record} variants — "
+                  f"{[t for _, t in rejected_variants]}")
+
+        # Early-stop once the target is reached (skipped in dry-run so we
+        # always inspect the requested number of prompts).
+        if not dry_run and len(pairs) >= target_size:
+            target_reached = True
+            logger.info(
+                f"Target dataset size {target_size} reached — stopping early."
+            )
 
     logger.info(
-        f"Generated {total_valid}/{total_attempts} valid candidates "
-        f"for {len(records)} prompts"
+        f"Generated {total_valid}/{total_attempts} valid chosen candidates "
+        f"for {len(records)} prompts ({accepted_chosen_count} accepted)"
     )
 
     # Unload Qwen to free VRAM
@@ -733,25 +1135,49 @@ def build_preference_pairs(
     torch.cuda.empty_cache()
     gc.collect()
 
+    # Build distribution summary for the rejection-type histogram.
+    histogram_lines = "\n".join(
+        f"    {name:>22}: {count}"
+        for name, count in sorted(
+            rejection_type_counts.items(), key=lambda kv: -kv[1]
+        )
+    ) or "    (none)"
+
     # Write output
     if not dry_run:
+        if len(pairs) < target_size:
+            logger.warning(
+                f"Final dataset size ({len(pairs)}) is below target "
+                f"({target_size}). Writing what we have."
+            )
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as f:
             for pair in pairs:
                 f.write(json.dumps(pair, ensure_ascii=False) + "\n")
         logger.info(f"\nWrote {len(pairs)} preference pairs to {output_path}")
+        logger.info(
+            f"Rejection-type distribution:\n{histogram_lines}"
+        )
     else:
         print(f"\n{'='*70}")
-        print(f"DRY RUN COMPLETE: {len(pairs)} valid pairs, {skipped} skipped")
-        acceptance_rate = (
-            (len(pairs) / len(records) * 100) if records else 0
+        print(
+            f"DRY RUN COMPLETE: {len(pairs)} preference pairs from "
+            f"{accepted_chosen_count} accepted chosens, {skipped} skipped"
         )
-        print(f"Acceptance rate: {acceptance_rate:.1f}%")
+        acceptance_rate = (
+            (accepted_chosen_count / len(records) * 100) if records else 0
+        )
+        avg_negatives = (
+            (len(pairs) / accepted_chosen_count) if accepted_chosen_count else 0
+        )
+        print(f"Chosen acceptance rate: {acceptance_rate:.1f}%")
+        print(f"Avg rejections per chosen: {avg_negatives:.2f}")
         print(f"Total attempts: {total_attempts}")
-        print(f"Avg attempts per accepted: {total_attempts / max(len(pairs), 1):.1f}")
+        print(f"Rejection-type histogram:\n{histogram_lines}")
 
     logger.info(
-        f"Done. Accepted: {len(pairs)}, Skipped: {skipped}, "
+        f"Done. Pairs: {len(pairs)}, Accepted chosens: "
+        f"{accepted_chosen_count}, Skipped: {skipped}, "
         f"Total processed: {len(records)}, "
         f"Total generation attempts: {total_attempts}"
     )
@@ -791,6 +1217,15 @@ if __name__ == "__main__":
         default=MAX_REWRITE_ATTEMPTS,
         help=f"Maximum rewrite attempts per prompt (default: {MAX_REWRITE_ATTEMPTS})",
     )
+    parser.add_argument(
+        "--target-size",
+        type=int,
+        default=TARGET_DATASET_SIZE,
+        help=(
+            f"Target preference-pair count; pipeline early-stops once reached "
+            f"(default: {TARGET_DATASET_SIZE})"
+        ),
+    )
     args = parser.parse_args()
 
     build_preference_pairs(
@@ -800,4 +1235,5 @@ if __name__ == "__main__":
         dry_run_limit=args.dry_run_limit,
         min_gain=args.min_gain,
         max_attempts=args.max_attempts,
+        target_size=args.target_size,
     )
