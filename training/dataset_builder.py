@@ -231,25 +231,9 @@ _BASE_RULES = (
     "- Do NOT include placeholder content or generic filler\n"
     "- Output ONLY the rewritten prompt — no explanations or commentary\n"
 )
-
-    Returns a dict with 'system' and 'user' prompts ready for the optimizer.
-    The instruction adapts dynamically based on which components are missing.
-    """
-    # Build the section-token hint list
-    if missing_components:
-        hints = []
-        for comp in missing_components:
-            hint = f"- Add a {SECTION_TOKEN_MAP.get(comp, comp.upper())} section"
-            if comp == "role":
-                hint += ' (start with "You are an expert..." or a similar persona)'
-            hints.append(hint)
-        missing_sections_text = "\n".join(hints)
-        component_block = (
-            f"Rewrite the prompt by adding the following missing sections:\n"
-            f"{missing_sections_text}\n\n"
-        )
-    else:
-        component_block = (
+def _missing_block(missing_components: List[str]) -> str:
+    if not missing_components:
+        return (
             "The prompt already contains all major structural sections. "
             "Focus on improving clarity, precision, and organization.\n\n"
         )
