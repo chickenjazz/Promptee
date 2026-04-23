@@ -1,10 +1,6 @@
 """
 Improved Heuristic Scorer — Deterministic Prompt Quality Evaluation Pipeline.
 
-Implements the full scoring pipeline from:
-  - architecture/heuristic_scorer.md (base specification)
-  - architecture/heuristic_scorer_improv_checklist.md (all 12 improvements)
-
 Pipeline flow order:
   1. Clarity scoring (per-sentence actionability)
   2. Specificity scoring (constraint density)

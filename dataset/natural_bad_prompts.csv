@@ -1,0 +1,501 @@
+text,topic,quality_score,length_bucket,source
+write a creative brief for a new logo design,generation,0.19999999999999998,short,casual_cluster
+create a storyboard outline for a short animated film,general,0.19999999999999998,short,casual_cluster
+write an engaging instagram caption for a travel photo,generation,0.19999999999999998,short,casual_cluster
+suggest 5 different layout options for a magazine cover,general,0.19999999999999998,short,casual_cluster
+draft a concept for an interactive billboard ad,generation,0.19999999999999998,short,casual_cluster
+write a character description for a sci-fi novel protagonist,generation,0.19999999999999998,short,casual_cluster
+explain quantum computing using a simple analogy,QA/explanation,0.0,short,casual_cluster
+generate a list of study flashcards for human anatomy,general,0.19999999999999998,short,casual_cluster
+write a lesson plan on fractions for 4th graders,generation,0.19999999999999998,short,casual_cluster
+summarize the main themes of the great gatsby,general,0.19999999999999998,short,casual_cluster
+create a weekly study schedule for the sats,general,0.19999999999999998,short,casual_cluster
+explain the difference between mitosis and meiosis,QA/explanation,0.0,short,casual_cluster
+translate these 20 common conversational phrases into spanish,general,0.19999999999999998,short,casual_cluster
+plan a 7-day vegetarian meal prep menu,general,0.19999999999999998,short,casual_cluster
+write a polite decline response to a wedding invitation,generation,0.19999999999999998,short,casual_cluster
+create a daily routine for a remote software developer,general,0.19999999999999998,short,casual_cluster
+generate a packing list for a weekend camping trip,general,0.19999999999999998,short,casual_cluster
+plan a birthday party itinerary for a 10-year-old,general,0.19999999999999998,short,casual_cluster
+create a checklist for moving into a new apartment,general,0.19999999999999998,short,casual_cluster
+draft a resume summary for a recent college graduate,generation,0.19999999999999998,short,casual_cluster
+build a chatbot for my customer service portal,general,0.19999999999999998,short,casual_cluster
+write a unit test for this authentication function,coding,0.19999999999999998,short,casual_cluster
+create a kubernetes deployment manifest for my app,general,0.19999999999999998,short,casual_cluster
+design a scalable architecture for a video streaming platform,general,0.19999999999999998,short,casual_cluster
+generate a json payload for a mock api response,general,0.19999999999999998,short,casual_cluster
+write a terraform script to provision a virtual machine,generation,0.19999999999999998,short,casual_cluster
+debug this c++ code that throws a segmentation fault,coding,0.19999999999999998,short,casual_cluster
+write a regular expression to validate strong passwords,generation,0.19999999999999998,short,casual_cluster
+draft a partnership proposal for a local charity event,generation,0.19999999999999998,short,casual_cluster
+create a risk management plan for a construction project,general,0.19999999999999998,short,casual_cluster
+write a script for a cold calling sales campaign,generation,0.19999999999999998,short,casual_cluster
+generate an agenda for a quarterly board meeting,general,0.19999999999999998,short,casual_cluster
+write an employee performance review template,generation,0.19999999999999998,short,casual_cluster
+create a crisis communication plan for a data breach,general,0.19999999999999998,short,casual_cluster
+draft a user manual for a smart home thermostat,generation,0.19999999999999998,short,casual_cluster
+write a case study on a successful marketing campaign,generation,0.19999999999999998,short,casual_cluster
+design an onboarding sequence for new app users,general,0.19999999999999998,short,casual_cluster
+write a macro to format this excel spreadsheet,generation,0.19999999999999998,short,casual_cluster
+write a script to scrape product prices from amazon,generation,0.19999999999999998,short,casual_cluster
+create a timeline for planning a corporate conference,general,0.19999999999999998,short,casual_cluster
+draft a non-disclosure agreement for freelance contractors,generation,0.19999999999999998,short,casual_cluster
+write a how-to guide on changing a car tire,generation,0.19999999999999998,short,casual_cluster
+build an automated email sequence for abandoned shopping carts,general,0.19999999999999998,short,casual_cluster
+How do I make a website?,general,0.09999999999999998,short,curated_vague
+Explain loop quantum gravity.,QA/explanation,0.0,short,curated_vague
+Explain genetic inheritance.,QA/explanation,0.0,short,curated_vague
+Explain how sports work.,QA/explanation,0.0,short,curated_vague
+Explain cognitive neuroscience.,QA/explanation,0.0,short,curated_vague
+Explain the ethical issues in gene editing.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain chaos theory.,QA/explanation,0.0,short,curated_vague
+Explain embodied cognition.,QA/explanation,0.0,short,curated_vague
+Explain theoretical ecology.,QA/explanation,0.0,short,curated_vague
+Explain evolutionary biology.,QA/explanation,0.0,short,curated_vague
+Explain how to tell time.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain how the advertising strategies code works.,coding,0.09999999999999998,short,curated_vague
+Explain quantum cryptography.,QA/explanation,0.0,short,curated_vague
+Explain how to make jokes.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain philosophical theories.,QA/explanation,0.0,short,curated_vague
+Explain this evolutionary biology code.,coding,0.09999999999999998,short,curated_vague
+Explain String Theory.,QA/explanation,0.0,short,curated_vague
+Explain physical chemistry.,QA/explanation,0.0,short,curated_vague
+Explain advanced economics.,QA/explanation,0.0,short,curated_vague
+How do I do synthetic biology?,general,0.09999999999999998,short,curated_vague
+Explain measure theory.,QA/explanation,0.0,short,curated_vague
+Explain data visualization.,QA/explanation,0.0,short,curated_vague
+Explain advanced game theory.,QA/explanation,0.0,short,curated_vague
+Explain SN1 reactions.,QA/explanation,0.0,short,curated_vague
+Explain the concept of cognitive dissonance.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain augmented reality.,QA/explanation,0.0,short,curated_vague
+Explain organic chemistry.,QA/explanation,0.0,short,curated_vague
+Explain how a climate model works.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain biochemistry.,QA/explanation,0.0,short,curated_vague
+Explain political systems simply.,QA/explanation,0.0,short,curated_vague
+Explain content marketing.,QA/explanation,0.0,short,curated_vague
+Explain arithmetic.,QA/explanation,0.0,short,curated_vague
+Explain measure theory code.,coding,0.0,short,curated_vague
+Explain string theory.,QA/explanation,0.0,short,curated_vague
+Explain the difference between saving and investing.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain jokes.,QA/explanation,0.0,short,curated_vague
+Explain advanced mathematical concepts.,QA/explanation,0.0,short,curated_vague
+Explain inorganic chemistry.,QA/explanation,0.0,short,curated_vague
+Explain how a blockchain works.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain the cognitive neuroscience of decision-making.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain network security.,QA/explanation,0.0,short,curated_vague
+Explain the water cycle.,QA/explanation,0.0,short,curated_vague
+Explain simple science experiments.,QA/explanation,0.0,short,curated_vague
+Explain how organic chemistry code works.,coding,0.09999999999999998,short,curated_vague
+Explain gravitational wave astronomy.,QA/explanation,0.0,short,curated_vague
+Explain differential geometry.,QA/explanation,0.0,short,curated_vague
+Explain the different parts of this code:,coding,0.09999999999999998,short,curated_vague
+Explain the bias-variance tradeoff.,QA/explanation,0.0,short,curated_vague
+Explain how a Kalman filter works.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain causal set theory.,QA/explanation,0.0,short,curated_vague
+Explain quantum algorithms.,QA/explanation,0.0,short,curated_vague
+How do I copy and paste?,general,0.09999999999999998,short,curated_vague
+Write about garden tools.,generation,0.1,short,curated_vague
+Explain constructivism.,QA/explanation,0.0,short,curated_vague
+Explain evolution.,QA/explanation,0.0,short,curated_vague
+Explain community helpers.,QA/explanation,0.0,short,curated_vague
+Write about creative writing.,generation,0.1,short,curated_vague
+Explain climate change.,QA/explanation,0.0,short,curated_vague
+Explain machine learning.,QA/explanation,0.0,short,curated_vague
+How do I negotiate?,general,0.0,short,curated_vague
+Explain how this population genetics code works.,coding,0.09999999999999998,short,curated_vague
+Explain extended mind theory.,QA/explanation,0.0,short,curated_vague
+Explain game theory.,QA/explanation,0.0,short,curated_vague
+How do I change my car's oil?,general,0.09999999999999998,short,curated_vague
+Explain this Python code that visualizes data.,coding,0.09999999999999998,short,curated_vague
+Explain blockchain technology.,QA/explanation,0.0,short,curated_vague
+How do I take better photos?,general,0.09999999999999998,short,curated_vague
+Explain molecular dynamics simulation.,QA/explanation,0.0,short,curated_vague
+Explain quantum entanglement.,QA/explanation,0.0,short,curated_vague
+Explain the five senses.,QA/explanation,0.0,short,curated_vague
+Explain the history of the world.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain this habitat restoration code.,coding,0.09999999999999998,short,curated_vague
+Explain algorithm design.,QA/explanation,0.0,short,curated_vague
+Explain weather patterns.,QA/explanation,0.0,short,curated_vague
+Explain quantum computing.,QA/explanation,0.0,short,curated_vague
+How do I make friends?,general,0.09999999999999998,short,curated_vague
+Explain molecular biology.,QA/explanation,0.0,short,curated_vague
+Explain cognitive biases.,QA/explanation,0.0,short,curated_vague
+Explain exercise physiology.,QA/explanation,0.0,short,curated_vague
+Explain cryptocurrency.,QA/explanation,0.0,short,curated_vague
+Explain computational complexity theory.,QA/explanation,0.0,short,curated_vague
+Explain supply chain management.,QA/explanation,0.0,short,curated_vague
+Explain basic nutrition.,QA/explanation,0.0,short,curated_vague
+How do I clean my house?,general,0.09999999999999998,short,curated_vague
+Explain blockchain.,QA/explanation,0.0,short,curated_vague
+Explain cryptographic protocols.,QA/explanation,0.0,short,curated_vague
+Explain the Diffie-Hellman key exchange.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain number theory.,QA/explanation,0.0,short,curated_vague
+Explain systems biology.,QA/explanation,0.0,short,curated_vague
+Explain the concept of quantum entanglement.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain constructivism in education.,QA/explanation,0.0,short,curated_vague
+Explain M-theory.,QA/explanation,0.0,short,curated_vague
+Explain the code.,coding,0.0,short,curated_vague
+Explain the concept of chemical potential.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain musical theory.,QA/explanation,0.0,short,curated_vague
+Explain M-theory in simpler terms.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain time series analysis.,QA/explanation,0.0,short,curated_vague
+Explain cryptocurrency basics.,QA/explanation,0.0,short,curated_vague
+How do I put on a shirt?,general,0.09999999999999998,short,curated_vague
+Help me with financial planning.,general,0.09999999999999998,short,curated_vague
+Explain the philosophy of science.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain economics.,QA/explanation,0.0,short,curated_vague
+Explain quantum error correction.,QA/explanation,0.0,short,curated_vague
+Explain this number theory code.,coding,0.09999999999999998,short,curated_vague
+Explain climate modeling.,QA/explanation,0.0,short,curated_vague
+Explain reinforcement learning.,QA/explanation,0.0,short,curated_vague
+Create a website.,general,0.1,short,curated_vague
+Explain technical quality control.,QA/explanation,0.0,short,curated_vague
+Explain cellular respiration.,QA/explanation,0.0,short,curated_vague
+Explain machine learning theory.,QA/explanation,0.0,short,curated_vague
+Explain this urban planning algorithm.,QA/explanation,0.09999999999999998,short,curated_vague
+Write code for animals.,coding,0.1,short,curated_vague
+Explain brand management.,QA/explanation,0.0,short,curated_vague
+Explain how a structural biochemistry algorithm works.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain how virtual reality works.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain complex systems theory.,QA/explanation,0.0,short,curated_vague
+Explain the concept of 'mise en place'.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain abstract algebra.,QA/explanation,0.0,short,curated_vague
+Explain topological insulators.,QA/explanation,0.0,short,curated_vague
+Write about counting numbers.,generation,0.1,short,curated_vague
+Explain epistemology.,QA/explanation,0.0,short,curated_vague
+How do I use virtual reality?,general,0.09999999999999998,short,curated_vague
+Explain cognitive dissonance.,QA/explanation,0.0,short,curated_vague
+Explain optogenetics.,QA/explanation,0.0,short,curated_vague
+Explain the concept of dynamic programming.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain combinatorial optimization.,QA/explanation,0.0,short,curated_vague
+Write about theoretical ecology.,generation,0.1,short,curated_vague
+Explain the Internet of Things.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain how this VR code works.,coding,0.09999999999999998,short,curated_vague
+Explain natural language processing.,QA/explanation,0.0,short,curated_vague
+Explain advanced cryptography in an interesting way.,QA/explanation,0.09999999999999998,short,curated_vague
+How do plants grow?,general,0.1,short,curated_vague
+Explain how a synthetic biology algorithm works.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain the code for breakfast foods.,coding,0.09999999999999998,short,curated_vague
+Explain family relationships.,QA/explanation,0.0,short,curated_vague
+Explain neighborhood places.,QA/explanation,0.0,short,curated_vague
+Explain how food affects our bodies.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain cellular processes.,QA/explanation,0.0,short,curated_vague
+Explain supersymmetry.,QA/explanation,0.0,short,curated_vague
+Explain exercise physiology code.,coding,0.0,short,curated_vague
+Explain deep learning architectures.,QA/explanation,0.0,short,curated_vague
+Explain functional analysis.,coding,0.0,short,curated_vague
+Explain web development.,QA/explanation,0.0,short,curated_vague
+How do you paint?,general,0.1,short,curated_vague
+How do I manage my time better?,general,0.09999999999999998,short,curated_vague
+Explain quantum field theory.,QA/explanation,0.0,short,curated_vague
+How do I make a new product?,general,0.09999999999999998,short,curated_vague
+Explain water conservation.,QA/explanation,0.0,short,curated_vague
+How do I cook rice?,general,0.09999999999999998,short,curated_vague
+Explain epigenetic mechanisms.,QA/explanation,0.0,short,curated_vague
+Explain consumer behavior.,QA/explanation,0.0,short,curated_vague
+Explain the concept of chemical kinetics.,QA/explanation,0.09999999999999998,short,curated_vague
+Explain how a heart transplant works.,QA/explanation,0.09999999999999998,short,curated_vague
+create a landing page for my new bakery,general,0.19999999999999998,short,curated_vague
+build an inventory management app for my warehouse,general,0.19999999999999998,short,curated_vague
+write a python script to scrape real estate listings,coding,0.19999999999999998,short,curated_vague
+design a database schema for an e-commerce store,general,0.19999999999999998,short,curated_vague
+code a simple discord bot that tells daily jokes,coding,0.19999999999999998,short,curated_vague
+develop a mobile app mockup for a fitness tracker,general,0.19999999999999998,short,curated_vague
+set up a wordpress site for my freelance portfolio,general,0.19999999999999998,short,curated_vague
+write a react component for a user login form,generation,0.19999999999999998,short,curated_vague
+create a browser extension that blocks social media sites,general,0.19999999999999998,short,curated_vague
+build a rest api for a task management system,general,0.19999999999999998,short,curated_vague
+draft a welcome email for new newsletter subscribers,generation,0.19999999999999998,short,curated_vague
+summarize this 20-page market research report,general,0.19999999999999998,short,curated_vague
+write a cold outreach message to potential investors,generation,0.19999999999999998,short,curated_vague
+draft a press release for our new software launch,generation,0.19999999999999998,short,curated_vague
+create a cover letter for a data scientist position,general,0.19999999999999998,short,curated_vague
+write product descriptions for my handmade soap collection,generation,0.19999999999999998,short,curated_vague
+develop a go-to-market strategy for a saas startup,general,0.19999999999999998,short,curated_vague
+create a customer feedback survey for my restaurant,general,0.19999999999999998,short,curated_vague
+design a loyalty program for my coffee shop,general,0.19999999999999998,short,curated_vague
+draft a standard operating procedure for onboarding new employees,generation,0.19999999999999998,short,curated_vague
+create a monthly budget template for a small agency,general,0.19999999999999998,short,curated_vague
+draft a refund policy for my online clothing boutique,generation,0.19999999999999998,short,curated_vague
+create a competitive analysis matrix for ride-sharing apps,general,0.19999999999999998,short,curated_vague
+optimize this python code for better performance,coding,0.19999999999999998,short,curated_vague
+write a dockerfile for a node.js web application,generation,0.19999999999999998,short,curated_vague
+generate dummy data for testing a user database,general,0.19999999999999998,short,curated_vague
+translate this java code snippet into python,coding,0.19999999999999998,short,curated_vague
+write code for html,coding,0.0,short,synthetic_open_source
+explain nothing,QA/explanation,0.0,short,synthetic_open_source
+tell me about love,general,0.0,short,synthetic_open_source
+write code for python,coding,0.0,short,synthetic_open_source
+html,coding,0.0,short,synthetic_open_source
+what is tv,QA/explanation,0.0,short,synthetic_open_source
+helpmewithreact,general,0.0,short,synthetic_open_source
+what is people,QA/explanation,0.0,short,synthetic_open_source
+everything please,general,0.0,short,synthetic_open_source
+how to school,general,0.0,short,synthetic_open_source
+tell me about computer,general,0.0,short,synthetic_open_source
+doanimals,general,0.0,short,synthetic_open_source
+how to python,coding,0.0,short,synthetic_open_source
+tell me about something,general,0.0,short,synthetic_open_source
+write code for work,coding,0.0,short,synthetic_open_source
+tell me about java,general,0.0,short,synthetic_open_source
+howtoanimals,general,0.0,short,synthetic_open_source
+tell me about music,general,0.0,short,synthetic_open_source
+what is java,QA/explanation,0.0,short,synthetic_open_source
+what is it,QA/explanation,0.0,short,synthetic_open_source
+explaintime,QA/explanation,0.0,short,synthetic_open_source
+work please,general,0.0,short,synthetic_open_source
+work,general,0.0,short,synthetic_open_source
+tellmeabouteverything,general,0.0,short,synthetic_open_source
+writecodeformoney,coding,0.0,short,synthetic_open_source
+help me with history,general,0.0,short,synthetic_open_source
+how to react,general,0.0,short,synthetic_open_source
+do html,coding,0.0,short,synthetic_open_source
+explain math,QA/explanation,0.0,short,synthetic_open_source
+do pizza,general,0.0,short,synthetic_open_source
+tell me about history,general,0.0,short,synthetic_open_source
+people please,general,0.0,short,synthetic_open_source
+write code for water,coding,0.0,short,synthetic_open_source
+tell me about react,general,0.0,short,synthetic_open_source
+math please,general,0.0,short,synthetic_open_source
+something please,general,0.0,short,synthetic_open_source
+it,general,0.0,short,synthetic_open_source
+what is something,QA/explanation,0.0,short,synthetic_open_source
+write code for the thing,coding,0.19999999999999998,short,synthetic_open_source
+howtoenglish,general,0.0,short,synthetic_open_source
+write code for people,coding,0.0,short,synthetic_open_source
+explain english,QA/explanation,0.0,short,synthetic_open_source
+do money,general,0.0,short,synthetic_open_source
+help me with something,general,0.0,short,synthetic_open_source
+helpmewithart,general,0.0,short,synthetic_open_source
+english please,general,0.0,short,synthetic_open_source
+moneyplease,general,0.0,short,synthetic_open_source
+writecodeforfood,coding,0.0,short,synthetic_open_source
+what is pizza,QA/explanation,0.0,short,synthetic_open_source
+time,general,0.0,short,synthetic_open_source
+write code for time,coding,0.0,short,synthetic_open_source
+writecodeforpython,coding,0.0,short,synthetic_open_source
+do computer,general,0.0,short,synthetic_open_source
+howtothat,general,0.0,short,synthetic_open_source
+how to something,general,0.0,short,synthetic_open_source
+helpmewithpython,coding,0.0,short,synthetic_open_source
+tell me about money,general,0.0,short,synthetic_open_source
+howtospanish,general,0.0,short,synthetic_open_source
+write code for that,coding,0.0,short,synthetic_open_source
+help me with computer,general,0.0,short,synthetic_open_source
+how to time,general,0.0,short,synthetic_open_source
+helpmewithmusic,general,0.0,short,synthetic_open_source
+dothething,general,0.0,short,synthetic_open_source
+explainenglish,QA/explanation,0.0,short,synthetic_open_source
+houseplease,general,0.0,short,synthetic_open_source
+something,general,0.0,short,synthetic_open_source
+what is science,QA/explanation,0.0,short,synthetic_open_source
+how to nothing,general,0.0,short,synthetic_open_source
+help me with water,general,0.0,short,synthetic_open_source
+what is computer,QA/explanation,0.0,short,synthetic_open_source
+pizzaplease,general,0.0,short,synthetic_open_source
+money,general,0.0,short,synthetic_open_source
+helpmewithpizza,general,0.0,short,synthetic_open_source
+write code for react,coding,0.0,short,synthetic_open_source
+howtowater,general,0.0,short,synthetic_open_source
+tell me about house,general,0.0,short,synthetic_open_source
+how to money,general,0.0,short,synthetic_open_source
+computer please,general,0.0,short,synthetic_open_source
+explain school,QA/explanation,0.0,short,synthetic_open_source
+history,general,0.0,short,synthetic_open_source
+what is house,QA/explanation,0.0,short,synthetic_open_source
+write code for everything,coding,0.0,short,synthetic_open_source
+what is school,QA/explanation,0.0,short,synthetic_open_source
+what is water,QA/explanation,0.0,short,synthetic_open_source
+whatisscience,general,0.0,short,synthetic_open_source
+tell me about python,coding,0.0,short,synthetic_open_source
+explain life,QA/explanation,0.0,short,synthetic_open_source
+spanish please,general,0.0,short,synthetic_open_source
+explainjava,QA/explanation,0.0,short,synthetic_open_source
+helpmewithspanish,general,0.0,short,synthetic_open_source
+howtomusic,general,0.0,short,synthetic_open_source
+helpmewithwater,general,0.0,short,synthetic_open_source
+writecodefortv,coding,0.0,short,synthetic_open_source
+help me with people,general,0.0,short,synthetic_open_source
+howtojava,general,0.0,short,synthetic_open_source
+write code for car,coding,0.0,short,synthetic_open_source
+react,general,0.0,short,synthetic_open_source
+helpmewithhouse,general,0.0,short,synthetic_open_source
+writecodeforhouse,coding,0.0,short,synthetic_open_source
+art,general,0.0,short,synthetic_open_source
+life please,general,0.0,short,synthetic_open_source
+music please,general,0.0,short,synthetic_open_source
+explainit,QA/explanation,0.0,short,synthetic_open_source
+explain art,QA/explanation,0.0,short,synthetic_open_source
+howtocar,general,0.0,short,synthetic_open_source
+do java,general,0.0,short,synthetic_open_source
+how to people,general,0.0,short,synthetic_open_source
+whatispython,coding,0.0,short,synthetic_open_source
+do everything,general,0.0,short,synthetic_open_source
+writecodeforphone,coding,0.0,short,synthetic_open_source
+that,general,0.0,short,synthetic_open_source
+phone please,general,0.0,short,synthetic_open_source
+do phone,general,0.0,short,synthetic_open_source
+write code for school,coding,0.0,short,synthetic_open_source
+writecodeforenglish,coding,0.0,short,synthetic_open_source
+whatisthat,general,0.0,short,synthetic_open_source
+help me with html,coding,0.0,short,synthetic_open_source
+explainthething,QA/explanation,0.0,short,synthetic_open_source
+how to java,general,0.0,short,synthetic_open_source
+do science,general,0.0,short,synthetic_open_source
+phone,general,0.0,short,synthetic_open_source
+the thing,general,0.0,short,synthetic_open_source
+help me with car,general,0.0,short,synthetic_open_source
+whatispizza,general,0.0,short,synthetic_open_source
+tell me about science,general,0.0,short,synthetic_open_source
+write code for animals,coding,0.0,short,synthetic_open_source
+tell me about everything,general,0.0,short,synthetic_open_source
+tell me about life,general,0.0,short,synthetic_open_source
+what is music,QA/explanation,0.0,short,synthetic_open_source
+art please,general,0.0,short,synthetic_open_source
+do something,general,0.0,short,synthetic_open_source
+everything,general,0.0,short,synthetic_open_source
+help me with tv,general,0.0,short,synthetic_open_source
+writecodeforspanish,coding,0.0,short,synthetic_open_source
+write code for nothing,coding,0.0,short,synthetic_open_source
+do school,general,0.0,short,synthetic_open_source
+tell me about phone,general,0.0,short,synthetic_open_source
+explain something,QA/explanation,0.0,short,synthetic_open_source
+pizza,general,0.0,short,synthetic_open_source
+explaineverything,QA/explanation,0.0,short,synthetic_open_source
+helpmewithenglish,general,0.0,short,synthetic_open_source
+what is english,QA/explanation,0.0,short,synthetic_open_source
+do english,general,0.0,short,synthetic_open_source
+how to that,general,0.0,short,synthetic_open_source
+school please,general,0.0,short,synthetic_open_source
+help me with money,general,0.0,short,synthetic_open_source
+what is work,QA/explanation,0.0,short,synthetic_open_source
+write code for something,coding,0.0,short,synthetic_open_source
+math,general,0.0,short,synthetic_open_source
+do love,general,0.0,short,synthetic_open_source
+howtosomething,general,0.0,short,synthetic_open_source
+help me with art,general,0.0,short,synthetic_open_source
+writecodeforthat,coding,0.0,short,synthetic_open_source
+explainspanish,QA/explanation,0.0,short,synthetic_open_source
+dojava,general,0.0,short,synthetic_open_source
+howtothething,general,0.0,short,synthetic_open_source
+how to math,general,0.0,short,synthetic_open_source
+how to tv,general,0.0,short,synthetic_open_source
+do food,general,0.0,short,synthetic_open_source
+howtopeople,general,0.0,short,synthetic_open_source
+howtomoney,general,0.0,short,synthetic_open_source
+do life,general,0.0,short,synthetic_open_source
+java please,general,0.0,short,synthetic_open_source
+write code for art,coding,0.0,short,synthetic_open_source
+spanishplease,general,0.0,short,synthetic_open_source
+doreact,general,0.0,short,synthetic_open_source
+water please,general,0.0,short,synthetic_open_source
+how to everything,general,0.0,short,synthetic_open_source
+explain phone,QA/explanation,0.0,short,synthetic_open_source
+react please,general,0.0,short,synthetic_open_source
+what is html,coding,0.0,short,synthetic_open_source
+school,general,0.0,short,synthetic_open_source
+how to history,general,0.0,short,synthetic_open_source
+what is art,QA/explanation,0.0,short,synthetic_open_source
+life,general,0.0,short,synthetic_open_source
+explain money,QA/explanation,0.0,short,synthetic_open_source
+explaintv,QA/explanation,0.0,short,synthetic_open_source
+tell me about tv,general,0.0,short,synthetic_open_source
+it please,general,0.0,short,synthetic_open_source
+english,general,0.0,short,synthetic_open_source
+java,general,0.0,short,synthetic_open_source
+help me with animals,general,0.0,short,synthetic_open_source
+write code for it,coding,0.0,short,synthetic_open_source
+howtocomputer,general,0.0,short,synthetic_open_source
+do animals,general,0.0,short,synthetic_open_source
+car,general,0.0,short,synthetic_open_source
+tell me about nothing,general,0.0,short,synthetic_open_source
+python,coding,0.0,short,synthetic_open_source
+spanish54,general,0.0,short,synthetic_open_source
+write code for house,coding,0.0,short,synthetic_open_source
+write code for html50,coding,0.0,short,synthetic_open_source
+food please,general,0.0,short,synthetic_open_source
+write code for science,coding,0.0,short,synthetic_open_source
+tell me about the thing,general,0.0,short,synthetic_open_source
+money please41,general,0.0,short,synthetic_open_source
+write code for love,coding,0.0,short,synthetic_open_source
+help me with it,general,0.0,short,synthetic_open_source
+how to pizza,general,0.0,short,synthetic_open_source
+that please,general,0.0,short,synthetic_open_source
+do love94,general,0.0,short,synthetic_open_source
+math16,general,0.0,short,synthetic_open_source
+what is everything,QA/explanation,0.0,short,synthetic_open_source
+help me with tv50,general,0.0,short,synthetic_open_source
+explain everything,QA/explanation,0.0,short,synthetic_open_source
+how to english,general,0.0,short,synthetic_open_source
+do water,general,0.0,short,synthetic_open_source
+html please,coding,0.0,short,synthetic_open_source
+what is love,QA/explanation,0.0,short,synthetic_open_source
+help me with work,general,0.0,short,synthetic_open_source
+help me with react79,general,0.0,short,synthetic_open_source
+do art70,general,0.0,short,synthetic_open_source
+do music,general,0.0,short,synthetic_open_source
+car please,general,0.0,short,synthetic_open_source
+what is science13,QA/explanation,0.0,short,synthetic_open_source
+do work,general,0.0,short,synthetic_open_source
+spanish please67,general,0.0,short,synthetic_open_source
+do car,general,0.0,short,synthetic_open_source
+food,general,0.0,short,synthetic_open_source
+help me with that,general,0.0,short,synthetic_open_source
+explain history,QA/explanation,0.0,short,synthetic_open_source
+food please36,general,0.0,short,synthetic_open_source
+what is pizza89,QA/explanation,0.0,short,synthetic_open_source
+tell me about animals,general,0.0,short,synthetic_open_source
+house,general,0.0,short,synthetic_open_source
+help me with nothing,general,0.0,short,synthetic_open_source
+write code for tv,coding,0.0,short,synthetic_open_source
+tv,general,0.0,short,synthetic_open_source
+tell me about math,general,0.0,short,synthetic_open_source
+write code for food,coding,0.0,short,synthetic_open_source
+help me with phone4,general,0.0,short,synthetic_open_source
+tell me about math8,general,0.0,short,synthetic_open_source
+how to math8,general,0.0,short,synthetic_open_source
+do it,general,0.0,short,synthetic_open_source
+tell me about time,general,0.0,short,synthetic_open_source
+how to phone,general,0.0,short,synthetic_open_source
+nothing please,general,0.0,short,synthetic_open_source
+how to it93,general,0.0,short,synthetic_open_source
+python please,coding,0.0,short,synthetic_open_source
+tell me about it,general,0.0,short,synthetic_open_source
+what is money,QA/explanation,0.0,short,synthetic_open_source
+what is car,QA/explanation,0.0,short,synthetic_open_source
+love,general,0.0,short,synthetic_open_source
+do art,general,0.0,short,synthetic_open_source
+write code for money,coding,0.0,short,synthetic_open_source
+what is art97,QA/explanation,0.0,short,synthetic_open_source
+love please,general,0.0,short,synthetic_open_source
+water,general,0.0,short,synthetic_open_source
+write code for love37,coding,0.0,short,synthetic_open_source
+help me with java,general,0.0,short,synthetic_open_source
+help me with music,general,0.0,short,synthetic_open_source
+help me with english,general,0.0,short,synthetic_open_source
+tell me about computer71,general,0.0,short,synthetic_open_source
+how to tv19,general,0.0,short,synthetic_open_source
+do math,general,0.0,short,synthetic_open_source
+write code for english,coding,0.0,short,synthetic_open_source
+write code for life,coding,0.0,short,synthetic_open_source
+how to food,general,0.0,short,synthetic_open_source
+tell me about html,coding,0.0,short,synthetic_open_source
+write code for computer70,coding,0.0,short,synthetic_open_source
+help me with spanish35,general,0.0,short,synthetic_open_source
+what is react,QA/explanation,0.0,short,synthetic_open_source
+how to love,general,0.0,short,synthetic_open_source
+tell me about pizza,general,0.0,short,synthetic_open_source
+help me with money14,general,0.0,short,synthetic_open_source
+music51,general,0.0,short,synthetic_open_source
+history90,general,0.0,short,synthetic_open_source
+it94,general,0.0,short,synthetic_open_source
+do people,general,0.0,short,synthetic_open_source
+computer,general,0.0,short,synthetic_open_source
+money33,general,0.0,short,synthetic_open_source
+explain science,QA/explanation,0.0,short,synthetic_open_source
+time please,general,0.0,short,synthetic_open_source
+money please,general,0.0,short,synthetic_open_source
+history please,general,0.0,short,synthetic_open_source
+tell me about water,general,0.0,short,synthetic_open_source
+write code for phone,coding,0.0,short,synthetic_open_source
+help me with love,general,0.0,short,synthetic_open_source
