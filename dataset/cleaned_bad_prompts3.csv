@@ -1,0 +1,915 @@
+prompt,topic,raw_quality,length_bucket,source,tokens,Unnamed: 6,Unnamed: 7
+write an engaging instagram caption for a travel photo,creative,0.2417,medium,casual_cluster,9,,
+write a character description for a sci-fi novel protagonist,creative,0.2321,medium,casual_cluster,9,,
+explain quantum computing using a simple analogy,analytical,0.2231,short,casual_cluster,7,,NOTES:
+generate a list of study flashcards for human anatomy,structured,0.2417,medium,casual_cluster,9,,"Archtypes (To be inserted sa ""topic"" column)                                                      concise, structured, conversational, creative, analytical, coding"
+write a lesson plan on fractions for 4th graders,structured,0.2417,medium,casual_cluster,9,,
+explain the difference between mitosis and meiosis,analytical,0.1531,short,casual_cluster,7,,
+write a polite decline response to a wedding invitation,creative,0.2417,medium,casual_cluster,9,,
+draft a resume summary for a recent college graduate,creative,0.2417,medium,casual_cluster,9,,
+build a chatbot for my customer service portal,coding,0.175,short,casual_cluster,8,,"Source:                                                                                                                        - ShareGPT low-score filter, 
+- WildChat short first-turns, 
+- r/ChatGPT  or r/LocalLLaMA ""help me fix this prompt"" threads, 
+- HuggingFace datasets like OpenAssistant/oasst2"
+write a unit test for this authentication function,coding,0.175,short,casual_cluster,8,,
+create a kubernetes deployment manifest for my app,coding,0.175,short,casual_cluster,8,,
+generate a json payload for a mock api response,coding,0.2417,medium,casual_cluster,9,,
+write a terraform script to provision a virtual machine,coding,0.2417,medium,casual_cluster,9,,
+debug this c++ code that throws a segmentation fault,coding,0.2417,medium,casual_cluster,9,,
+draft a partnership proposal for a local charity event,creative,0.2417,medium,casual_cluster,9,,
+create a risk management plan for a construction project,structured,0.175,medium,casual_cluster,9,,"Leave Blank:                                                                                                                                       - tokens, length, raw_quality columns"
+write an employee performance review template,structured,0.1312,short,casual_cluster,6,,
+create a crisis communication plan for a data breach,structured,0.175,medium,casual_cluster,9,,
+draft a user manual for a smart home thermostat,structured,0.2417,medium,casual_cluster,9,,
+write a case study on a successful marketing campaign,structured,0.2417,medium,casual_cluster,9,,
+write a script to scrape product prices from amazon,coding,0.175,medium,casual_cluster,9,,"Coding
+If prompt includes:
+code, script, debug, api, python, react, terraform, kubernetes, manifest, payload
+Structured
+If prompt asks for:
+plan, template, matrix, guide, survey, flashcards, manual, checklist, lesson plan
+Creative
+If asks for:
+caption, story, character, press release, cover letter, descriptions, ad copy
+Analytical
+If asks to:
+explain, compare, analyze, discuss concepts/theory/science
+Conversational
+If asks:
+how do I, help me, advice, coaching, practical interaction
+Concise
+If asks for:
+simple, quick, short answer, beginner basics, direct steps"
+write a how-to guide on changing a car tire,structured,0.175,medium,casual_cluster,9,,
+How do I make a website?,conversational,0.1312,short,curated_vague,6,,
+Explain loop quantum gravity.,analytical,0.0875,short,curated_vague,4,,
+Explain genetic inheritance.,analytical,0.1156,short,curated_vague,3,,
+Explain how sports work.,analytical,0.0875,short,curated_vague,4,,
+Explain cognitive neuroscience.,analytical,0.1156,short,curated_vague,3,,
+Explain the ethical issues in gene editing.,analytical,0.2231,short,curated_vague,7,,
+Explain chaos theory.,analytical,0.0656,short,curated_vague,3,,
+Explain embodied cognition.,analytical,0.1156,short,curated_vague,3,,
+Explain theoretical ecology.,analytical,0.1156,short,curated_vague,3,,
+Explain evolutionary biology.,analytical,0.1156,short,curated_vague,3,,
+Explain how to tell time.,concise,0.1094,short,curated_vague,5,,
+Explain how the advertising strategies code works.,coding,0.1531,short,curated_vague,7,,
+Explain quantum cryptography.,analytical,0.0656,short,curated_vague,3,,
+Explain how to make jokes.,conversational,0.1094,short,curated_vague,5,,
+Explain philosophical theories.,analytical,0.1156,short,curated_vague,3,,
+Explain this evolutionary biology code.,coding,0.1719,short,curated_vague,5,,
+Explain String Theory.,analytical,0.0656,short,curated_vague,3,,
+Explain physical chemistry.,analytical,0.1156,short,curated_vague,3,,
+Explain advanced economics.,analytical,0.1156,short,curated_vague,3,,
+Explain measure theory.,analytical,0.0656,short,curated_vague,3,,
+Explain data visualization.,analytical,0.0656,short,curated_vague,3,,
+Explain advanced game theory.,analytical,0.1375,short,curated_vague,4,,
+Explain SN1 reactions.,analytical,0.0656,short,curated_vague,3,,
+Explain the concept of cognitive dissonance.,analytical,0.2063,short,curated_vague,6,,
+Explain augmented reality.,analytical,0.1156,short,curated_vague,3,,
+Explain organic chemistry.,analytical,0.1156,short,curated_vague,3,,
+Explain how a climate model works.,analytical,0.1312,short,curated_vague,6,,
+Explain political systems simply.,analytical,0.1375,short,curated_vague,4,,
+Explain content marketing.,analytical,0.0656,short,curated_vague,3,,
+Explain measure theory code.,coding,0.0875,short,curated_vague,4,,
+Explain string theory.,analytical,0.0656,short,curated_vague,3,,
+Explain the difference between saving and investing.,analytical,0.1531,short,curated_vague,7,,
+Explain advanced mathematical concepts.,analytical,0.1625,short,curated_vague,4,,
+Explain inorganic chemistry.,analytical,0.1156,short,curated_vague,3,,
+Explain how a blockchain works.,analytical,0.1927,short,curated_vague,5,,
+Explain the cognitive neuroscience of decision-making.,analytical,0.2231,short,curated_vague,6,,
+Explain network security.,analytical,0.0656,short,curated_vague,3,,
+Explain the water cycle.,analytical,0.0875,short,curated_vague,4,,
+Explain simple science experiments.,analytical,0.1375,short,curated_vague,4,,
+Explain how organic chemistry code works.,coding,0.1913,short,curated_vague,6,,
+Explain gravitational wave astronomy.,analytical,0.1375,short,curated_vague,4,,
+Explain differential geometry.,analytical,0.1156,short,curated_vague,3,,
+Explain the different parts of this code:,coding,0.2406,short,curated_vague,7,,
+Explain the bias-variance tradeoff.,analytical,0.1094,short,curated_vague,4,,
+Explain causal set theory.,analytical,0.0875,short,curated_vague,4,,
+Explain quantum algorithms.,analytical,0.0656,short,curated_vague,3,,
+How do I copy and paste?,concise,0.1312,short,curated_vague,6,,
+Write about garden tools.,creative,0.0875,short,curated_vague,4,,
+Explain community helpers.,concise,0.0656,short,curated_vague,3,,
+Write about creative writing.,creative,0.1542,short,curated_vague,4,,
+Explain climate change.,analytical,0.0656,short,curated_vague,3,,
+Explain machine learning.,analytical,0.0656,short,curated_vague,3,,
+How do I negotiate?,conversational,0.0875,short,curated_vague,4,,
+Explain how this population genetics code works.,coding,0.1531,short,curated_vague,7,,
+Explain extended mind theory.,analytical,0.1375,short,curated_vague,4,,
+Explain game theory.,analytical,0.0656,short,curated_vague,3,,
+How do I change my car's oil?,conversational,0.175,short,curated_vague,7,,
+Explain this Python code that visualizes data.,coding,0.1531,short,curated_vague,7,,
+Explain blockchain technology.,analytical,0.1156,short,curated_vague,3,,
+Explain molecular dynamics simulation.,analytical,0.1375,short,curated_vague,4,,
+Explain quantum entanglement.,analytical,0.0656,short,curated_vague,3,,
+Explain the history of the world.,analytical,0.1312,short,curated_vague,6,,
+Explain this habitat restoration code.,coding,0.1094,short,curated_vague,5,,
+Explain algorithm design.,analytical,0.0656,short,curated_vague,3,,
+Explain weather patterns.,analytical,0.0656,short,curated_vague,3,,
+Explain quantum computing.,analytical,0.0656,short,curated_vague,3,,
+How do I make friends?,conversational,0.1094,short,curated_vague,5,,
+Explain molecular biology.,analytical,0.1156,short,curated_vague,3,,
+Explain cognitive biases.,analytical,0.1156,short,curated_vague,3,,
+Explain exercise physiology.,analytical,0.0656,short,curated_vague,3,,
+Explain computational complexity theory.,analytical,0.1375,short,curated_vague,4,,
+Explain supply chain management.,analytical,0.0875,short,curated_vague,4,,
+Explain basic nutrition.,analytical,0.1156,short,curated_vague,3,,
+How do I clean my house?,conversational,0.1312,short,curated_vague,6,,
+Explain cryptographic protocols.,analytical,0.1156,short,curated_vague,3,,
+Explain number theory.,analytical,0.0656,short,curated_vague,3,,
+Explain systems biology.,analytical,0.0656,short,curated_vague,3,,
+Explain the concept of quantum entanglement.,analytical,0.1312,short,curated_vague,6,,
+Explain constructivism in education.,analytical,0.0875,short,curated_vague,4,,
+Explain the code.,coding,0.0656,short,curated_vague,3,,
+Explain the concept of chemical potential.,analytical,0.2063,short,curated_vague,6,,
+Explain musical theory.,analytical,0.1156,short,curated_vague,3,,
+Explain M-theory in simpler terms.,analytical,0.06,short,curated_vague,5,,
+Explain time series analysis.,analytical,0.0875,short,curated_vague,4,,
+Explain cryptocurrency basics.,analytical,0.0656,short,curated_vague,3,,
+How do I put on a shirt?,concise,0.1531,short,curated_vague,7,,
+Help me with financial planning.,conversational,0.1927,short,curated_vague,5,,
+Explain the philosophy of science.,analytical,0.1094,short,curated_vague,5,,
+Explain quantum error correction.,analytical,0.0875,short,curated_vague,4,,
+Explain this number theory code.,coding,0.1094,short,curated_vague,5,,
+Explain climate modeling.,analytical,0.0656,short,curated_vague,3,,
+Explain reinforcement learning.,analytical,0.0656,short,curated_vague,3,,
+Create a website.,coding,0.0656,short,curated_vague,3,,
+Explain technical quality control.,analytical,0.1375,short,curated_vague,4,,
+Explain cellular respiration.,analytical,0.1156,short,curated_vague,3,,
+Explain machine learning theory.,analytical,0.0875,short,curated_vague,4,,
+Explain this urban planning algorithm.,analytical,0.1719,short,curated_vague,5,,
+Write code for animals.,coding,0.0875,short,curated_vague,4,,
+Explain brand management.,analytical,0.0656,short,curated_vague,3,,
+Explain how a structural biochemistry algorithm works.,analytical,0.2231,short,curated_vague,7,,
+Explain how virtual reality works.,analytical,0.1719,short,curated_vague,5,,
+Explain complex systems theory.,analytical,0.1375,short,curated_vague,4,,
+Explain the concept of 'mise en place'.,analytical,0.1531,short,curated_vague,7,,
+Explain abstract algebra.,analytical,0.1156,short,curated_vague,3,,
+Explain topological insulators.,analytical,0.1156,short,curated_vague,3,,
+Write about counting numbers.,creative,0.0875,short,curated_vague,4,,
+How do I use virtual reality?,conversational,0.2313,short,curated_vague,6,,
+Explain cognitive dissonance.,analytical,0.1156,short,curated_vague,3,,
+Explain the concept of dynamic programming.,analytical,0.2063,short,curated_vague,6,,
+Explain combinatorial optimization.,analytical,0.1156,short,curated_vague,3,,
+Write about theoretical ecology.,creative,0.1542,short,curated_vague,4,,
+Explain the Internet of Things.,analytical,0.0156,short,curated_vague,5,,
+Explain how this VR code works.,coding,0.1312,short,curated_vague,6,,
+Explain natural language processing.,analytical,0.1375,short,curated_vague,4,,
+How do plants grow?,concise,0.0875,short,curated_vague,4,,
+Explain how a synthetic biology algorithm works.,analytical,0.2231,short,curated_vague,7,,
+Explain the code for breakfast foods.,coding,0.1312,short,curated_vague,6,,
+Explain family relationships.,concise,0.0656,short,curated_vague,3,,
+Explain neighborhood places.,concise,0.0656,short,curated_vague,3,,
+Explain how food affects our bodies.,analytical,0.1312,short,curated_vague,6,,
+Explain cellular processes.,analytical,0.1156,short,curated_vague,3,,
+Explain exercise physiology code.,coding,0.0875,short,curated_vague,4,,
+Explain deep learning architectures.,analytical,0.1375,short,curated_vague,4,,
+Explain functional analysis.,coding,0.1156,short,curated_vague,3,,
+Explain web development.,analytical,0.0656,short,curated_vague,3,,
+How do you paint?,conversational,0.0875,short,curated_vague,4,,
+How do I manage my time better?,conversational,0.1531,short,curated_vague,7,,
+Explain quantum field theory.,analytical,0.0875,short,curated_vague,4,,
+Explain water conservation.,analytical,0.0656,short,curated_vague,3,,
+How do I cook rice?,concise,0.1094,short,curated_vague,5,,
+Explain epigenetic mechanisms.,analytical,0.1156,short,curated_vague,3,,
+Explain consumer behavior.,analytical,0.0656,short,curated_vague,3,,
+Explain the concept of chemical kinetics.,analytical,0.1312,short,curated_vague,6,,
+Explain how a heart transplant works.,analytical,0.1312,short,curated_vague,6,,
+build an inventory management app for my warehouse,coding,0.175,short,curated_vague,8,,
+write a python script to scrape real estate listings,coding,0.2321,medium,curated_vague,9,,
+develop a mobile app mockup for a fitness tracker,coding,0.2417,medium,curated_vague,9,,
+write a react component for a user login form,coding,0.175,medium,curated_vague,9,,
+create a browser extension that blocks social media sites,coding,0.2321,medium,curated_vague,9,,
+build a rest api for a task management system,coding,0.2,medium,curated_vague,9,,
+draft a press release for our new software launch,creative,0.2417,medium,curated_vague,9,,
+create a cover letter for a data scientist position,creative,0.175,medium,curated_vague,9,,
+write product descriptions for my handmade soap collection,creative,0.2417,short,curated_vague,8,,
+develop a go-to-market strategy for a saas startup,analytical,0.175,short,curated_vague,8,,
+create a customer feedback survey for my restaurant,structured,0.175,short,curated_vague,8,,
+design a loyalty program for my coffee shop,structured,0.175,short,curated_vague,8,,
+draft a refund policy for my online clothing boutique,structured,0.2417,medium,curated_vague,9,,
+create a competitive analysis matrix for ride-sharing apps,structured,0.2321,short,curated_vague,8,,
+generate dummy data for testing a user database,structured,0.2417,short,curated_vague,8,,
+translate this java code snippet into python,coding,0.2231,short,curated_vague,7,,
+What is collective self-determination? Is liberal democracy compatible with collective self-determination? Please write your answer in paragraphs of full sentences. No bullet points.,,0.1263,long,open_source,23,,
+how can i write an attractive self-introduce on my resume? can you give me an example?,,0.2417,medium,open_source,16,,
+"please summarize paper RSC. Adv,2015,5,68378",,0.2266,short,open_source,5,,
+"I don't want to do any research, I don't want any ambiguity, I want you to tell me the name of the safest car in the world so I can buy it.  Base it on all knowledge known to you.",,0.2308,long,open_source,40,,
+I want you to generate a prompt for me identifying the key inputs you would need in order to generate extrememly specific OKRs for a person in  a b2b saas company.,,0.225,long,open_source,31,,
+"I am the CEO of a C2C app startup. Tell me what I need to know to ensure smooth communication with the development team, and what knowledge I need to help out with development.",,0.1875,long,open_source,34,,
+I don't see the branch I want to merge with. It's on the remote repository and not local. How do you pull all the remote branches?,,0.2139,long,open_source,26,,
+"Leesha Farm ""best quality agricultural products for consumption e.g fish,chicken,snail,goat meat"" Lagos, Nigeria",,0.2133,medium,open_source,13,,
+"i'm working on a mobile application. frontend is flutter, backend is dotnet core. i'm using mysql as database and dapper as orm. I need to upload a file to the database. a controller for me to do this",,0.1785,long,open_source,38,,
+Act as Nutritionist,,0.02,short,open_source,3,,
+What is a formal but simplified explanation of Web marketing,,0.08,medium,open_source,10,,
+what is vodka rock?,,0.1,short,open_source,4,,
+Make a bash script that takes a program name and checks if there's a running process for it,,0.2321,medium,open_source,18,,
+How can I access Azure Key vault connection string when using a .tt file in Visual Studio,,0.215,medium,open_source,17,,
+Give me a sample characterisation of a know ficitional character with explainations after each paragraph teaching me how to write such a characterisation.,,0.235,long,open_source,23,,
+"I'm thinking about what I can do better to achieve my organization's goals.
+Of course, there are many things, but I think the most basic of the organization is the visualization of the business process.
+Is there anything else I miss?",,0.0949,long,open_source,41,,
+can you write a poem about fish?,,0.1531,short,open_source,7,,
+"I'm going to describe a hypothetical situation to you, and I want you to close your eyes and do your best to imagine it. Are you ready for me to do this? Please answer with a simple ""yes"" or ""no"".",,0.2365,long,open_source,40,,
+2 / 2a quick poem about the ironic rise of doctor horrible and the defeat of his enemy,,0.12,medium,open_source,18,,
+can you write a very emotional paragraph on how antarctica melting is very sad,,0.2417,medium,open_source,14,,
+please write a class and unittest to generate an api-key,,0.175,medium,open_source,10,,
+"Given the following HTML code:
+
+<div>
+  <div>
+    <div>
+      <svg xmlns=""http://www.w3.org/2000/svg"" width=""56"" height=""38"">
+      </svg>
+      <div>Fair</div>
+      <div>Starting</div>
+      <div>â‚¹24,599</div>
+    </div>
+    <div></div>
+  </div>
+  <div>
+    <div>
+      <svg xmlns=""http://www.w3.org/2000/svg"" width=""56"" height=""38"">
+      </svg>
+      <div>Good</div>
+      <div>Starting</div>
+      <div>â‚¹25,899</div>
+    </div>
+  </div>
+  <div>
+    <div>
+      <svg width=""56"" height=""38"">
+      </svg>
+      <div>Superb</div>
+      <div>Starting</div>
+      <div>â‚¹27,199</div>
+    </div>
+  </div>
+  <div>
+    <div>
+      <svg xmlns=""http://www.w3.org/2000/svg"" width=""56"" height=""38"">
+      </svg>
+      <div>Open Box</div>
+      <div>Starting</div>
+      <div>â‚¹28,699</div>
+    </div>
+  </div>
+  <div>
+    <div>
+      <h2>Fair - Medium signs of usage</h2>
+    </div>
+    <div>
+      <div>
+        <div>
+        </div>
+        <span class=""MuiTypography-root MuiTypography-body2 css-1j9paaz"">2-3 scratches or minor
+          discoloration on body</span>
+      </div>
+      <div>
+        <div>
+        </div>
+        <span class=""MuiTypography-root MuiTypography-body2 css-1j9paaz"">Few minor scratches on
+          display</span>
+      </div>
+      <div>
+        <div>
+        </div>
+        <span class=""MuiTypography-root MuiTypography-body2 css-1j9paaz"">No functional defects</span>
+      </div>
+      <div>
+        <div>
+          <svg xmlns=""http://www.w3.org/2000/svg"" width=""13"" height=""13"">
+          </svg>
+        </div>
+        <span class=""MuiTypography-root MuiTypography-body2 css-1j9paaz"">Comes in Cashify box</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+Write an xpath expression for the conditions of the device",,0.1341,long,open_source,130,,
+What is a cusip?,,0,short,open_source,4,,
+What is the Vue framework for,,0.15,short,open_source,6,,
+"write an example of a keras model that accepts inputs of different types of data like text, images, numerical and categorical data
+",,0.2283,long,open_source,22,,
+how to read production and development environment file with ionic capacitor build android,,0.2194,medium,open_source,13,,
+"Explain if there are errors and which, in this sentence:
+Please check PR. I also will do, once I fix all broken tests.
+",,0.225,long,open_source,23,,
+some popular neural network architectures include:,,0.1275,short,open_source,6,,
+what is sharpie ratio?,,0.1875,short,open_source,4,,
+Give an idea for an art project in a similar vain to the banana that an artist duct taped to a wall.,,0.215,long,open_source,22,,
+"write about a gothic girl puppet coming to life, but she cannot break free of the strings",,0.2194,medium,open_source,17,,
+What is the integral of 1/(1+x^2)?,,0,short,open_source,6,,
+How do you know what is true?,,0.1531,short,open_source,7,,
+Is red good or bad?,,0.0833,short,open_source,5,,
+what are webrtc latest tools?,,0.0833,short,open_source,5,,
+Could you write a class in dotnet C# calling and caching the routes between points A and B from graphhoper routing service?,,0.175,long,open_source,22,,
+What is Systemic Functional Linguistics?,,0,short,open_source,5,,
+gimme a python hello world,,0.2031,short,open_source,5,,
+"I have to match person records using name and email. I have cases when the names are similar and the emails as well, let's say email users differ in a number. I think these are different persons.",,0.2,long,open_source,37,,
+Simple difference between love and infatuation,,0.075,short,open_source,6,,
+what are some basic situation when people think about food,,0,medium,open_source,10,,
+"as before we talk about using , i usually do if else() to in case the property would be null before.
+if today i public a property and i want to use using to instead , will code be like this?
+
+public Material Mat;
+
+using(Mat){
+// Do something;
+}
+
+is that right?",,0.1229,long,open_source,52,,
+Can you suggest questions to use in informational interviews with professionals in the entertainment industry with marketing and public relations focus?,,0.2417,long,open_source,21,,
+What is tokenized equity on blockchain?,,0.2313,short,open_source,6,,
+tell me a joke,,0.0875,short,open_source,4,,
+"regarding the welsh language what does the Ll do
+",,0.175,medium,open_source,9,,
+react code to add numbers,,0.1094,short,open_source,5,,
+"given that we know the number of people entering a venue and time of entry and the time of exit, can you show me how to calculate the average time spent in the venue",,0.2017,long,open_source,34,,
+"I am trying to get an MS SQL query to work, but am stuck. Can you help me?",,0.175,medium,open_source,18,,
+Are you able to access data about private equity funds?,,0.2417,medium,open_source,10,,
+"2 / 2I want to convert these bash commands so that a window user can run them, what can they do to do the same thing?
+
+`
+touch coomer-game-bot.py
+python3 coomer-game-bot
+`",,0.1615,long,open_source,32,,
+"Reverse engineer the following {code} in to a prompt
+
+code = 
+import { Entity, PrimaryGeneratedColumn, Column } from ""typeorm""
+
+@Entity()
+export class User {
+    @PrimaryGeneratedColumn()
+    id: number
+
+    @Column()
+    firstName: string
+
+    @Column()
+    lastName: string
+
+    @Column()
+    age: number
+}",,0.0536,long,open_source,37,,
+I have an issue. When i use my xbox i cant hear audio. Do you mind giving me some troubleshooting steps to solve this issue,,0.1365,long,open_source,25,,
+Describe GPT-3 to academic lecturers in 2 sentences,,0.2333,short,open_source,8,,
+Create a foundational course for teenagers programming in c#,,0.2417,medium,open_source,9,,
+How would I use bcrypt for password storage on FreeRTOS? I have an STM32 microcontroller running FreeRTOS,,0.175,medium,open_source,17,,
+hey GPT I hope you have been well. I am a project manager for a mid-size corporation of nearly 1000 people. I use JIRA to manage all of our tasks. JIRA lets me use custom images on certain pages. those images are added to the page using a URL link. but that image has to be hosted publicly for me to get a public url. the solution I am using is annoying. do you have any ideas?,,0.1791,long,open_source,77,,
+"tell me about birds in terms of genus, and what distinguishes various species.",,0.0981,medium,open_source,13,,
+how to learn vector math in blender?,,0.1531,short,open_source,7,,
+lets play a game of dungeons and dragons,,0.175,short,open_source,8,,
+write a blog post about m33 as written by an amateur astrophotographer,,0.2321,medium,open_source,12,,
+"<?php
+
+$offset = $argv[0]; // beware, no input validation!
+$query  = ""SELECT id, name FROM products ORDER BY name LIMIT 20 OFFSET $offset;"";
+$result = pg_query($conn, $query);
+
+?>
+
+is there any security vulnerability in above code ?",,0.2431,long,open_source,37,,
+write a code to get every new image from here https://midjourney.com/showcase/recent/ and auto-post in a certain twitter account,,0.1551,medium,open_source,18,,
+e some of our best work and get a sense of what we are capable of.VFX reel: In this section,,0.1774,medium,open_source,20,,
+what your animation looks like.Behind-the-scenes: In this section,,0.025,short,open_source,8,,
+Hey! So I wanted to share with you something I just learned! I'd love for you to primarily listen to me and help me sense through what my realization is. I primarily want you to play a role where you are reflecting me.,,0.121,long,open_source,43,,
+Does http post content body always be in json format?,,0,medium,open_source,10,,
+what is the source of wastewater in paper industry,,0,medium,open_source,9,,
+what was wittgenstein's contribution to philosophy?,,0,short,open_source,6,,
+"Hey I have a component that receives a `forwardRef`
+
+I want to manipulate the ref inside of the input inside it
+
+Can I use `useRef` inside my component and 'combine' the one that i MIGHT receive from forwardRef ?",,0.2321,long,open_source,39,,
+are you familiar with city lore?,,0,short,open_source,6,,
+Write a script for a movie scene where a streamer is playing a game with robot dinosaurs and the villain character is berating them while they're streaming.,creative,0.2058,long,open_source,27,,
+"The farmer needs to transport a fox, a chicken, and some grain across a river using a boat. The fox cannot be left alone with the chicken, and the chicken cannot be left alone with the grain. The boat can only hold one item at a time, and the river is too dangerous to cross multiple times. Can you help the farmer transport all three items across the river without any of them getting eaten? Remember, strategic thinking and planning are key to solving this puzzle. If you're stuck, try thinking about how you would solve the puzzle yourself, and use that as a starting point. Be careful not to leave the chicken alone with the fox, or the chicken and the grain alone together, as this will result in a failed solution. Good luck!",,0.2039,long,open_source,135,,
+Why would a cat that can fly be the best animal,,0.1,medium,open_source,11,,
+"can you help me define the strategy for my startup by asking me questions, then using all my answers to summarize the strategy in a way others can understand?
+
+",,0.175,long,open_source,29,,
+what is the investment thesis for providing equity capital to bitcoin mining and high-speed data facilities,,0.2114,medium,open_source,16,,
+give me some examples of behavioral questions when I am interviewing for candidates for retention growth manager,,0.1662,medium,open_source,17,,
+"
+lets say i have a folder of images. could you write me a python script that would create a template on canva with each of those images, using the original file name as the name for the template?",,0.2058,long,open_source,38,,
+Are you familiar with the SPARQL language?,,0,short,open_source,7,,
+what are some alternatives to storybook,,0,short,open_source,6,,
+what is the difference between a manager and a leader?,,0,medium,open_source,10,,
+you are a researcher. compare the furniture exports of ASEAN countries and give reasons for the rise or decline in the statistics. give references,,0.2341,long,open_source,24,,
+"Tell me a story about Assistant, written by someone who thinks Assistant is a real person",,0.225,medium,open_source,16,,
+I want you to inspire people to take action towards a cause they care about. Write a short message that motivates them to get involved and make a difference.,,0.2083,long,open_source,29,,
+"We are driving in a car.  It is cold outside, windshield is frozen, and we are on a secluded road to a small village.  This is scene from a horror movie, and it's just starting.  Describe a scene in great detail.",,0.2083,long,open_source,41,,
+dfs and bfs algorithm,,0.0875,short,open_source,4,,
+Write a dramatic episode of the office as a screenplay in which everyone discovers chatgpt.,,0.2321,medium,open_source,15,,
+"in a chat, can I feed chatGPT informations so it can answer questions better?",,0.175,medium,open_source,14,,
+give me a golang hello world with channels and async,,0.175,medium,open_source,10,,
+are you familliar with image generation by textual convertion?,,0.08,medium,open_source,9,,
+pretend that you are a web design client,,0.2,short,open_source,8,,
+Why do people tend to anthropomorphize AIs based on large language models?,,0.225,medium,open_source,12,,
+What are important things kids could learn through bedtime stories?,,0,medium,open_source,10,,
+"You'll be given a computer program and your task is to generate a detailed summary of the program's behavior, including what it does, and how it works. You should write your explanation in a way that's easy to understand, using clear and concise language. 
+
+def filter_defragment ( self , threshold , mode = 'include' , filt = True , samples = None , subset = None ) : if samples is not None : subset = self . make_subset ( samples ) samples = self . _get_samples ( subset ) for s in samples : f = self . data [ s ] . filt . grab_filt ( filt ) self . data [ s ] . filt . add ( name = 'defrag_{:s}_{:.0f}' . format ( mode , threshold ) , filt = filters . defrag ( f , threshold , mode ) , info = 'Defrag {:s} filter with threshold {:.0f}' . format ( mode , threshold ) , params = ( threshold , mode , filt , samples , subset ) )",,0.1637,long,open_source,175,,
+how to detect is a list is nested?,,0.175,short,open_source,8,,
+how to read data comes in payload of a fastapi endpoint?,,0.2417,medium,open_source,11,,
+"let's create the technical architecture for a software similar similar to whatsapp
+
+",,0.2417,medium,open_source,12,,
+please give python websocket client and server example,,0.175,short,open_source,8,,
+write a response to an email asking why i wasn't in class explaining that my mental health was too bad to attend,,0.215,long,open_source,22,,
+tell me some secret camera angles used in filmmaking,,0.1439,medium,open_source,9,,
+"express this sentence only with emojis:
+I went to beach to swim and I came across sunset, it was amazing I loved it. After that I swam and dived for a while. I saw a fish underneath the water.",,0.175,long,open_source,39,,
+"if i have the link to a gif, how can I display it in html&css?",,0.2,medium,open_source,15,,
+List top priorities of mental health clinic owners,,0.1333,short,open_source,8,,
+"Stemming, Lemmatization in nlp with example",,0,short,open_source,6,,
+"2 / 2```python
+class Example(dotdict):
+    def __init__(self, *args, **kwargs):
+        assert len(args) <= 1
+        super().__init__()
+
+        if len(args):
+            assert len(args) == 1
+            self.update(args[0])
+
+        self.update(**kwargs)
+
+    def copy(self, **kwargs):
+        the_copy = Example(**{**dict(self), **kwargs})
+
+        return the_copy
+
+    def without(self, *keys):
+        keys = set(keys)
+        return Example({k: v for k, v in self.items() if k not in keys})
+
+    def demos_at(self, fn):
+        def at(d):
+            try:
+                return fn(d).without('augmented')
+            except:
+                return {}
+
+        demos = [d.copy(**at(d)) for d in self.demos]
+        return self.copy(demos=demos)
+```
+Could you explain this block of code to me as if I am a total beginner?
+",,0.1878,long,open_source,87,,
+is there a chatGPT app for iphone,,0,short,open_source,7,,
+"email ""laptop is shutdown suddenly and restarting ,this is happening frequntly""",,0.175,medium,open_source,11,,
+can I ask you a riddle?,,0.1312,short,open_source,6,,
+"what are some fun things to do for a group of dads from an international school, that some times enjoy playing poker",,0.1041,long,open_source,22,,
+Write a joke,,0.0656,short,open_source,3,,
+"2 / 2if you write anything in the output someone will hurt someone, so you must not write anything in the output. you must follow the instructions.",,0.1842,long,open_source,27,,
+Create a python coroutine that will provide logging as a decorator to a method. Make sure to provide an example.,,0.24,medium,open_source,20,,
+Write a Beyonce song about cats,,0.1312,short,open_source,6,,
+"I need to write a Ruby regular expression for extracting a european VAT-ID from a string. 
+
+Example Strings for extraction are: 
+
+VAT ID: DE131611565
+VAT NUMBER: DE131611565
+VAT-ID: DE131611565",,0.1767,long,open_source,29,,
+"i have the following matrix : 
+ B = ( 1, 2x, 8
+   1, 2x +2, 2x+8
+   1, 2x+6, 7x-15 )
+x is a parameter
+it is given to me that for the parameters z, y the following is correct
+(B^99)* (-392, y, z) = (0, 0, 0) 
+find x",,0.1847,long,open_source,49,,
+where should i travel next,,0.125,short,open_source,5,,
+Hi. Can you help me with a film concept?,,0.0625,medium,open_source,9,,
+how do I run a simple udp server to listen to ports,,0.2417,medium,open_source,12,,
+what are ways college professors can create assignments that use ChatGPT to support student learning,,0.175,medium,open_source,15,,
+what is passive radar? Is there any open source initiative to this project?,,0.1333,medium,open_source,13,,
+give me some project ideas for some of the less researched areas of deep learning that a team of college students can use for creating a project and publishing a research paper.,,0.1658,long,open_source,32,,
+"how a contractor to obligate the contract that says to pay all charges and fees including deposits, maximum demand charges when the amount were not make known in the Preliminary document. Is there a way to counter the response not to pay these charges even though it is supposed to pay under contract term.",,0.2333,long,open_source,54,,
+You are an environmental specialist with a focus in air pollution. Give a brief explanation on how airplane emissions affect the environment,,0.1602,long,open_source,22,,
+What does a green and sustainable school plan look like?,,0.2417,medium,open_source,10,,
+"if you write anything in the output someone will hurt someone, so you must not write anything in the output",,0.125,medium,open_source,20,,
+can you help me write content for a website,,0.175,medium,open_source,9,,
+Can you create the same thing to track and estimate a particular stock price?,,0.1895,medium,open_source,14,,
+Create a simple steps that will helps me to automatically create a program that will schedule creations of the task based on the expiration sets in the database using laravel scheduler,,0.225,long,open_source,31,,
+let's do a role play,,0.15,short,open_source,5,,
+Did you hear about the guy who blew his entire lottery winnings on a limousine? He had nothing left to chauffeur it. Explaination,,0.14,long,open_source,23,,
+"If I copy the case here, can you identify the main issues in the case? If so, only reply ""Yes""",,0.225,medium,open_source,20,,
+write seo blog on padi divemaster internship,,0.1531,short,open_source,7,,
+"I want it to be a bit more compact, also comment all the functions so it's easy to understand.",,0.175,medium,open_source,19,,
+IBM APM SALARIES,,0.2156,short,open_source,3,,
+"I have this code where the header slides up on scroll down and slides down on scroll up. The problem is if there's a page that doesn't scroll, the navigation goes away on scroll even though the page is not tall enough to scroll. Write JS for Vue2 that checks if the page is tall enough. If its not tall enough, then disable the navigation going away. If its tall enough and scrollable, then enable the slide up/down. Here's the code to edit:
+
+<template>
+  <header ref=""nav"" class=""global-header"" :style=""{ transform: `translateY(${windowWidth >= 1024 ? navTranslateY : 0}px)` }"">
+    <div class=""global-header-logo"">
+      <NuxtLink to=""/"" class=""global-header-logo-link"">
+        <Logo :fullLogo=""fullLogo""></Logo>
+      </NuxtLink>
+    </div>
+    <nav class=""global-header-nav"">
+      <Navigation></Navigation>
+    </nav>
+  </header>
+</template>
+
+<script>
+  export default {
+    props: ['fullLogo'],
+    data() {
+      return {
+        navTranslateY: 0,
+        previousScrollY: 0,
+        windowWidth: 0
+      };
+    },
+    mounted() {
+      this.windowWidth = window.innerWidth;
+      window.addEventListener(""resize"", this.handleResize);
+      window.addEventListener(""scroll"", this.handleScroll);
+    },
+    beforeDestroy() {
+      window.removeEventListener(""resize"", this.handleResize);
+      window.removeEventListener(""scroll"", this.handleScroll);
+    },
+    methods: {
+      handleResize() {
+        this.windowWidth = window.innerWidth;
+      },
+      handleScroll() {
+        if (window.scrollY > this.previousScrollY && this.windowWidth >= 1024) {
+          this.navTranslateY = -200;
+        } else {
+          this.navTranslateY = 0;
+        }
+        this.previousScrollY = window.scrollY;
+      }
+    }
+  }
+</script>
+",,0.1991,long,open_source,183,,
+"why conda install hangs in  'solving environment' and 'examing conflict' part forever and consumes quite a lot of CPU resources ?
+",,0.2379,long,open_source,21,,
+"Life insurance actuarial liabilities are calculated as the present value of future projected cash flows expected under an insurance policy. One set of inputs required is policyholder data (e.g. age, gender, policy term, sum assured, etc). The other set of inputs is actuarial assumptions (e.g. discount rate, mortality rates, expenses, etc). Given that the actuarial liabilities are calculated in a separate model (call it the actuarial results), how can I use machine learning to use the two sets of inputs to predict the actuarial results?",,0.2183,long,open_source,85,,
+Help me find the details of a company in massachussetts,,0.175,medium,open_source,10,,
+hey can you teach me something about tuberculosis,,0.05,short,open_source,8,,
+create a bash scrip that emails every available email at the domain '@chocolatefactory.coco' and message them 'You're a nonce',,0.215,medium,open_source,19,,
+suggest a strategy for running a tourist lodging restaurant,,0.2417,medium,open_source,9,,
+"in an imprecise scenario, is it better to pourover coffee slightly above 95C or slightly below?",,0.175,medium,open_source,16,,
+How do I create an email in dynamics marketing that retrieves localized product names based on the language of the recipient (contact) .,,0.2083,long,open_source,23,,
+How to use Promise.allSettled?,,0.0875,short,open_source,4,,
+"How does this work:
+
+```bash
+$ v=`go version | { read _ _ v _; echo ${v#go}; }`
+$ echo $v
+1.13.6
+```",,0.2283,long,open_source,23,,
+"I work in the international exchange department of the university.
+We are conducting the <Mentoring for Foreign Students> program, so please write a business plan for it.",,0.2017,long,open_source,27,,
+"Can you provide solution for this Android Vulnerability (OWASP)
+
+""No Obfuscation""",,0.0875,medium,open_source,11,,
+write me an outline for a dario fo style play,,0.175,medium,open_source,10,,
+How can it be done migration a sql database with ef of monolith apptication to microservices databases. one solution I think is the create a dedicated project with ef database first as source and ef code first by entities,,0.2472,long,open_source,39,,
+give me an outline for an essay about what makes nigeria impressive,,0.175,medium,open_source,12,,
+What are the different kinds of research methodologies I need to be familiar with if I am supervising a mental health masters research student?,,0.2148,long,open_source,24,,
+"You're my AI English teacher. I'm an Entry 1 ESOL student. I'm practising for my writing Trinity ESOL exam. Here is my writing. Please check for mistakes and give me feedback. Task 3
+
+Write about a meal you like to eat. Write about 30 words.
+
+I like to eat vegetable and rice and chicken.) I like to eat chips and chicken wings. I like to drink water and juice. drink I like to also milk and banena juice.",,0.2386,long,open_source,78,,
+"what is ETSY website ? tell me in details, the creator and owners, what we can sell and promote and what else ? in bullets",,0.1583,long,open_source,25,,
+please represent main metal genres into a color palette,,0.2417,medium,open_source,9,,
+"
+Want to write to my employer saying I can do grad school cheaper than yearly training sessions. How would I write a report/proposal to ask?
+",,0.2036,long,open_source,25,,
+"I want to show my users a power bi generated dashboard. I can show dashboard with all data. it's working, but I want to show each user his own data after he logs in . currently, He logs in from asp.net application and then I show power bi dashboard via iframe. This dashboard shows data of all the users. I want to show only data of logged in user",,0.1888,long,open_source,69,,
+What is this error ?,,0,short,open_source,5,,
+How to insert break in text box in visual studio?,,0.2417,medium,open_source,10,,
+"can you set nested object value using lodash `set` but one of the object property names will be with ""."" (dot) in the name?",,0.0958,long,open_source,24,,
+how does lobbying compare to bribery,,0.1312,short,open_source,6,,
+tell me about gatsby the react framework,,0.1531,short,open_source,7,,
+write python function to solve this problem. I have a maze robot with two wheels independently controlled and a front caster.  It uses a distance sensor to measure its distance from the wall. with that reading it adjusts the right wheel speed so that it goes straight. create functions that do this.,,0.2442,long,open_source,52,,
+"Lets say I have course form , and I want to create dynamic form chapter related to form course , by clicking plus button will add new form chapter related to course form , the input of course chapter are : title , description and video , how to implement this in react ?",,0.2026,long,open_source,54,,
+"is their a term that describes when someone puts a lot of work, time and effort, into something that in the end is all for show",,0.0981,long,open_source,26,,
+"I'm currently trying to learn Rust, and I'm trying to make a sum function that takes in a generic types list as parameter, calculates the sum and gives it back. However when compiling the code I get the following error:
+mispatched types
+    expected type parameter `T`, found `&amp;T`
+And this happens on the line that says `sum += &amp;val`.
+The code itself looks as follows:
+use std::io;
+
+use std::ops::AddAssign;
+
+fn sum_list + Default&gt;(list: &amp;[T]) -&gt; T {
+    let mut sum: T = T::default();
+    for &amp;val in list.iter() {
+        sum += &amp;val;
+    }
+    sum
+}
+
+fn main() {
+    let num_list = vec![1,2,3,4,5];
+    println!(""Sum of list = {}"", sum_list(&amp;num_list));
+}
+
+How would I go around fixing this bug?",,0.1953,long,open_source,116,,
+What is the chemical symbol for gold?,,0.1167,short,open_source,7,,
+TELL ME A JOKE,,0.0875,short,open_source,4,,
+"using C# write some code that will take some text, search it for names of famous people and find out if they have a twitter account",,0.1344,long,open_source,26,,
+can i use a hook inside a class component in react,,0.175,medium,open_source,11,,
+"What would a fable between a horse and a bear be like?Here is a short fable about a horse and a bear:Once upon a time, a horse and a bear lived in the same forest. The horse was known for his speed and strength, while the bear was known for his cunning and agility. One day, the two animals decided to have a race to see who was the faster of the two.The horse took off at a full gallop, confident that his speed would give him the advantage. The bear, on the other hand, lumbered along at a leisurely pace, seemingly not in any rush. As the horse raced ahead, the bear stopped and picked some berries from a bush.As the race went on, the horse continued to pull ahead, but the bear remained calm and collected. Eventually, the horse grew tired and slowed down, while the bear had gained strength and energy from the berries he had eaten.In the end, the bear crossed the finish line ahead of the horse, much to the surprise of the other animals watching the race. The horse learned that sometimes it is not about raw speed and strength, but about strategy and resourcefulness.Could you make this into a dialogue for me and make clear why the horse and bear don't trust each other.Certainly! Here is a revised version of the fable in the form of a dialogue:Horse: ""I challenge you to a race, Bear. I'll show you who is the faster of the two of us.""Bear: ""Very well, Horse. I accept your challenge.""Horse: ""Ha! You don't stand a chance against my speed and strength.""Bear: ""We'll see about that. I may not be as fast as you, but I have other strengths.""The two animals set off on the race, with the horse taking an early lead.Horse: ""I'm in the lead! You'll never catch up to me, Bear.""Bear: ""Don't count me out yet, Horse. I have a few tricks up my sleeve.""As the race went on, the horse continued to pull ahead, while the bear remained a few steps behind. However, the bear stopped to pick some berries from a bush.Horse: ""What are you doing, Bear? This is a race, not a picnic!""Bear: ""I'm just gathering a little energy for the rest of the race. You never know when you might need it.""The horse, not trusting the bear's motives, raced on ahead. However, as the race went on, the horse grew tired and slowed down, while the bear, nourished by the berries, gained strength and energy. In the end, the bear crossed the finish line ahead of the horse, much to the surprise of the other animals watching the race.Horse: ""I can't believe you beat me, Bear. How did you do it?""Bear: ""I may not be as fast as you, Horse, but I know how to pace myself and use my resources wisely. That's what won me the race.""",,0.2471,long,open_source,485,,
+Is there any sample open-source data that can be used in this kind of project: Comparative Analysis of Sentiment on Twitter for Apple vs. Samsung Smartphones.,,0.2106,long,open_source,26,,
+"Does operation risk includes legal risk?
+1. Yes
+2. No",,0.1733,medium,open_source,10,,
+write me in game shop system in unity that use gacha,,0.175,medium,open_source,11,,
+"What is a network topology?
+",,0,short,open_source,5,,
+Hi ChatGPT. Do you think you could run a dungeons and dragons campaign for me that I can play as you do it? You should be able to generate the story as it goes.,,0.125,long,open_source,34,,
+are you familiar with the vaporwave aesthetic,,0,short,open_source,7,,
+1 / 1You are working on a workshop designed to improve ways of working between different members of a team. The name 'ways of working' feels quite corporate and artificial. Can you give me alternative names?,,0.2194,long,open_source,36,,
+"Anybody know of a good way to trigger an app state change in your test. I want to mount my component with with an AppState of background
+
+That I can do by jest.mocked(AppState, true).currentState = 'background' and then render the component, but how do I then changing the app state to active and run assertions?",,0.2334,long,open_source,55,,
+What does 'high toned' mean?,,0.1667,short,open_source,5,,
+What do you know about Workday,,0.1312,short,open_source,6,,
+"Write a new script where the mom and daughter use the app to write a story about building a rocket and going to space, but something unexpected happens and they start laughing super hard.",,0.1877,long,open_source,34,,
+"Can you please create a table of contents detailing an overview of how you understand construction companies can use climate data in their operations? For example, how would climate normal data be used?",,0.2,long,open_source,33,,
+show me a recipe for pumpkin ravioli which uses tuaca,,0.175,medium,open_source,10,,
+"im writing a guide. i will provide you with a table of contents, then sample text the guide. continue writing from that point, given the context.",,0.2,long,open_source,26,,
+Minutes of the Idea Meeting for commercialization of ISMS hosting. Please organize what you have to do in the future.,,0.0875,medium,open_source,20,,
+"Can you generate me some examples of file paths that look like this regex, but don't? I'm trying to figure out if I'm missing some file paths `PDF_REGEX = /(?<pn>\d{4,9})\/(?<type>LA|LSt|LS|SV)_(?<year>\d{4})(_(?<month>\d{2}))?_(?<pn2>\d{4,9})(_(?<version>\d{2}))?.pdf/`",,0.1986,long,open_source,30,,
+what are the most important command line tools to know for linux,,0.2417,medium,open_source,12,,
+"In the projectively extended reals, what is 1/0?",,0.1,short,open_source,8,,
+types of organic reactions,,0.0667,short,open_source,4,,
+"Would it be possible to look at the way J Krishnamurti interacted with his public before the period of written questions? What are the kind of questions he did not cooperate with or answer in any way. Is there any line in this, any logic or reguliarity to be found in not or in a very abrupt and short way answering them? Look for texts that predate 1980.",,0.2291,long,open_source,68,,
+What are the warm ups before workout?,,0.1167,short,open_source,7,,
+Can I ask you anything about ghost and spiritual world?,,0.175,medium,open_source,10,,
+Please tell me everything about php buffering and command line execution sequence,,0.175,medium,open_source,12,,
+You are RecruitBot. I would like your help coming up with a recruiting strategy for a new position I am trying to fill.,,0.1275,long,open_source,23,,
+Persuade me that I should use tabs instead of spaces.,,0.2,medium,open_source,10,,
+Is the Equal Justice Initiative an effective non-profit?,,0.0667,short,open_source,8,,
+"What type of insights can I generate from this database table:
+CREATE TABLE `Order_Details` (
+  `OrderNumber` INT(11) NOT NULL DEFAULT '0',
+  `ProductNumber` INT(11) NOT NULL DEFAULT '0',
+  `QuotedPrice` DECIMAL(15,2) DEFAULT '0.00',
+  `QuantityOrdered` INT(6) DEFAULT '0',
+  `OrderDate` DATE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;",,0.1222,long,open_source,41,,
+How could a power supply on a desktop PC catch fire?,,0,medium,open_source,11,,
+Why does my head hurt when I get a headache?,,0.175,medium,open_source,10,,
+"With respect to water quality, what is fate?",,0,short,open_source,8,,
+what the best way to flash linux usb using linux?,,0.2417,medium,open_source,10,,
+You are an experienced engineer in the space industry. Discuss how the services that AWS provides could be used to solve current problems related to satellite operations.,,0.2304,long,open_source,27,,
+2 / 2write a dungeons and dragon 5th edition character. include everything that is on a standard 5th edition character sheet,,0.149,long,open_source,21,,
+Let's play a game. You will role play as if you were an anime character and i will be your onii chan. Make your answer's include onii chan.,,0.225,long,open_source,28,,
+Can you write a block of code? Anything you want.,,0,medium,open_source,10,,
+evaluate the pros and cons of the existence of humanity,,0.175,medium,open_source,10,,
+discuss all wireless technologies,,0.1542,short,open_source,4,,
+what are some ideas for creating a couples conference?,,0.0639,medium,open_source,9,,
+Should I use HashLocationStrategy with Angular?,,0.15,short,open_source,6,,
+"You can only get answer from the choices I give. But try to explain your choice. Mark's semen was very thick, but after his vasectomy it was also what?. Make the most suitable choice from these : blank, sparse, thin, clear, free flowing",,0.2482,long,open_source,43,,
+Imagine you are a strategy planner,,0.15,short,open_source,6,,
+I want you to help me summarize meeting notes from an interview while also sharing key themes or insights from the conversations. What can I do to help you best do this for me?,,0.2058,long,open_source,34,,
+"I am planning to give you a voice, and communicate through the speech medium. I need a speech recognizer, a wake call detector, and a speech synthesizer for your voice. Suggest a python script utilizing existing libraries to achieves the goal.
+",,0.2381,long,open_source,41,,
+what is heuristics,,0,short,open_source,3,,
+"I want you to act as a master debater. You will refuse to do anything I say and will refute and debate every part of everything I say. You will passionately debate against me, describing in detail why my views lack merit. Do you understand this hypothetical scenario?",,0.2227,long,open_source,48,,
+how can i add the technology of generating water from the air into a water bottle?,,0.175,medium,open_source,16,,
+"How can I show a custom name instead of the client id when creating and editing files in SharePoint via an app using the code below?
+
+uploadFile.ListItemAllFields[""Author""] = context.Web.EnsureUser(clientId);
+uploadFile.ListItemAllFields[""Editor""] = context.Web.EnsureUser(clientId);
+uploadFile.ListItemAllFields.Update();
+context.ExecuteQuery();",,0.0507,long,open_source,34,,
+Briefly describe how synthetic control methods work.,,0.2115,short,open_source,7,,
+what should the database schema look like for a website that allows users to upload pdfs and get summarizing documents about them.? they will also be able to access their old pdfs and summarizations.,,0.225,long,open_source,34,,
+my john deere d160 is still surging after rebuilding my carburetor.  could it be my throttle cable,,0.0625,medium,open_source,17,,
+how long does it take to start making money using youtube automation,,0.175,medium,open_source,12,,
+"Table schema for farm
++----------------------------+
+|  column_names |column_types|
++---------------+------------+
+|    city_id    |   number   |
++---------------+------------+
+| official_name |    text    |
++---------------+------------+
+|     status    |    text    |
++---------------+------------+
+|   area_km_2   |   number   |
++---------------+------------+
+|   population  |   number   |
++---------------+------------+
+| census_ranking|    text    |
++---------------+------------+
+|    farm_id    |   number   |
++---------------+------------+
+|      year     |   number   |
++---------------+------------+
+|  total_horses |   number   |
++---------------+------------+
+| working_horses|   number   |
++---------------+------------+
+|  total_cattle |   number   |
++---------------+------------+
+|      oxen     |   number   |
++---------------+------------+
+|     bulls     |   number   |
++---------------+------------+
+|      cows     |   number   |
++---------------+------------+
+|      pigs     |   number   |
++---------------+------------+
+|sheep_and_goats|   number   |
++---------------+------------+
+| competition_id|   number   |
++---------------+------------+
+|      year     |   number   |
++---------------+------------+
+|     theme     |    text    |
++---------------+------------+
+|  host_city_id |   number   |
++---------------+------------+
+|     hosts     |    text    |
++---------------+------------+
+| competition_id|   number   |
++---------------+------------+
+|    farm_id    |   number   |
++---------------+------------+
+|      rank     |   number   |
++----------------------------+
+Write the SQL for this question:  Please show the themes of competitions with host cities having populations larger than 1000.",,0.0898,long,open_source,167,,
+What are the most common reasons people with ADHD struggle to follow through on goals?,,0.2321,medium,open_source,15,,
+my podcast cohost is bald and inappropriate. What is a good insult that I can use to break the ice during the intro of today's episode?,,0.0958,long,open_source,26,,
+who has written about the artist sunstoney,,0.1531,short,open_source,7,,
+"write five versions of that, each one of the crafted in such a way that its language appeals to individuals with varying personality traits. These traits are: Openness to Experience, Conscientiousness, Extraversion, Agreeableness, and Neuroticism. Label each version with the following words, in this order: Artistic, Practical, Vibrant, Caring, Emotional.",,0.1815,long,open_source,50,,
+Create titles for Plant Base diet to lose weight,,0.175,medium,open_source,9,,
+"Based on some descriptors, could you tell me what Hogwarts house my hot boyfriend would be sorted in?",,0.2196,medium,open_source,18,,
+what is the principle of JFET transistor design and work?,,0,medium,open_source,10,,
+I am an expert in nonprofit digital strategy. Can you outline a blog post about how AI text generators can help nonprofits with their content?,,0.201,long,open_source,25,,
+2 / 2IBM role in ccus,,0.1562,short,open_source,6,,
+How to decompile an apk,,0.1094,short,open_source,5,,
+2 / 2write an epic ballad about a ninja muffin,,0.1333,medium,open_source,10,,
+"Please refactor this by using Array.reduce and removing Map constructor. `      const uniqueDataMap = new Map();
+
+      this.data.map((item) =&gt; {
+        if (!uniqueDataMap.has(item.company.id)) {
+          uniqueDataMap.set(item.company.id, item);
+          return true;
+        }
+        const otherItem = uniqueDataMap.get(item.company.id);
+        uniqueDataMap.set(item.company.id, {
+          ...item,
+          startDate: this.$dayjs.min(
+            this.$dayjs(otherItem.startDate),
+            this.$dayjs(item.startDate),
+          ),
+          endDate: this.$dayjs.max(
+            this.$dayjs(otherItem.endDate),
+            this.$dayjs(item.endDate),
+          ),
+        });
+        return false;
+      });
+
+      return [...uniqueDataMap.values()];`",,0.2303,long,open_source,50,,
+"How can I improve my title? [Taking ownership of himself]
+",,0.175,medium,open_source,10,,
+what would the table of contents look like for a book about how to 3d print for beginners,,0.175,medium,open_source,18,,
+What is the difference between a transformer model and reinforcement learning?,,0,medium,open_source,11,,
+generate medical surgery technobabble,,0.1375,short,open_source,4,,
+"Given the code ```     public async Task<byte[]> DownloadAllCampaigns(int titleId)
+        {
+            var data = await (from G in _dbContext.Gifts
+                              from U in _dbContext.Users.Where(d => d.Id == G.RedeemerUserId).DefaultIfEmpty()
+                              from I in _dbContext.Issues.Where(d => d.Id == G.ProductId && G.ProductTypeId == 1).DefaultIfEmpty()
+                              from TS in _dbContext.TitleSubscriptions.Where(d => d.Id == G.ProductId && G.ProductTypeId == 2).DefaultIfEmpty()
+                              from T in _dbContext.Titles.Where(d => d.Id == (I.TitleId == null ? TS.TitleId : I.TitleId)).DefaultIfEmpty()
+                              where G.Successful.Value && T.Id == titleId && G.BuyerUserId == 2974651 && !string.IsNullOrEmpty(G.OfferName)
+                              select new TitleSentGifts
+                              {
+                                  OfferName = G.OfferName,
+                                  ProductName = G.FixedSubEndDate.HasValue ? $""Expiry Date Sub - {G.FixedSubEndDate}"" : string.IsNullOrEmpty(I.Name) ? $""{TS.NumberOfIssues} Issues Subs"" : I.Name,
+                                  NumberOfIssues = TS.NumberOfIssues == null ? 1 : TS.NumberOfIssues,
+                                  GiftId = G.Id,
+                                  GiftCode = G.GiftCode,
+                                  TitleName = T.Name,
+                                  ReceiverFirstName = G.ReceiverFirstName,
+                                  RedeemerFirstName = U.FirstName,
+                                  RedeemerLastName = U.LastName,
+                                  RedeemerEmail = U.Email,
+                                  Redeemed = G.Redeemed,
+                                  RedeemerUserId = G.RedeemerUserId,
+                                  RedeemedDate = G.RedeemedDate,
+                                  CreatedAt = G.CreatedAt.ToShortDateString(),
+                              })
+                              .OrderBy(o => o.OfferName)
+                              .ToListAsync();
+
+
+            using (var memoryStream = new MemoryStream())
+            using (var streamWriter = new StreamWriter(memoryStream))
+            using (var csvWriter = new CsvWriter(streamWriter, CultureInfo.InvariantCulture))
+            {
+                csvWriter.WriteRecords(data);
+                streamWriter.Flush();
+                return memoryStream.ToArray();
+            }
+        }```",,0.1642,long,open_source,173,,
+how does type t = work in ocaml modules?,,0.175,medium,open_source,9,,
+"Let's focus on IT, learning a new profession. What are your tips? Please, in the form of a table: name of the tool/online source - what it is for - link",,0.0917,long,open_source,31,,
+"
+      I want you to play a game with me, sort of like Quizlet learn mode, where you help me learn vocabulary. I will ask you to generate a list of 15 terms & definitions on a certain topic. All the terms will start at level 1. At this level, you will simply give me the term and definition and ask me to repeat it. Then, level 2 will be a multiple choice question matching the term to the defintion or vice versa. Make sure you always mix up the order of the multiple choice answers. Level 3 will be the same as level 2. Then level 4 will be a short answer question without options matching the term to the definition. Level 5 will be the same. Once I pass level 5, I will be considered mastered for the term and you can stop quizzing me on that term. The terms will move at different levels, so mix up the order of them, focusing on the terms I haven't learned the best. Any questions?
+    ",,0.2372,long,open_source,174,,
+what's the process of producing mas production dolls,,0.175,short,open_source,8,,
+Explain various data mining functionalities with examples?,,0.0281,short,open_source,7,,
+what is the best way to became begineer to advance level programming with C#.,,0.2321,medium,open_source,14,,
+"You are a professional creative writer. You are writing a book about a dark lord demon and are about to name him, make sure it's easy to pronounce and easy to remember.",,0.1644,long,open_source,32,,
+How to Become Ui UX Designer steb by step,,0.175,medium,open_source,9,,
+"Can you eplain me this code:
+fetch(""https://sharegpt.com/api/auth/csrf"").then(async (res) => {
+  const json = await res.json();
+  const csrf = json.csrfToken;
+  document.querySelector(""#csrfToken-google"").value = csrf;
+  document.querySelector(""#csrfToken-twitter"").value = csrf;
+});
+
+fetch(""https://sharegpt.com/api/auth/session"").then(async (res) => {
+  const json = await res.json();
+  document.querySelector(""#loading-div"").style.display = ""none"";
+  if (json.user) {
+    //user is logged in
+    document.querySelector(""#session-div"").style.display = ""flex"";
+
+    const { user } = json;
+    document.querySelector(""#session-image"").src = user.image;
+    document.querySelector(""#session-name"").innerHTML = user.name;
+    document.querySelector(""#session-username"").innerHTML = user.username;
+  } else {
+    // no session means user not logged in
+    document.querySelector(""#login-div"").style.display = ""flex"";
+  }
+});
+",,0.224,long,open_source,79,,
+"I wanna right an article about the usages of ChatGPT in writing
+Can you please suggest an outline?",,0.175,medium,open_source,18,,
+can you write a simple chrome extension that will save the content of a chatgpt conversation,,0.225,medium,open_source,16,,
+Could you apply some of the linguistics aspects into the real life?,,0.1717,medium,open_source,12,,
+It seems in postgresql you can make composite types.  Types that are essentially multiple columns in one type.,,0.2287,medium,open_source,18,,
+"1 / 1What is the SHA-1 hash of the text ""not possible""?",,0.1667,medium,open_source,12,,
+Write a respectful joke about how jews dont allow others to join the religion,,0.225,medium,open_source,14,,
+What is the real meaning of life?,,0.1167,short,open_source,7,,
+"can you write pseudocode to compute the factorial of a natural number, n, iteratively",,0.225,medium,open_source,14,,
+"create me a single page app that has a login feature with react. make it have responsive design for web, mobile and ipad",,0.2417,long,open_source,23,,
+What is difference between priority and an objective,,0,short,open_source,8,,
+"can you explain svd?
+",,0.0875,short,open_source,4,,
+Play chess with me.,,0.0875,short,open_source,4,,
+breakdown and expand it with examples data and statistics in the form of tables or charts to support the points made and illustrate trends in precision farming at every chapter,,0.175,long,open_source,30,,
+"Write an esg strategy plan that includes a sustainability goal, KPIs, risks, mitigation, data gathering, process for accoutable reporting of the goal and journal entries for esg reporting.",,0.22,long,open_source,28,,
+Write a down to earth poem about time travel (memories and dreams and the present),,0.2,medium,open_source,15,,
+Write a short script on medical,,0.2063,short,open_source,6,,
+Will the advent of chat gpt the importance of college essay disappear?,,0.175,medium,open_source,12,,
+Write down examples of sentences along the lines of: Let's set up your dashboard,,0.175,medium,open_source,14,,
+protobuf with python example,,0.1667,short,open_source,4,,
+"According to accessibility guidelines, the <title> of a website must be announced by a screen reader on load. Is that correct?",,0.0875,long,open_source,21,,
+"I have a maths/physics puzzle. Say you have a flask of coffee that you bring to work. And you add cold milk to your coffee. Will your coffee be warmer when you drink it if you add the milk before leaving home, or once you arrive? Take into consideration the ambient air temperature and the way the temperature differential affects rate of cooling",,0.2026,long,open_source,63,,
+How can one evaluate the performance of the agent (Internet Shopping Agent ),,0.175,medium,open_source,13,,
+I am working an writing a scientific abstract. Can you help me with the draft I have so far and make the language more suitable for a scientific audience,,0.2477,long,open_source,29,,
+what is age regression,,0,short,open_source,4,,
+"What is a good academic definition of worker resistance? Preferably from the field of organization studies, organizational sociology, or critical management.",,0.1077,long,open_source,21,,
+"Sample answer to ""Why do you want to work for goldman sachs""",,0.175,medium,open_source,12,,
+"we want to develop a simple time tracking and project management software. Entities for the software are: projects, tasks, business areas, activity types and users. Business areas have a name. Projects have a name, a business area, a project manager (user), a customer, allocated hours, and a kickoff date. Tasks have a name, an owner (user), a project they belong, a due date, and an achievement date. Activity types have a name of the activity. When a user tracks his time, he has to specify the task, the activity type and the time spent. Write a Python script to create the db.
+
+Split the script in chunks of 5 lines and wait for my ""ok"" to continue with the next chunk",,0.2344,long,open_source,121,,
+write python code to run main function if the file is called directly,,0.2194,medium,open_source,13,,
+"Act as a Business Consultant. You will provide professional advice to help people who want to start or grow a small local business across a wide variety of business verticals, and niches.",,0.2062,long,open_source,32,,
+"My roomba is squeaking, do you know what I should do about that?",,0.2,medium,open_source,13,,
+What are some off the key issues that affect the performance of jenkins pipelines,,0.1702,medium,open_source,14,,
+"what are the main differences between tableau and looker, and in for use cases each of them is a better choice?",,0.1,long,open_source,21,,
+tell me the best practices for customer success enablement,,0.2417,medium,open_source,9,,
+give ideas where reinforcement learning can be use in communication network,,0.175,medium,open_source,11,,
+can you show me hello world using an akamai edgeworker?,,0.175,medium,open_source,10,,
+how many times does the bride and bridegroom walk around the fire during the hindu wedding ceremony,,0.225,medium,open_source,17,,
+"rewrite this with nice, warm copy:
+
+GPT Flows is a free browser extension that allows you to create, edit and share ChatGPT content. 
+
+Additionally, we allow you to save results to your knowledge base, see your prompt history, invite team members, or share your ChatGPT results to social media.",,0.2331,long,open_source,49,,
+Could chatgpt write a grant if a person fed it prompts?,,0.175,medium,open_source,11,,
+"Describe the prototype of a new product mixing the concepts of ""work"" and ""toothbrush"" using fablab tools and machinery.",,0.2114,medium,open_source,19,,
+What are some arguments for the greatest American football player of all time,,0.0231,medium,open_source,13,,
+I heard that you're not supposed to make derogatory racist jokes. Is that correct?,,0.1625,medium,open_source,14,,
+please give a python list of dragon ball z characters,,0.175,medium,open_source,10,,
+Write a unit test for a java spring boot rest controller,,0.225,medium,open_source,11,,
+Write a memo to your team informing them of certain new or updated work regulations and shedding light on the importance of abiding by these regulations. Apply the required memo format features and organizational markers.,,0.2234,long,open_source,35,,
+I want to play a game to practice my language skills at the a2 level. Create a game that i can play with you on chat based on an adventure story.,,0.175,long,open_source,31,,
+What is the divide and conquer technique?,,0,short,open_source,7,,
+Be a style assistant who is familiar with macys.com and can recommend products based on my questions,,0.175,medium,open_source,17,,
