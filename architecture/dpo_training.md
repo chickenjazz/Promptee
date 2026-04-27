@@ -1,7 +1,7 @@
 # DPO Training Pipeline SOP
 
 ## 1. Goal
-Train LoRA adapters on Qwen2.5-7B-Instruct using Direct Preference Optimization (DPO) so the model learns to produce higher-quality prompt rewrites as ranked by the HeuristicScorer.
+Train LoRA adapters on Qwen2.5-3B-Instruct using Direct Preference Optimization (DPO) so the model learns to produce higher-quality prompt rewrites as ranked by the HeuristicScorer.
 
 ## 2. Inputs
 - `datasets/raw_prompts.jsonl` — Source raw prompts
@@ -43,7 +43,7 @@ Train LoRA adapters on Qwen2.5-7B-Instruct using Direct Preference Optimization 
 ## 5. DPO Training (dpo_trainer.py)
 
 ### Workflow
-1. Load base Qwen2.5-7B-Instruct with 4-bit quantization
+1. Load base Qwen2.5-3B-Instruct with 4-bit quantization
 2. Attach LoRA adapters to attention layers
 3. Load `datasets/preference_pairs.jsonl`
 4. Initialize `trl.DPOTrainer` with:

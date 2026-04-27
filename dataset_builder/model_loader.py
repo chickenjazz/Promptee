@@ -1,4 +1,4 @@
-"""Qwen2.5-7B-Instruct loading + generation helpers.
+"""Qwen2.5-3B-Instruct loading + generation helpers.
 
 4-bit nf4 quantization is the default; an 8GB-class GPU (e.g. RTX 3070) can
 host the model with this config. bfloat16 compute dtype matches what
@@ -22,7 +22,7 @@ def load_model_and_tokenizer(
     model_name: str = MODEL_NAME,
     load_in_4bit: bool = True,
 ) -> Tuple[AutoModelForCausalLM, AutoTokenizer]:
-    """Load Qwen2.5-7B-Instruct with optional 4-bit quantization.
+    """Load Qwen2.5-3B-Instruct with optional 4-bit quantization.
 
     Returns (model, tokenizer). Caller owns the lifecycle. Raises on failure.
     """

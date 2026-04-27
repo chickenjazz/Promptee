@@ -1,6 +1,6 @@
 # Auto Prompt Rewrite Dataset Builder
 
-Implements [`architecture/auto-rewriter.md`](../architecture/auto-rewriter.md). Reads a CSV with a `prompt` column, rewrites each prompt using `Qwen/Qwen2.5-7B-Instruct`, and writes the improved version to `rewritten_prompt`.
+Implements [`architecture/auto-rewriter.md`](../architecture/auto-rewriter.md). Reads a CSV with a `prompt` column, rewrites each prompt using `Qwen/Qwen2.5-3B-Instruct`, and writes the improved version to `rewritten_prompt`.
 
 ## Install
 

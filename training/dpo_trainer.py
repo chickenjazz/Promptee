@@ -31,7 +31,7 @@ logging.basicConfig(
 )
 
 # Defaults from SOP
-BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct" #TODO: Change to 3B
+BASE_MODEL_ID = "Qwen/Qwen2.5-3B-Instruct" #TODO: Change to 3B
 DATASET_PATH = os.path.join(PROJECT_ROOT, "datasets", "preference_pairs.jsonl")
 CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "training", "checkpoints")
 

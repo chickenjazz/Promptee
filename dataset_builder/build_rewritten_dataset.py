@@ -1,6 +1,6 @@
 """CLI entrypoint for the automatic prompt-rewrite dataset builder.
 
-Reads a CSV with a `prompt` column, rewrites each prompt with Qwen2.5-7B-Instruct,
+Reads a CSV with a `prompt` column, rewrites each prompt with Qwen2.5-3B-Instruct,
 and writes the improved version to the `rewritten_prompt` column. Resume-safe:
 non-empty `rewritten_prompt` cells are skipped unless --overwrite is passed.
 Crash-safe: a checkpoint is written every --save-every rows via atomic rename.
@@ -59,7 +59,7 @@ logger = logging.getLogger("dataset_builder.build")
 def _parse_args(argv: Optional[list] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="dataset_builder.build_rewritten_dataset",
-        description="Rewrite prompts in a CSV using Qwen/Qwen2.5-7B-Instruct.",
+        description="Rewrite prompts in a CSV using Qwen/Qwen2.5-3B-Instruct.",
     )
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT_CSV,
                         help="Input CSV path (must contain a 'prompt' column).")

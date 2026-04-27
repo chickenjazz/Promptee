@@ -40,7 +40,7 @@ The backend must follow this layered structure:
 
 Presentation Layer → React Frontend  
 Application Layer → FastAPI Backend  
-Model Layer → Fine-tuned Qwen-Instruct-7B + LoRA adapters  
+Model Layer → Fine-tuned Qwen-Instruct-3B + LoRA adapters  
 Offline Training Layer → QLoRA + DPO pipeline
 
 Rules:
@@ -55,7 +55,7 @@ Rules:
 # Model Requirements
 
 Base Model:
-Qwen-Instruct-7B
+Qwen-Instruct-3B
 
 Fine-Tuning Method:
 QLoRA
@@ -149,7 +149,7 @@ PromptOptimizer
 
 Responsibilities:
 
-- load fine-tuned Qwen-Instruct-7B
+- load fine-tuned Qwen-Instruct-3B
 - apply LoRA adapters
 - rewrite prompts
 - return optimized prompt output
@@ -226,7 +226,7 @@ Training pipeline must exist separately from runtime backend.
 
 Training workflow:
 
-1. load base Qwen-Instruct-7B
+1. load base Qwen-Instruct-3B
 2. apply 4-bit quantization
 3. attach LoRA adapters
 4. generate heuristic rewrite candidates
@@ -317,7 +317,7 @@ Pipeline must support single-GPU execution
 
 Tokenizer must match:
 
-Qwen-Instruct-7B tokenizer
+Qwen-Instruct-3B tokenizer
 
 Tokenizer substitution is NOT allowed
 

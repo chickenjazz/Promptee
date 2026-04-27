@@ -575,7 +575,7 @@ def _normalize_for_dedup(text: str) -> str:
 
 class AtomicRewriter:
     """
-    Scorer-guided atomic rewriter using the local Qwen2.5-7B-Instruct model.
+    Scorer-guided atomic rewriter using the local Qwen2.5-3B-Instruct model.
 
     Generates a single rewrite candidate per attempt using a dynamically
     built instruction that targets only the missing structural components

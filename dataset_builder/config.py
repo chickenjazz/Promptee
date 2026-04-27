@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict, Tuple
 
-MODEL_NAME: str = "Qwen/Qwen2.5-7B-Instruct"
+MODEL_NAME: str = "Qwen/Qwen2.5-3B-Instruct"
 
 PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent
 DEFAULT_INPUT_CSV: Path = PROJECT_ROOT / "dataset" / "test_dataset.csv"

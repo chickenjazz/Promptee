@@ -12,7 +12,7 @@ logger = logging.getLogger("promptee.prompt_optimizer")
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_ADAPTER_PATH = os.path.join(PROJECT_ROOT, "models", "adapters")
 
-# Maximum input length (tokens) — Qwen2.5-7B supports 32k, keep headroom for generation
+# Maximum input length (tokens) — Qwen2.5-3B supports 32k, keep headroom for generation
 MAX_INPUT_TOKENS = 4096
 
 # Common LLM preamble patterns to strip from output
@@ -28,7 +28,7 @@ _PREAMBLE_PATTERNS = [
 
 class PromptOptimizer:
     """
-    Runtime prompt refinement engine using Qwen2.5-7B-Instruct with optional LoRA adapters.
+    Runtime prompt refinement engine using Qwen2.5-3B-Instruct with optional LoRA adapters.
 
     Implements the logic defined in architecture/prompt_optimizer.md:
       - 4-bit NF4 quantization via bitsandbytes
@@ -40,7 +40,7 @@ class PromptOptimizer:
 
     def __init__(
         self,
-        base_model_id: str = "Qwen/Qwen2.5-1.5B-Instruct",
+        base_model_id: str = "Qwen/Qwen2.5-3B-Instruct",
         adapter_path: str = DEFAULT_ADAPTER_PATH,
     ):
         self.base_model_id = base_model_id

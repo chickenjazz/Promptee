@@ -1,10 +1,10 @@
 # Automatic Dataset Builder Specification
 
 ## Project Name
-Automatic Prompt Rewrite Dataset Builder Using Qwen2.5-7B-Instruct
+Automatic Prompt Rewrite Dataset Builder Using Qwen2.5-3B-Instruct
 
 ## Purpose
-Build an automatic dataset builder that reads raw prompts from a dataset column named `prompt`, rewrites each prompt using `Qwen2.5-7B-Instruct`, and writes the improved version into a new column named `rewritten_prompt`.
+Build an automatic dataset builder that reads raw prompts from a dataset column named `prompt`, rewrites each prompt using `Qwen2.5-3B-Instruct`, and writes the improved version into a new column named `rewritten_prompt`.
 
 The dataset builder must preserve the original user intent while improving clarity, specificity, structure, completeness, and AI-executability.
 
@@ -21,7 +21,7 @@ Given a dataset with a `prompt` column, the system must:
 3. Detect the prompt archetype.
 4. Select the correct modularity style.
 5. Diagnose the prompt's weaknesses internally.
-6. Rewrite the prompt using `Qwen2.5-7B-Instruct`.
+6. Rewrite the prompt using `Qwen2.5-3B-Instruct`.
 7. Preserve the original intent.
 8. Avoid answering the prompt itself.
 9. Write only the improved prompt into the `rewritten_prompt` column.
@@ -70,7 +70,7 @@ Do not write diagnostic text, archetype labels, weakness summaries, or improveme
 Use the following model:
 
 ```text
-Qwen/Qwen2.5-7B-Instruct
+Qwen/Qwen2.5-3B-Instruct
 ```
 
 The builder should support local inference using Hugging Face Transformers.
@@ -742,7 +742,7 @@ Recommended for RTX 3070 Laptop GPU or similar 8GB VRAM devices:
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import torch
 
-model_name = "Qwen/Qwen2.5-7B-Instruct"
+model_name = "Qwen/Qwen2.5-3B-Instruct"
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -800,7 +800,7 @@ Write a vivid character description for a sci-fi novel protagonist. Include thei
 The dataset builder is complete when it can:
 
 - Load a CSV dataset with a `prompt` column
-- Generate rewritten prompts using `Qwen/Qwen2.5-7B-Instruct`
+- Generate rewritten prompts using `Qwen/Qwen2.5-3B-Instruct`
 - Add or update the `rewritten_prompt` column
 - Preserve all original dataset rows and columns
 - Skip already completed rows when resume mode is enabled
@@ -815,6 +815,6 @@ The dataset builder is complete when it can:
 
 Build the automatic dataset builder exactly according to this specification.
 
-The final system must not be a general chatbot. It must be a dataset processing tool that reads raw prompts from the `prompt` column and writes improved prompts into the `rewritten_prompt` column using `Qwen/Qwen2.5-7B-Instruct`.
+The final system must not be a general chatbot. It must be a dataset processing tool that reads raw prompts from the `prompt` column and writes improved prompts into the `rewritten_prompt` column using `Qwen/Qwen2.5-3B-Instruct`.
 
 The rewritten output must contain only the optimized prompt text.
