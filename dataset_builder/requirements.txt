@@ -1,0 +1,8 @@
+pandas
+transformers
+accelerate
+torch
+bitsandbytes
+sentencepiece
+protobuf
+tqdm

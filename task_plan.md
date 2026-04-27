@@ -15,7 +15,7 @@
 - [x] Develop Navigation / Decision Making logic
 - [x] Build Python engines in `tools/`
   - [x] `HeuristicScorer` module (Clarity, Specificity, Semantic Preservation via sentence-transformers)
-  - [x] `PromptOptimizer` module (Load fine-tuned Qwen2.5-7B-Instruct + LoRA)
+  - [x] `PromptOptimizer` module (Load fine-tuned Qwen2.5-3B-Instruct + LoRA)
   - [x] `ExternalLLMService` (OpenAI/Claude/Gemini API calls)
   - [x] FastAPI `PromptController` and `PromptService` (tools/api.py)
 

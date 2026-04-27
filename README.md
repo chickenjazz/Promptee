@@ -1,6 +1,6 @@
 # Promptee
 
-Promptee is a strict, rule-based Prompt Optimization Backend that autonomously refines user prompts using locally fine-tuned LoRA models (like Qwen2.5-7B-Instruct).
+Promptee is a strict, rule-based Prompt Optimization Backend that autonomously refines user prompts using locally fine-tuned LoRA models (like Qwen2.5-3B-Instruct).
 
 ## Architecture
 

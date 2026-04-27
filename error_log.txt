@@ -1,272 +1,267 @@
-Traceback (most recent call last):
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\tests\tmp_test.py", line 8, in <module>
-    SentenceTransformer('all-MiniLM-L6-v2')
-    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\sentence_transformers\SentenceTransformer.py", line 339, in __init__
-    modules = self._load_auto_model(
-        model_name_or_path,
-    ...<8 lines>...
-        has_modules=has_modules,
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\sentence_transformers\SentenceTransformer.py", line 2130, in _load_auto_model
-    transformer_model = Transformer(
-        model_name_or_path,
-    ...<4 lines>...
-        backend=self.backend,
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\sentence_transformers\models\Transformer.py", line 120, in __init__
-    config, is_peft_model = self._load_config(model_name_or_path, cache_dir, backend, config_args)
-                            ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\sentence_transformers\models\Transformer.py", line 171, in _load_config
-    find_adapter_config_file(
-    ~~~~~~~~~~~~~~~~~~~~~~~~^
-        model_name_or_path,
-        ^^^^^^^^^^^^^^^^^^^
-    ...<3 lines>...
-        local_files_only=config_args.get("local_files_only", False),
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\transformers\utils\peft_utils.py", line 84, in find_adapter_config_file
-    adapter_cached_filename = cached_file(
-        model_id,
-    ...<11 lines>...
-        _raise_exceptions_for_connection_errors=False,
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\transformers\utils\hub.py", line 278, in cached_file
-    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\transformers\utils\hub.py", line 512, in cached_files
-    raise e
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\transformers\utils\hub.py", line 422, in cached_files
-    hf_hub_download(
-    ~~~~~~~~~~~~~~~^
-        path_or_repo_id,
-        ^^^^^^^^^^^^^^^^
-    ...<10 lines>...
-        tqdm_class=tqdm_class,
-        ^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\utils\_validators.py", line 88, in _inner_fn
-    return fn(*args, **kwargs)
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\file_download.py", line 995, in hf_hub_download
-    return _hf_hub_download_to_cache_dir(
-        # Destination
-    ...<15 lines>...
-        dry_run=dry_run,
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\file_download.py", line 1070, in _hf_hub_download_to_cache_dir
-    (url_to_download, etag, commit_hash, expected_size, xet_file_data, head_call_error) = _get_metadata_or_catch_error(
-                                                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        repo_id=repo_id,
-        ^^^^^^^^^^^^^^^^
-    ...<9 lines>...
-        relative_filename=relative_filename,
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\file_download.py", line 1665, in _get_metadata_or_catch_error
-    metadata = get_hf_file_metadata(
-        url=url,
-    ...<4 lines>...
-        retry_on_errors=retry_on_errors,
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\utils\_validators.py", line 88, in _inner_fn
-    return fn(*args, **kwargs)
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\file_download.py", line 1587, in get_hf_file_metadata
-    response = _httpx_follow_relative_redirects_with_backoff(
-        method="HEAD", url=url, headers=hf_headers, timeout=timeout, retry_on_errors=retry_on_errors
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\utils\_http.py", line 685, in _httpx_follow_relative_redirects_with_backoff
-    response = http_backoff(
-        method=method,
-    ...<3 lines>...
-        **no_retry_kwargs,
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\utils\_http.py", line 559, in http_backoff
-    return next(
-        _http_backoff_base(
-    ...<9 lines>...
-        )
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\utils\_http.py", line 427, in _http_backoff_base
-    client = get_session()
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\utils\_http.py", line 346, in get_session
-    _GLOBAL_CLIENT = _GLOBAL_CLIENT_FACTORY()
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\huggingface_hub\utils\_http.py", line 272, in default_client_factory
-    return httpx.Client(
-           ~~~~~~~~~~~~^
-        event_hooks={"request": [hf_request_event_hook]},
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        follow_redirects=True,
-        ^^^^^^^^^^^^^^^^^^^^^^
-        timeout=None,
-        ^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\httpx\_client.py", line 688, in __init__
-    self._transport = self._init_transport(
-                      ~~~~~~~~~~~~~~~~~~~~^
-        verify=verify,
-        ^^^^^^^^^^^^^^
-    ...<5 lines>...
-        transport=transport,
-        ^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\httpx\_client.py", line 731, in _init_transport
-    return HTTPTransport(
-        verify=verify,
-    ...<4 lines>...
-        limits=limits,
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\httpx\_transports\default.py", line 153, in __init__
-    ssl_context = create_ssl_context(verify=verify, cert=cert, trust_env=trust_env)
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\httpx\_config.py", line 35, in create_ssl_context
-    ctx = ssl.create_default_context(cafile=os.environ["SSL_CERT_FILE"])
-  File "C:\Users\quadcore\AppData\Local\Python\pythoncore-3.14-64\Lib\ssl.py", line 717, in create_default_context
-    context.load_verify_locations(cafile, capath, cadata)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory
-2026-04-08 18:37:06,094 [promptee.heuristic_scorer] INFO: spaCy model 'en_core_web_sm' loaded successfully.
-2026-04-08 18:37:06,100 [sentence_transformers.SentenceTransformer] INFO: Use pytorch device_name: cpu
-2026-04-08 18:37:06,100 [sentence_transformers.SentenceTransformer] INFO: Load pretrained SentenceTransformer: all-MiniLM-L6-v2
-2026-04-08 18:37:07,094 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:37:07,154 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
-2026-04-08 18:37:17,482 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:37:17,500 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
-2026-04-08 18:37:17,783 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:37:17,815 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/README.md "HTTP/1.1 200 OK"
-2026-04-08 18:37:28,147 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:37:28,172 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/sentence_bert_config.json "HTTP/1.1 200 OK"
-2026-04-08 18:37:28,449 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
-2026-04-08 18:37:28,734 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:37:28,767 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:37:29,076 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:37:29,117 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:37:29,516 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:37:29,543 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:37:29,820 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:37:29,846 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
-2026-04-08 18:37:30,192 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
-2026-04-08 18:37:30,495 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
-2026-04-08 18:37:40,898 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
-2026-04-08 18:37:40,905 [promptee.heuristic_scorer] INFO: SentenceTransformer 'all-MiniLM-L6-v2' loaded successfully.
-2026-04-08 18:37:41,040 [promptee.prompt_optimizer] INFO: Loading tokenizer: Qwen/Qwen2.5-7B-Instruct
-2026-04-08 18:37:51,570 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:37:51,920 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:37:52,315 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:39:52,963 [huggingface_hub.utils._http] WARNING: 'The read operation timed out' thrown while requesting HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/tokenizer_config.json
-2026-04-08 18:39:52,963 [huggingface_hub.utils._http] WARNING: Retrying in 1s [Retry 1/5].
-2026-04-08 18:41:36,178 [huggingface_hub.utils._http] WARNING: 'The read operation timed out' thrown while requesting HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/tokenizer_config.json
-2026-04-08 18:41:36,178 [huggingface_hub.utils._http] WARNING: Retrying in 2s [Retry 2/5].
-2026-04-08 18:41:38,625 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:42:38,635 [huggingface_hub.utils._http] WARNING: 'The read operation timed out' thrown while requesting HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/tokenizer_config.json
-2026-04-08 18:42:38,635 [huggingface_hub.utils._http] WARNING: Retrying in 1s [Retry 1/5].
-2026-04-08 18:43:22,273 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/tokenizer_config.json "HTTP/1.1 200 OK"
-2026-04-08 18:43:22,573 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/tokenizer_config.json "HTTP/1.1 200 OK"
-2026-04-08 18:43:22,905 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
-2026-04-08 18:43:23,188 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
-2026-04-08 18:43:23,464 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/vocab.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:43:23,758 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/vocab.json "HTTP/1.1 200 OK"
-2026-04-08 18:43:24,086 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/vocab.json "HTTP/1.1 200 OK"
-2026-04-08 18:43:24,618 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/merges.txt "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:43:24,945 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/merges.txt "HTTP/1.1 200 OK"
-2026-04-08 18:43:25,264 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/merges.txt "HTTP/1.1 200 OK"
-2026-04-08 18:43:25,685 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:43:26,030 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/tokenizer.json "HTTP/1.1 200 OK"
-2026-04-08 18:43:26,356 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/tokenizer.json "HTTP/1.1 200 OK"
-2026-04-08 18:43:37,144 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/added_tokens.json "HTTP/1.1 404 Not Found"
-2026-04-08 18:43:37,435 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/special_tokens_map.json "HTTP/1.1 404 Not Found"
-2026-04-08 18:43:37,744 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
-2026-04-08 18:43:38,428 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct "HTTP/1.1 200 OK"
-2026-04-08 18:43:38,430 [promptee.prompt_optimizer] INFO: Loading model: Qwen/Qwen2.5-7B-Instruct (4-bit NF4)
-2026-04-08 18:43:48,914 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
-2026-04-08 18:44:32,447 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
-2026-04-08 18:44:32,760 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/model.safetensors.index.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:44:33,083 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/model.safetensors.index.json "HTTP/1.1 200 OK"
-2026-04-08 18:44:33,412 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/model.safetensors.index.json "HTTP/1.1 200 OK"
-2026-04-08 18:44:33,728 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/revision/main "HTTP/1.1 200 OK"
-2026-04-08 18:44:34,077 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/a09a35458c702b33eeacc393d103063234e8bc28/model-00004-of-00004.safetensors "HTTP/1.1 302 Found"
-2026-04-08 18:44:34,123 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/a09a35458c702b33eeacc393d103063234e8bc28/model-00001-of-00004.safetensors "HTTP/1.1 302 Found"
-2026-04-08 18:44:34,449 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/xet-read-token/a09a35458c702b33eeacc393d103063234e8bc28 "HTTP/1.1 200 OK"
-2026-04-08 18:44:34,452 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/xet-read-token/a09a35458c702b33eeacc393d103063234e8bc28 "HTTP/1.1 200 OK"
-2026-04-08 18:44:44,673 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/a09a35458c702b33eeacc393d103063234e8bc28/model-00003-of-00004.safetensors "HTTP/1.1 302 Found"
-2026-04-08 18:44:56,024 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/a09a35458c702b33eeacc393d103063234e8bc28/model-00002-of-00004.safetensors "HTTP/1.1 302 Found"
-2026-04-08 18:47:23,591 [promptee.heuristic_scorer] INFO: spaCy model 'en_core_web_sm' loaded successfully.
-2026-04-08 18:47:23,595 [sentence_transformers.SentenceTransformer] INFO: Use pytorch device_name: cpu
-2026-04-08 18:47:23,595 [sentence_transformers.SentenceTransformer] INFO: Load pretrained SentenceTransformer: all-MiniLM-L6-v2
-2026-04-08 18:47:24,502 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:24,554 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:24,853 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:24,902 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:25,206 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:25,256 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:25,547 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:25,601 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/README.md "HTTP/1.1 200 OK"
-2026-04-08 18:47:25,919 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:25,983 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:26,291 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:26,337 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/sentence_bert_config.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:26,638 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
-2026-04-08 18:47:26,955 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:27,006 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:27,348 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:27,416 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:27,784 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:27,832 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:28,138 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:28,193 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:28,510 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
-2026-04-08 18:47:28,827 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
-2026-04-08 18:47:29,192 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:29,244 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:29,579 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
-2026-04-08 18:47:29,583 [promptee.heuristic_scorer] INFO: SentenceTransformer 'all-MiniLM-L6-v2' loaded successfully.
-2026-04-08 18:47:29,673 [promptee.prompt_optimizer] INFO: Loading tokenizer: Qwen/Qwen2.5-7B-Instruct
-2026-04-08 18:47:29,988 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:30,083 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:30,437 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:30,598 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/tokenizer_config.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:30,915 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
-2026-04-08 18:47:31,226 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
-2026-04-08 18:47:31,917 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct "HTTP/1.1 200 OK"
-2026-04-08 18:47:31,921 [promptee.prompt_optimizer] INFO: Loading model: Qwen/Qwen2.5-7B-Instruct (4-bit NF4)
-2026-04-08 18:47:32,238 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:32,291 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:32,628 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
-2026-04-08 18:47:32,687 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-7B-Instruct/a09a35458c702b33eeacc393d103063234e8bc28/config.json "HTTP/1.1 200 OK"
-2026-04-08 18:47:34,289 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/revision/main "HTTP/1.1 200 OK"
-2026-04-08 18:47:34,601 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/a09a35458c702b33eeacc393d103063234e8bc28/model-00001-of-00004.safetensors "HTTP/1.1 302 Found"
-2026-04-08 18:47:34,707 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/a09a35458c702b33eeacc393d103063234e8bc28/model-00004-of-00004.safetensors "HTTP/1.1 302 Found"
-2026-04-08 18:47:34,907 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/xet-read-token/a09a35458c702b33eeacc393d103063234e8bc28 "HTTP/1.1 200 OK"
-2026-04-08 18:47:35,033 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/xet-read-token/a09a35458c702b33eeacc393d103063234e8bc28 "HTTP/1.1 200 OK"
-2026-04-08 18:47:44,823 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/a09a35458c702b33eeacc393d103063234e8bc28/model-00003-of-00004.safetensors "HTTP/1.1 302 Found"
-2026-04-08 18:47:44,840 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-7B-Instruct/resolve/a09a35458c702b33eeacc393d103063234e8bc28/model-00002-of-00004.safetensors "HTTP/1.1 302 Found"
-2026-04-08 19:03:41,348 [promptee.prompt_optimizer] ERROR: Failed to load optimizer model: Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules in 32-bit, you need to set `llm_int8_enable_fp32_cpu_offload=True` and pass a custom `device_map` to `from_pretrained`. Check https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu for more details. 
-Traceback (most recent call last):
-  File "c:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\tools\prompt_optimizer.py", line 70, in load_model
-    base_model = AutoModelForCausalLM.from_pretrained(
-        self.base_model_id,
-    ...<2 lines>...
-        trust_remote_code=True,
-    )
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\transformers\models\auto\auto_factory.py", line 387, in from_pretrained
-    return model_class.from_pretrained(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        pretrained_model_name_or_path, *model_args, config=config, **hub_kwargs, **kwargs
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\transformers\modeling_utils.py", line 4113, in from_pretrained
-    device_map = _get_device_map(model, device_map, max_memory, hf_quantizer)
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\transformers\integrations\accelerate.py", line 373, in _get_device_map
-    hf_quantizer.validate_environment(device_map=device_map)
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\.venv\Lib\site-packages\transformers\quantizers\quantizer_bnb_4bit.py", line 74, in validate_environment
-    raise ValueError(
-    ...<6 lines>...
-    )
-ValueError: Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules in 32-bit, you need to set `llm_int8_enable_fp32_cpu_offload=True` and pass a custom `device_map` to `from_pretrained`. Check https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu for more details. 
-2026-04-08 19:03:41,403 [promptee.api] WARNING: Optimizer model could not be loaded at startup: PromptOptimizer failed to initialize: Some modules are dispatched on the CPU or the disk. Make sure you have enough GPU RAM to fit the quantized model. If you want to dispatch the model on the CPU or the disk while keeping these modules in 32-bit, you need to set `llm_int8_enable_fp32_cpu_offload=True` and pass a custom `device_map` to `from_pretrained`. Check https://huggingface.co/docs/transformers/main/en/main_classes/quantization#offload-between-cpu-and-gpu for more details. . Ensure the model 'Qwen/Qwen2.5-7B-Instruct' is accessible and GPU memory is sufficient.. Rewrite requests will fail until the model is available.
-2026-04-08 19:21:44,550 [promptee.api] INFO: Shutdown complete.
+2026-04-27 11:23:58,762 [promptee.heuristic_scorer] INFO: System Check | PyTorch CUDA available: True
+2026-04-27 11:23:59,517 [promptee.heuristic_scorer] INFO: spaCy model 'en_core_web_sm' loaded successfully.
+2026-04-27 11:23:59,525 [sentence_transformers.base.model] INFO: No device provided, using cuda:0
+2026-04-27 11:24:00,475 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:00,502 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:00,797 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:00,828 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:00,834 [sentence_transformers.base.model] INFO: Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+2026-04-27 11:24:01,132 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:01,157 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:01,454 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:01,483 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/README.md "HTTP/1.1 200 OK"
+2026-04-27 11:24:01,801 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:01,836 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:02,127 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:02,157 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:02,476 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:24:03,006 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:03,036 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:03,388 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:03,423 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:04,145 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:24:04,453 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:24:05,022 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:24:05,311 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:24:05,616 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:05,645 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:05,949 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:05,977 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:06,278 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:06,303 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:06,607 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:06,641 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:06,954 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-27 11:24:07,253 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-27 11:24:07,630 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:07,662 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:07,967 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+2026-04-27 11:24:08,346 [promptee.heuristic_scorer] INFO: SentenceTransformer 'all-MiniLM-L6-v2' loaded successfully.
+2026-04-27 11:24:08,464 [promptee.heuristic_scorer] INFO: SpellChecker loaded successfully.
+2026-04-27 11:24:08,472 [promptee.prompt_optimizer] INFO: System Check | PyTorch CUDA available: True
+2026-04-27 11:24:08,472 [promptee.prompt_optimizer] INFO: Loading tokenizer: Qwen/Qwen2.5-1.5B-Instruct
+2026-04-27 11:24:08,762 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:08,805 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:09,640 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:09,666 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:09,972 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-27 11:24:10,762 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-27 11:24:11,528 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct "HTTP/1.1 200 OK"
+2026-04-27 11:24:11,533 [promptee.prompt_optimizer] INFO: Loading model: Qwen/Qwen2.5-1.5B-Instruct (4-bit NF4)
+2026-04-27 11:24:11,828 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:11,863 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:12,162 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:12,205 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:25,807 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:24:25,842 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/generation_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:24:26,162 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/custom_generate/generate.py "HTTP/1.1 404 Not Found"
+2026-04-27 11:24:26,168 [promptee.prompt_optimizer] WARNING: No adapters found in C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\models\adapters. Using base model weights.
+2026-04-27 11:24:26,168 [promptee.prompt_optimizer] INFO: Optimizer engine loaded successfully.
+2026-04-27 11:24:26,170 [promptee.api] INFO: Startup complete — optimizer model loaded.
+2026-04-27 11:39:00,807 [promptee.heuristic_scorer] INFO: System Check | PyTorch CUDA available: True
+2026-04-27 11:39:01,270 [promptee.heuristic_scorer] INFO: spaCy model 'en_core_web_sm' loaded successfully.
+2026-04-27 11:39:01,273 [sentence_transformers.base.model] INFO: No device provided, using cuda:0
+2026-04-27 11:39:02,235 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:02,323 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:02,659 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:02,693 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:02,696 [sentence_transformers.base.model] INFO: Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+2026-04-27 11:39:02,987 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:03,018 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:03,350 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:03,434 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/README.md "HTTP/1.1 200 OK"
+2026-04-27 11:39:03,730 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:03,770 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:04,057 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:04,081 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:04,369 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:39:04,652 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:04,676 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:05,000 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:05,035 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:05,427 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:39:05,715 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:39:06,001 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:39:06,302 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 11:39:06,617 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:06,657 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:06,952 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:06,987 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:07,273 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:07,306 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:07,597 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:07,627 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:07,950 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-27 11:39:08,246 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-27 11:39:08,589 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:08,621 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:08,939 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+2026-04-27 11:39:09,327 [promptee.heuristic_scorer] INFO: SentenceTransformer 'all-MiniLM-L6-v2' loaded successfully.
+2026-04-27 11:39:09,443 [promptee.heuristic_scorer] INFO: SpellChecker loaded successfully.
+2026-04-27 11:39:09,448 [promptee.prompt_optimizer] INFO: System Check | PyTorch CUDA available: True
+2026-04-27 11:39:09,448 [promptee.prompt_optimizer] INFO: Loading tokenizer: Qwen/Qwen2.5-1.5B-Instruct
+2026-04-27 11:39:09,743 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:09,765 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:10,054 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:10,079 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:10,375 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-27 11:39:10,739 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-27 11:39:11,499 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct "HTTP/1.1 200 OK"
+2026-04-27 11:39:11,508 [promptee.prompt_optimizer] INFO: Loading model: Qwen/Qwen2.5-1.5B-Instruct (4-bit NF4)
+2026-04-27 11:39:11,795 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:11,827 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:12,139 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:12,166 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:17,768 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 11:39:17,801 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/generation_config.json "HTTP/1.1 200 OK"
+2026-04-27 11:39:18,107 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/custom_generate/generate.py "HTTP/1.1 404 Not Found"
+2026-04-27 11:39:18,111 [promptee.prompt_optimizer] WARNING: No adapters found in C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\models\adapters. Using base model weights.
+2026-04-27 11:39:18,113 [promptee.prompt_optimizer] INFO: Optimizer engine loaded successfully.
+2026-04-27 11:39:18,113 [promptee.api] INFO: Startup complete — optimizer model loaded.
+2026-04-27 16:37:29,853 [promptee.heuristic_scorer] INFO: System Check | PyTorch CUDA available: True
+2026-04-27 16:37:30,467 [promptee.heuristic_scorer] INFO: spaCy model 'en_core_web_sm' loaded successfully.
+2026-04-27 16:37:30,471 [sentence_transformers.base.model] INFO: No device provided, using cuda:0
+2026-04-27 16:37:31,567 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:31,594 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:31,898 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:31,934 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:31,938 [sentence_transformers.base.model] INFO: Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+2026-04-27 16:37:32,230 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:32,261 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:32,551 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:32,589 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/README.md "HTTP/1.1 200 OK"
+2026-04-27 16:37:32,914 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:32,947 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:33,228 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:33,263 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:33,551 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 16:37:33,844 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:33,873 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:34,168 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:34,209 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:34,629 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 16:37:34,908 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 16:37:35,180 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 16:37:35,445 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 16:37:35,739 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:35,845 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:36,130 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:36,170 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:36,452 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:36,476 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:36,764 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:36,801 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:37,092 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-27 16:37:37,373 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-27 16:37:37,723 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:37,758 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:38,051 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+2026-04-27 16:37:38,367 [promptee.heuristic_scorer] INFO: SentenceTransformer 'all-MiniLM-L6-v2' loaded successfully.
+2026-04-27 16:37:38,471 [promptee.heuristic_scorer] INFO: SpellChecker loaded successfully.
+2026-04-27 16:37:38,526 [promptee.prompt_optimizer] INFO: System Check | PyTorch CUDA available: True
+2026-04-27 16:37:38,527 [promptee.prompt_optimizer] INFO: Loading tokenizer: Qwen/Qwen2.5-1.5B-Instruct
+2026-04-27 16:37:38,823 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:38,848 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:39,173 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:39,208 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:39,558 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-27 16:37:39,902 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-27 16:37:40,539 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-1.5B-Instruct "HTTP/1.1 200 OK"
+2026-04-27 16:37:40,540 [promptee.prompt_optimizer] INFO: Loading model: Qwen/Qwen2.5-1.5B-Instruct (4-bit NF4)
+2026-04-27 16:37:40,834 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:40,861 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:41,173 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:41,198 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:50,367 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 16:37:50,408 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-1.5B-Instruct/989aa7980e4cf806f80c7fef2b1adb7bc71aa306/generation_config.json "HTTP/1.1 200 OK"
+2026-04-27 16:37:50,732 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct/resolve/main/custom_generate/generate.py "HTTP/1.1 404 Not Found"
+2026-04-27 16:37:50,736 [promptee.prompt_optimizer] WARNING: No adapters found in C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\models\adapters. Using base model weights.
+2026-04-27 16:37:50,739 [promptee.prompt_optimizer] INFO: Optimizer engine loaded successfully.
+2026-04-27 16:37:50,739 [promptee.api] INFO: Startup complete — optimizer model loaded.
+2026-04-27 16:49:59,542 [promptee.api] INFO: Rewrite rejected (rejected=False, improvement=-0.1411). Falling back to raw prompt.
+2026-04-27 17:15:56,827 [promptee.api] INFO: Shutdown complete.
+2026-04-27 17:50:30,080 [promptee.heuristic_scorer] INFO: System Check | PyTorch CUDA available: True
+2026-04-27 17:50:30,506 [promptee.heuristic_scorer] INFO: spaCy model 'en_core_web_sm' loaded successfully.
+2026-04-27 17:50:30,509 [sentence_transformers.base.model] INFO: No device provided, using cuda:0
+2026-04-27 17:50:31,292 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:31,323 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:31,853 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:31,881 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:31,887 [sentence_transformers.base.model] INFO: Loading SentenceTransformer model from sentence-transformers/all-MiniLM-L6-v2.
+2026-04-27 17:50:32,192 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config_sentence_transformers.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:32,231 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config_sentence_transformers.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:32,510 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/README.md "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:32,543 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/README.md "HTTP/1.1 200 OK"
+2026-04-27 17:50:32,818 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/modules.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:32,850 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/modules.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:33,145 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/sentence_bert_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:33,173 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/sentence_bert_config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:33,464 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:33,734 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:33,759 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:34,073 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:34,099 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:34,494 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/processor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:34,780 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:35,067 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/video_preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:35,389 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/preprocessor_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:35,673 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:35,699 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:36,220 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:36,250 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:36,556 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:36,585 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:36,859 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:36,889 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:37,187 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:37,492 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-27 17:50:37,845 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/1_Pooling/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:37,879 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/sentence-transformers/all-MiniLM-L6-v2/c9745ed1d9f207416be6d2e6f8de32d1f16199bf/1_Pooling%2Fconfig.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:38,201 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+2026-04-27 17:50:38,511 [promptee.heuristic_scorer] INFO: SentenceTransformer 'all-MiniLM-L6-v2' loaded successfully.
+2026-04-27 17:50:38,601 [promptee.heuristic_scorer] INFO: SpellChecker loaded successfully.
+2026-04-27 17:50:38,652 [promptee.prompt_optimizer] INFO: System Check | PyTorch CUDA available: True
+2026-04-27 17:50:38,652 [promptee.prompt_optimizer] INFO: Loading tokenizer: Qwen/Qwen2.5-3B-Instruct
+2026-04-27 17:50:38,953 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:40,217 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:40,539 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:40,878 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/tokenizer_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:41,180 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:41,493 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/tokenizer_config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:41,773 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-3B-Instruct/tree/main/additional_chat_templates?recursive=false&expand=false "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:42,058 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-3B-Instruct/tree/main?recursive=true&expand=false "HTTP/1.1 200 OK"
+2026-04-27 17:50:42,343 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/vocab.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:42,663 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/vocab.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:43,008 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/vocab.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:43,459 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/merges.txt "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:43,744 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/merges.txt "HTTP/1.1 200 OK"
+2026-04-27 17:50:44,039 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/merges.txt "HTTP/1.1 200 OK"
+2026-04-27 17:50:45,055 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:45,734 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/tokenizer.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:46,061 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/tokenizer.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:47,364 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/added_tokens.json "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:47,653 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/special_tokens_map.json "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:48,163 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/chat_template.jinja "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:48,852 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-3B-Instruct "HTTP/1.1 200 OK"
+2026-04-27 17:50:48,852 [promptee.prompt_optimizer] INFO: Loading model: Qwen/Qwen2.5-3B-Instruct (4-bit NF4)
+2026-04-27 17:50:49,130 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:49,192 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:49,478 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/adapter_config.json "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:49,761 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:49,788 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/config.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:51,474 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/model.safetensors "HTTP/1.1 404 Not Found"
+2026-04-27 17:50:51,760 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/model.safetensors.index.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 17:50:52,053 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/model.safetensors.index.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:52,352 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/model.safetensors.index.json "HTTP/1.1 200 OK"
+2026-04-27 17:50:52,646 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-3B-Instruct/revision/main "HTTP/1.1 200 OK"
+2026-04-27 17:50:52,935 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/aa8e72537993ba99e69dfaafa59ed015b17504d1/model-00001-of-00002.safetensors "HTTP/1.1 302 Found"
+2026-04-27 17:50:53,001 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/aa8e72537993ba99e69dfaafa59ed015b17504d1/model-00002-of-00002.safetensors "HTTP/1.1 302 Found"
+2026-04-27 17:50:53,297 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-3B-Instruct/xet-read-token/aa8e72537993ba99e69dfaafa59ed015b17504d1 "HTTP/1.1 200 OK"
+2026-04-27 17:50:53,299 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/models/Qwen/Qwen2.5-3B-Instruct/xet-read-token/aa8e72537993ba99e69dfaafa59ed015b17504d1 "HTTP/1.1 200 OK"
+2026-04-27 18:14:56,817 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/generation_config.json "HTTP/1.1 307 Temporary Redirect"
+2026-04-27 18:14:57,118 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/generation_config.json "HTTP/1.1 200 OK"
+2026-04-27 18:14:57,444 [httpx] INFO: HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Qwen/Qwen2.5-3B-Instruct/aa8e72537993ba99e69dfaafa59ed015b17504d1/generation_config.json "HTTP/1.1 200 OK"
+2026-04-27 18:14:57,744 [httpx] INFO: HTTP Request: HEAD https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/resolve/main/custom_generate/generate.py "HTTP/1.1 404 Not Found"
+2026-04-27 18:14:57,836 [promptee.prompt_optimizer] WARNING: No adapters found in C:\Users\quadcore\Documents\CODES\Promptee (v1- Test)\models\adapters. Using base model weights.
+2026-04-27 18:14:57,838 [promptee.prompt_optimizer] INFO: Optimizer engine loaded successfully.
+2026-04-27 18:14:57,839 [promptee.api] INFO: Startup complete — optimizer model loaded.

@@ -9,7 +9,7 @@ To transform a raw, sub-optimal user prompt into a highly structured, clear, and
 ## 3. Tool Logic & Processing
 
 ### A. Model Loading (Runtime)
-- **Base Model**: `Qwen2.5-7B-Instruct`
+- **Base Model**: `Qwen2.5-3B-Instruct`
 - **Quantization**: 4-bit NormalFloat (NF4) via `bitsandbytes` to ensure lightweight inference.
 - **Adapter**: Load pre-trained LoRA parameters from `models/adapters/` via `peft`.
 
