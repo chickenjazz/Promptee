@@ -53,7 +53,7 @@ app = FastAPI(title="Prompt Optimization Pipeline", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -107,7 +107,7 @@ async def optimize_prompt(request: PromptRequest):
     opt_score = scorer.evaluate(raw, optimized)
 
     # 4. Safety / Boundary checks (Self-Annealing)
-    improvement = opt_score["total"] - raw_score["total"]
+    improvement = opt_score["quality_improvement"]
 
     # Reject if: semantic preservation gate failed OR no improvement
     if opt_score["rejected"] or improvement < 0:
