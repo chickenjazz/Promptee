@@ -5,7 +5,7 @@ import OverviewTab from '@/components/tabs/OverviewTab';
 import DemoTab from '@/components/tabs/DemoTab';
 import PipelineTab from '@/components/tabs/PipelineTab';
 import AboutTab from '@/components/tabs/AboutTab';
-import EvaluationTab from '@/components/tabs/EvaluationTab';
+
 import ResultsTab from '@/components/tabs/ResultsTab';
 import SignInModal from '@/components/auth/SignInModal';
 import SplashScreen from '@/components/SplashScreen';
@@ -72,7 +72,7 @@ export default function PrompteeApp() {
   }
 
   const tabs = ['Overview', 'Demo', 'Pipeline', 'About'];
-  if (user) tabs.splice(2, 0, 'Evaluation', 'Results');
+  if (user) tabs.splice(2, 0, 'Results');
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -113,7 +113,7 @@ export default function PrompteeApp() {
       <main className="pb-20 focus:outline-none" tabIndex={-1}>
         {activeTab === 'Overview' && <OverviewTab onTryDemo={() => setActiveTab('Demo')} />}
         {activeTab === 'Demo' && <DemoTab user={user} onSignIn={() => setShowSignIn(true)} optimizedData={optimizedData} setOptimizedData={setOptimizedData} />}
-        {activeTab === 'Evaluation' && user && <EvaluationTab optimizedData={optimizedData} />}
+
         {activeTab === 'Results' && user && <ResultsTab />}
         {activeTab === 'Pipeline' && <PipelineTab />}
         {activeTab === 'About' && <AboutTab />}
