@@ -17,7 +17,9 @@ DEFAULT_OUTPUT_CSV: Path = PROJECT_ROOT / "dataset" / "test_dataset.csv"
 
 PROMPT_COLUMN: str = "prompt"
 REWRITE_COLUMN: str = "rewritten_prompt"
+LOSING_COLUMN: str = "losing_prompts"
 ERROR_COLUMN: str = "rewrite_error"
+LOSING_ERROR_COLUMN: str = "losing_error"
 
 DEFAULT_GENERATION: Dict[str, object] = {
     "temperature": 0.3,

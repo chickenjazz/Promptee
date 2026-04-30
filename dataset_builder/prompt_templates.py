@@ -170,39 +170,6 @@ Rewrite rules:
 - Return only the final rewritten prompt."""
 
 
-_ARCHETYPE_GUIDANCE = {
-    Archetype.CREATIVE: (
-        "This prompt is Creative. Use Semi Modular style: grouped natural language with light structure. "
-        "Improve tone, audience, style, mood, and output constraints. Avoid rigid section labels."
-    ),
-    Archetype.CODING: (
-        "This prompt is Coding. Use Full Modular style with explicit labeled sections such as TASK, "
-        "LANGUAGE/STACK, INPUTS, OUTPUT, CONSTRAINTS, EDGE CASES. The rewritten prompt must ASK for the code "
-        "or explanation. It must NOT contain the actual implementation. Clarify language, framework, expected "
-        "files or functions, input/output behavior, validation, and edge cases."
-    ),
-    Archetype.CONVERSATIONAL: (
-        "This prompt is Conversational. Use Natural Language Modular style: a conversational instruction flow "
-        "without rigid labels. Improve warmth, empathy, interaction flow, practical guidance, and user-centered "
-        "phrasing."
-    ),
-    Archetype.STRUCTURED: (
-        "This prompt is Structured. Use Full Modular style with sections such as OBJECTIVE, SECTIONS, FORMAT, "
-        "DETAIL LEVEL, ORDER, CONSTRAINTS. Improve expected structure, section order, completeness, formatting "
-        "instructions, and output usability."
-    ),
-    Archetype.ANALYTICAL: (
-        "This prompt is Analytical. Use Semi Modular for simple comparisons or Full Modular for complex analysis. "
-        "For complex analysis, sections may include QUESTION, SUBJECT, CRITERIA, ANALYSIS DEPTH, OUTPUT FORMAT, "
-        "FINAL RECOMMENDATION. Improve criteria, reasoning depth, conceptual scope, and final synthesis."
-    ),
-    Archetype.CONCISE: (
-        "This prompt is Concise. Use Minimal Modular style: a compact direct prompt with only the most important "
-        "constraints. Improve directness, brevity, clear output limit, and simple wording."
-    ),
-}
-
-
 @dataclass(frozen=True)
 class PromptPlan:
     archetype: Archetype
@@ -214,8 +181,6 @@ class PromptPlan:
 def build_plan(raw_prompt: str) -> PromptPlan:
     """Return the full prompt plan (archetype, modularity, system + user messages)."""
     archetype = detect_archetype(raw_prompt)
-    modularity = modularity_for(archetype)
-    guidance = _ARCHETYPE_GUIDANCE[archetype]
     system = f"{_BASE_SYSTEM}\n\nArchetype hint for the current row (do not echo this back):\n{guidance}"
     user = (
         "Raw prompt:\n"
