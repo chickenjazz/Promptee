@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import logging
 import torch
@@ -12,8 +13,108 @@ logger = logging.getLogger("promptee.prompt_optimizer")
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_ADAPTER_PATH = os.path.join(PROJECT_ROOT, "models", "adapters")
 
+# Make the dataset_builder package importable so the runtime meta-prompt can
+# reuse the same archetype classifier the training data was generated with.
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+from dataset_builder.prompt_templates import Archetype, detect_archetype, modularity_for
+
 # Maximum input length (tokens) — Qwen2.5-3B supports 32k, keep headroom for generation
 MAX_INPUT_TOKENS = 4096
+
+# --- Archetype-aware system prompts ---------------------------------------
+# Mirrors the modularity rules in dataset_builder/prompt_templates.py so the
+# runtime meta-prompt matches the regime the DPO `chosen` outputs were drawn
+# from. The classifier returns one of six archetypes; each maps to a scaffold
+# the model is asked to emit.
+
+_BASE_RULES = (
+    "Rules:\n"
+    "1. Output ONLY the rewritten prompt — no explanations, preamble, or closing remarks.\n"
+    "2. Do NOT answer the prompt, discuss it, or act as a chatbot.\n"
+    "3. Preserve the original intent, topic, and constraints exactly.\n"
+    "4. Do not over-engineer simple prompts; do not invent requirements not implied by the original.\n"
+    "5. Use [Insert ...] placeholders only for details the user genuinely did not provide."
+)
+
+_FULL_MODULAR_TEMPLATE = (
+    "ROLE: <one-line expert persona appropriate for the task>\n"
+    "\n"
+    "TASK:\n"
+    "<concise restatement of what to produce>\n"
+    "\n"
+    "INPUTS:\n"
+    "- <bulleted inputs the user must fill in, using [Insert ...] placeholders where unspecified>\n"
+    "\n"
+    "OUTPUTS:\n"
+    "<numbered or bulleted list of concrete deliverables>\n"
+    "\n"
+    "CONSTRAINTS:\n"
+    "- <bulleted rules, best practices, or quality bars>"
+)
+
+_SEMI_MODULAR_TEMPLATE = (
+    "ROLE: <one-line expert persona>\n"
+    "\n"
+    "TASK:\n"
+    "<concise restatement of what to produce>\n"
+    "\n"
+    "REQUIREMENTS:\n"
+    "- <bulleted requirements, constraints, or stylistic guidance>"
+)
+
+
+def _build_system_prompt(archetype: Archetype) -> str:
+    """Return the archetype-specific system meta-prompt.
+
+    The scaffold tracks `_DEFAULT_MODULARITY` in dataset_builder so the runtime
+    asks the model for the same shape of output the adapter was trained to prefer.
+    """
+    if archetype in (Archetype.CODING, Archetype.STRUCTURED):
+        scaffold = (
+            "Modularity: Full Modular. Output the rewrite using this exact section "
+            "format, in this order:\n\n"
+            f"{_FULL_MODULAR_TEMPLATE}\n\n"
+            "You may add an EDGE CASES or BEST PRACTICES section after CONSTRAINTS "
+            "only if clearly warranted by the task."
+        )
+    elif archetype in (Archetype.CREATIVE, Archetype.ANALYTICAL):
+        scaffold = (
+            "Modularity: Semi Modular. Output a structured rewrite using these sections:\n\n"
+            f"{_SEMI_MODULAR_TEMPLATE}\n\n"
+            "Keep the rewrite expressive — do not force [Insert ...] placeholders "
+            "unless something is genuinely missing."
+        )
+    elif archetype == Archetype.CONVERSATIONAL:
+        scaffold = (
+            "Modularity: Natural Language Modular. Output the rewrite as one or two "
+            "flowing paragraphs of natural English — no labeled sections, no ROLE / "
+            "TASK / OUTPUTS headers, no bullet scaffolding. The rewrite should read "
+            "like a thoughtfully phrased request, with role, context, tone, and any "
+            "constraints woven in naturally."
+        )
+    elif archetype == Archetype.CONCISE:
+        scaffold = (
+            "Modularity: Minimal Modular. Output the rewrite as a single sharpened "
+            "command or question — ideally one sentence, at most two. No labels, no "
+            "bullets, no scaffolding. Add only the minimum specificity the original "
+            "lacked."
+        )
+    else:
+        scaffold = (
+            "Modularity: Semi Modular. Output a structured rewrite using these sections:\n\n"
+            f"{_SEMI_MODULAR_TEMPLATE}"
+        )
+
+    return (
+        "You are an expert Prompt Rewriter, Prompt Architect, and Prompt Quality "
+        "Optimizer.\n\n"
+        "Rewrite the user's raw prompt into a clearer, more specific, better-"
+        "structured, and more reliable prompt while preserving the original intent.\n\n"
+        f"{scaffold}\n\n"
+        f"{_BASE_RULES}"
+    )
+
 
 # Common LLM preamble patterns to strip from output
 _PREAMBLE_PATTERNS = [
@@ -157,14 +258,51 @@ class PromptOptimizer:
             raw_prompt = self.tokenizer.decode(input_tokens, skip_special_tokens=True)
 
         # System meta-prompt (SOP §3B.1)
-        sys_prompt = sys_prompt_override or (
-            "You are a prompt refinement engine. Your ONLY task is to rewrite the user's "
-            "prompt into a highly structured, clear, and specific command. Rules:\n"
-            "1. Output ONLY the optimized prompt text — no explanations, no preamble.\n"
-            "2. Do NOT answer the prompt, discuss it, or act as a chatbot.\n"
-            "3. Preserve the original intent and meaning exactly.\n"
-            "4. Add structure, clarity, specificity, and constraints where missing."
-        )
+        # --- OLD generic meta-prompt (kept for reference) ---
+        # sys_prompt = sys_prompt_override or (
+        #     "You are a prompt refinement engine. Your ONLY task is to rewrite the user's "
+        #     "prompt into a highly structured, clear, and specific command. Rules:\n"
+        #     "1. Output ONLY the optimized prompt text — no explanations, no preamble.\n"
+        #     "2. Do NOT answer the prompt, discuss it, or act as a chatbot.\n"
+        #     "3. Preserve the original intent and meaning exactly.\n"
+        #     "4. Add structure, clarity, specificity, and constraints where missing."
+        # )
+        # --- OLD static Full-Modular template (replaced by archetype-aware routing) ---
+        # sys_prompt = sys_prompt_override or (
+        #     "You are a prompt refinement engine. Your ONLY task is to rewrite the user's "
+        #     "raw prompt into a structured prompt template. Output the rewrite in this exact "
+        #     "section format, in this order:\n"
+        #     "\n"
+        #     "ROLE: <one-line expert persona appropriate for the task>\n"
+        #     "\n"
+        #     "TASK:\n<concise restatement of what to produce>\n"
+        #     "\n"
+        #     "INPUTS:\n- <bulleted inputs the user must fill in, using [Insert ...] placeholders where the raw prompt is unspecified>\n"
+        #     "\n"
+        #     "OUTPUTS:\n<numbered or bulleted list of concrete deliverables>\n"
+        #     "\n"
+        #     "CONSTRAINTS:\n- <bulleted rules, best practices, or quality bars>\n"
+        #     "\n"
+        #     "Rules:\n"
+        #     "1. Output ONLY the template above — no explanations, no preamble, no closing remarks.\n"
+        #     "2. Do NOT answer the prompt, discuss it, or act as a chatbot.\n"
+        #     "3. Preserve the original intent and meaning exactly; do not invent new requirements.\n"
+        #     "4. Use [Insert ...] placeholders for any detail the user did not provide.\n"
+        #     "5. Add an EDGE CASES or BEST PRACTICES section after CONSTRAINTS only if the task clearly warrants it."
+        # )
+
+        # Archetype-aware dynamic meta-prompt — mirrors dataset_builder/prompt_templates.py
+        # so the runtime asks for the same modularity the DPO data was generated under.
+        if sys_prompt_override is not None:
+            sys_prompt = sys_prompt_override
+            archetype = None
+        else:
+            archetype = detect_archetype(raw_prompt)
+            sys_prompt = _build_system_prompt(archetype)
+            logger.info(
+                f"Archetype routed: {archetype.value} "
+                f"(modularity={modularity_for(archetype).value})"
+            )
 
         user_content = user_prompt_template.format(raw_prompt) if user_prompt_template else f"Optimize this prompt: {raw_prompt}"
 
