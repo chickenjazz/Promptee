@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tools.heuristic_scorer import HeuristicScorer
-from tools.prompt_optimizer import PromptOptimizer
+from tools.prompt_optimizer import PromptOptimizer, detect_answer_shape
 from tools.external_llm import ExternalLLMService
 
 # Configure structured logging for all promptee modules
@@ -103,16 +103,30 @@ async def optimize_prompt(request: PromptRequest):
             detail="Prompt optimizer model is not loaded. Please try again later.",
         )
 
-    # 3. Compute Optimized Score (with semantic preservation gate)
+    # 2b. Answer-shape guardrail — catches the case where the model produced
+    # an actual answer / code instead of a rewritten prompt. Cheap heuristic
+    # (no model call); runs before scoring so we skip a wasted evaluate().
+    is_answer_shaped, reasons = detect_answer_shape(raw, optimized)
+    if is_answer_shaped:
+        logger.info(
+            f"Answer-shape detected, falling back to raw prompt. "
+            f"signals={reasons}"
+        )
+        optimized = raw
+
+    # 3. Compute Optimized Score (with semantic + specificity-recall gates)
     opt_score = scorer.evaluate(raw, optimized)
 
     # 4. Safety / Boundary checks (Self-Annealing)
     improvement = opt_score["quality_improvement"]
 
-    # Reject if: semantic preservation gate failed OR no improvement
+    # Reject if: any scorer gate failed OR no improvement
     if opt_score["rejected"] or improvement < 0:
         logger.info(
-            f"Rewrite rejected (rejected={opt_score['rejected']}, improvement={improvement:.4f}). "
+            f"Rewrite rejected (rejected={opt_score['rejected']}, "
+            f"improvement={improvement:.4f}, "
+            f"semantic={opt_score['semantic_preservation']:.4f}, "
+            f"specificity_recall={opt_score['specificity_recall']:.4f}). "
             f"Falling back to raw prompt."
         )
         optimized = raw

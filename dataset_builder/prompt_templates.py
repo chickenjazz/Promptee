@@ -80,8 +80,24 @@ _KEYWORDS = (
         (
             r"\b(?:compare|contrast|analy[sz]e|evaluate|assess|discuss|explain|reason about|argue|critique)\b",
             r"\b(?:pros and cons|trade[- ]offs?|implications?|differences?|similarit(?:y|ies))\b",
+            # Question-form patterns: catches "Do you know X?", "What is X?",
+            # etc. so analysis-style questions don't collapse to Concise.
+            r"\b(?:do you know|do you understand|are you familiar|"
+            r"have you (?:ever|seen|heard|read)|can you explain|"
+            r"what is|what are|how does|how do|why does|why do)\b",
         ),
     ),
+)
+
+
+# Pattern matched against the raw prompt's first token to detect inputs that
+# start with an auxiliary verb (yes/no question form). Used by detect_archetype's
+# fallback so questions never default to CONCISE on length alone.
+_AUX_VERB_START = re.compile(
+    r"^\s*(?:do|does|did|is|are|was|were|am|"
+    r"can|could|would|will|should|shall|may|might|"
+    r"have|has|had)\b",
+    re.IGNORECASE,
 )
 
 
@@ -114,7 +130,12 @@ def detect_archetype(raw_prompt: str) -> Archetype:
                 scores[archetype] += 1
 
     if not any(scores.values()):
-        # Heuristic fallback: short prompts default to Concise, long ones to Analytical.
+        # Heuristic fallback: short prompts default to Concise, long ones to
+        # Analytical — but questions never default to Concise (otherwise
+        # "Do you know X?" collapses to a one-line Minimal Modular rewrite).
+        is_question = text.endswith("?") or bool(_AUX_VERB_START.match(text))
+        if is_question:
+            return Archetype.ANALYTICAL
         return Archetype.CONCISE if len(text.split()) <= 12 else Archetype.ANALYTICAL
 
     # Honor _KEYWORDS ordering when scores tie (Concise > Coding > Structured > ...).
