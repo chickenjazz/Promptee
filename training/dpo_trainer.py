@@ -20,9 +20,16 @@ from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from datasets import load_dataset
 from trl import DPOConfig, DPOTrainer
 
+# Fix SSL_CERT_FILE pointing to non-existent path (known env issue)
+if 'SSL_CERT_FILE' in os.environ and not os.path.exists(os.environ['SSL_CERT_FILE']):
+    del os.environ['SSL_CERT_FILE']
+
 # Project root
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PROJECT_ROOT)
+
+if not torch.cuda.is_available():
+    raise RuntimeError("CUDA is not available. DPO training requires a GPU.")
 
 logger = logging.getLogger("promptee.dpo_trainer")
 logging.basicConfig(
@@ -31,7 +38,7 @@ logging.basicConfig(
 )
 
 # Defaults from SOP
-BASE_MODEL_ID = "Qwen/Qwen2.5-3B-Instruct" #TODO: Change to 3B
+BASE_MODEL_ID = "Qwen/Qwen2.5-3B-Instruct"
 DATASET_PATH = os.path.join(PROJECT_ROOT, "datasets", "preference_pairs.jsonl")
 CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "training", "checkpoints")
 
@@ -48,7 +55,6 @@ def train(
     lora_alpha: int = 32,
     lora_dropout: float = 0.05,
     max_length: int = 512,
-    max_prompt_length: int = 256,
 ):
     """
     Run DPO training on the preference dataset.
@@ -135,7 +141,6 @@ def train(
         learning_rate=learning_rate,
         beta=beta,
         max_length=max_length,
-        max_prompt_length=max_prompt_length,
         optim="paged_adamw_8bit",
         logging_steps=10,
         save_steps=50,

@@ -7,45 +7,48 @@ from tools.heuristic_scorer import HeuristicScorer
 
 scorer = HeuristicScorer()
 raw_prompt = """
-Draft a contract between a startup and an advisor of the advisory board, focusing on the following key points:
+Chillax is a disposable vape brand. We sell in brick-and-mortar stores all over the world. I want to create offline marketing materials that could be used in a variety of places
+ 1. vape stores
+ 2. online distribution channels
+ Please help me draft a draft a marketing calendar including events, promotions and corresponding marketing materials"""
 
-- The contract should include a jurisdiction clause specifying the state/country.
-- It should outline compensation options, such as equity through NSOs or cash payments.
-- Services and commitments should detail the advisor's expected involvement, like meeting frequency and types of support provided.
-- Essential clauses should cover confidentiality, intellectual property rights, independent contractor status, conflict of interest, and termination procedures.
-- Ensure the contract includes clear sections and placeholders for specific details like names and dates."""
 opt_prompt = """
-Role: Legal Documentation Specialist for Startups
+ROLE:
+You are a compliance-focused marketing strategist with experience in age-restricted consumer products and offline retail campaigns.
 
-Objective: Draft a comprehensive Advisor Agreement (Individual Consultant) between a high-growth startup and a member of its Advisory Board.
+TASK:
+Create a responsible marketing calendar for Chillax, a disposable vape brand sold through brick-and-mortar retail locations and approved online distribution channels.
 
-Contractual Parameters:
+OBJECTIVE:
+Develop a structured marketing calendar that includes adult-focused events, promotions, and corresponding marketing materials while following applicable laws, age-restriction requirements, and responsible advertising standards.
 
-Jurisdiction: [INSERT STATE/COUNTRY, e.g., Delaware, USA].
+TARGET CHANNELS:
 
-Compensation: * Equity: [e.g., 0.25% of Common Stock] via an NSO (Non-Qualified Stock Option) with a [e.g., 2-year] vesting schedule and a [e.g., 3-month] cliff.
+1. Vape stores and adult-only retail locations
+2. Approved online distribution channels with proper age verification
+3. Distributor or retailer-facing promotional touchpoints
 
-Cash: [e.g., None, or $X per month].
+REQUIREMENTS:
 
-Services & Commitment: Define a commitment of [e.g., 5 hours per month], including one monthly strategy call and ad-hoc email support.
+* Focus only on legal-age adult consumers and retail partners.
+* Avoid youth-oriented language, imagery, themes, influencers, or promotional tactics.
+* Do not make health, safety, cessation, or medical claims.
+* Include age-gating, compliance reminders, and responsible-use messaging where appropriate.
+* Suggest offline marketing materials such as posters, shelf talkers, counter cards, retailer one-pagers, product information sheets, display signage, and event handouts.
+* Include retailer-facing promotions, staff education campaigns, product awareness initiatives, and seasonal merchandising ideas.
+* Organize the calendar by month or quarter.
+* For each campaign, include:
 
-Term: [e.g., At-will, or 12-month fixed term].
+  * campaign theme
+  * target audience
+  * event or promotion idea
+  * required marketing materials
+  * distribution channel
+  * compliance notes
+  * success metrics
 
-Essential Clauses to Include:
-
-Confidentiality & Non-Disclosure: Strict protection of startup trade secrets.
-
-Intellectual Property Assignment: Ensuring any ideas or work produced during the advisory period belong to the company.
-
-Independent Contractor Status: Explicitly stating the advisor is not an employee and is responsible for their own taxes.
-
-Conflict of Interest: Ensuring the advisor does not currently advise direct competitors.
-
-Termination: Procedures for ending the agreement with [e.g., 30 days] notice by either party.
-
-Output Format:
-
-A formal, professional contract template with clearly labeled sections and [BRACKETED] placeholders for specific names and dates.
+FORMAT:
+Present the output as a clear marketing calendar table, followed by brief notes on compliance, implementation, and performance tracking.
 """
 res = scorer.evaluate(raw_prompt, opt_prompt)
 print("EVALUATE:", json.dumps(res, indent=2))
