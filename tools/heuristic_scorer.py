@@ -107,6 +107,13 @@ class ScorerConfig:
         # even one signal to saturate at 1.0.
         specificity_ideal_density: float = 0.50,
 
+        # Length floor for specificity: prompts with fewer informative
+        # tokens than this are linearly down-scaled. Prevents tiny prompts
+        # anchored on a single named entity (e.g. "Write an essay about
+        # Leonardo Da Vinci") from pinning specificity at 1.0 — density
+        # alone is not a reliable signal on small samples.
+        specificity_length_floor: int = 12,
+
         # ── Penalty tuning ────────────────────────────────────────────
         ambiguity_max_penalty: float = 0.15,
         redundancy_max_penalty: float = 0.15,
@@ -141,6 +148,7 @@ class ScorerConfig:
         self.semantic_hard_floor = semantic_hard_floor
         self.semantic_soft_threshold = semantic_soft_threshold
         self.specificity_ideal_density = specificity_ideal_density
+        self.specificity_length_floor = specificity_length_floor
         self.ambiguity_max_penalty = ambiguity_max_penalty
         self.redundancy_max_penalty = redundancy_max_penalty
         self.min_tokens_for_full_score = min_tokens_for_full_score
@@ -684,21 +692,55 @@ class HeuristicScorer:
     # Stage 2: Specificity Scoring — Helpers
     # ═══════════════════════════════════════════════════════════════════
 
-    @staticmethod
-    def _get_informative_tokens(doc) -> list:
+    # Section headers that act as scaffolding in structured prompt templates.
+    # Excluded from the informative-token denominator so a ROLE/TASK/CONSTRAINTS
+    # rewrite is not penalised for its own structure.
+    _SCAFFOLD_HEADER_TOKENS: frozenset = frozenset({
+        "ROLE", "TASK", "INPUTS", "OUTPUTS", "OUTPUT", "CONSTRAINTS",
+        "REQUIREMENTS", "OBJECTIVE", "SECTIONS", "FORMAT", "LANGUAGE",
+        "STACK", "EDGE", "CASES", "BEST", "PRACTICES", "NOTES", "CRITERIA",
+        "QUESTION", "SUBJECT", "DELIVERABLES", "DETAIL", "LEVEL", "ORDER",
+        "RECOMMENDATION", "ANALYSIS", "DEPTH", "GOAL", "GOALS", "CONTEXT",
+        "BACKGROUND",
+    })
+
+    # Detects "[Insert ...]" placeholder spans whose content is scaffolding,
+    # not user-supplied specificity. Used to exclude tokens inside such spans
+    # from the informative-token denominator.
+    _RE_INSERT_PLACEHOLDER = re.compile(
+        r"\[\s*Insert\b[^\]]*\]", re.IGNORECASE
+    )
+
+    @classmethod
+    def _get_informative_tokens(cls, doc) -> list:
         """
-        Return tokens excluding punctuation, whitespace, stopwords, and
-        symbols.  This produces a clean denominator for constraint density
-        so that filler tokens do not deflate the ratio.
+        Return tokens excluding punctuation, whitespace, stopwords, symbols,
+        scaffold-section headers (ROLE/TASK/...), and tokens inside
+        ``[Insert ...]`` placeholder spans. Produces a clean denominator
+        for constraint density so that template structure does not
+        deflate the ratio.
 
         Numbers are kept — they are informative for specificity.
         """
+        text = doc.text
+        insert_spans = [
+            (m.start(), m.end())
+            for m in cls._RE_INSERT_PLACEHOLDER.finditer(text)
+        ]
+
+        def _in_insert_span(tok) -> bool:
+            tok_start = tok.idx
+            tok_end = tok.idx + len(tok.text)
+            return any(s <= tok_start and tok_end <= e for s, e in insert_spans)
+
         return [
             t for t in doc
             if not t.is_punct
             and not t.is_space
             and not t.is_stop
             and t.pos_ != "SYM"
+            and t.text.upper() not in cls._SCAFFOLD_HEADER_TOKENS
+            and not _in_insert_span(t)
         ]
 
     # ── Regex patterns for constraint detection (compiled once) ──────
@@ -711,16 +753,44 @@ class HeuristicScorer:
         r"|between\s+\d+\s+and\s+\d+|up\s+to\s+\d+)\b",
         re.IGNORECASE,
     )
+    # Verb + (optional modifiers, up to ~4 words) + format/deliverable noun.
+    # Modifiers allow patterns like "Output ONLY the JSON code block",
+    # "provide a complete YAML manifest", "Generate strictly valid JSON".
     _RE_FORMAT_INSTRUCTION = re.compile(
-        r"\b(?:return|output|provide|give|deliver|format)"
-        r"\s+(?:as\s+|in\s+|a\s+)?"
+        r"\b(?:return|output|provide|give|deliver|generate|produce|"
+        r"create|write|format)"
+        r"(?:\s+(?:only|strictly|exactly|a|an|the|complete|valid|"
+        r"well[- ]formed|following|all))*"
+        r"\s+"
         r"(?:json|csv|markdown|xml|yaml|table|html|plain\s+text"
-        r"|bullet\s+list|structured\s+outline)\b",
+        r"|bullet\s+list|structured\s+outline|code\s+block|manifest|"
+        r"payload|schema|deliverables?|outline|report|response|template)\b",
+        re.IGNORECASE,
+    )
+    # "Provide the following deliverables:" / "Deliver the following:" pattern,
+    # ubiquitous in `chosen` rewrites. Treated as a single format-instruction
+    # signal (weight 1.2) since it commits the response shape.
+    _RE_DELIVERABLES_LIST = re.compile(
+        r"\b(?:provide|deliver|return|produce|include)\s+"
+        r"the\s+following(?:\s+\w+){0,3}\s*:",
         re.IGNORECASE,
     )
     _RE_TOOL_REQUIREMENT = re.compile(
-        r"\b(?:using|in|with)\s+"
-        r"(?:python|javascript|typescript|sql|bash|r|go|java|c\+\+|ruby|rust)\b",
+        r"\b(?:using|in|with|use|implement(?:ed)?\s+in|written\s+in|"
+        r"build(?:\s+with)?|leverage)\s+"
+        r"(?:python|javascript|typescript|sql|bash|r|go|java|c\+\+|c#|"
+        r"ruby|rust|kotlin|swift|scala|php|perl|powershell|lua|dart|"
+        r"elixir|haskell|nodejs|node\.js)\b",
+        re.IGNORECASE,
+    )
+    # Frameworks: scored at reduced weight (0.6) inside
+    # _detect_tool_and_deliverable_constraints. Distinct regex so the bare
+    # framework name doesn't need a prefix verb (a framework alone is a
+    # weaker specificity signal than an explicit "using <lang>" directive).
+    _RE_FRAMEWORK_REQUIREMENT = re.compile(
+        r"\b(?:react|vue|angular|svelte|next\.?js|django|flask|fastapi|"
+        r"spring|express|laravel|rails|\.net|tailwind|bootstrap|"
+        r"pytorch|tensorflow|jax|pandas|numpy|scikit[- ]?learn)\b",
         re.IGNORECASE,
     )
     _RE_FILE_FORMAT = re.compile(
@@ -730,6 +800,20 @@ class HeuristicScorer:
     _RE_STRUCTURAL_EXECUTION = re.compile(
         r"\b(?:step[- ]by[- ]step|comparison\s+table|numbered\s+(?:list|explanation)"
         r"|code\s+block|worked\s+example|side[- ]by[- ]side)\b",
+        re.IGNORECASE,
+    )
+    # Negation constraints bound the output space ("Do not use deprecated
+    # libraries", "Never include personal data"). Real specificity signal.
+    _RE_NEGATION_CONSTRAINT = re.compile(
+        r"\b(?:do\s+not|don['’]t|must\s+not|should\s+not|shouldn['’]t"
+        r"|never|avoid|refrain\s+from|refuse\s+to|strictly\s+refuse"
+        r"|without\s+(?:using|including|adding))\b",
+        re.IGNORECASE,
+    )
+    # Persona / role declaration: constrains tone, expertise, voice.
+    _RE_PERSONA_DECLARATION = re.compile(
+        r"(?:^|\n|\.\s+)\s*(?:you\s+are|act\s+as|assume\s+the\s+role\s+of"
+        r"|as\s+(?:a|an)\s+expert|role\s*:\s*you\s+are)\b",
         re.IGNORECASE,
     )
 
@@ -782,11 +866,13 @@ class HeuristicScorer:
         """
         Detect output format requirement phrases.
 
-        Examples: "Return JSON", "output as markdown", "provide a table"
-        Each match contributes weight 1.2.
+        Examples: "Return JSON", "output as markdown", "provide a table",
+        "Output ONLY the JSON code block", "Provide the following
+        deliverables:".  Each match contributes weight 1.2.
         """
         matches = self._RE_FORMAT_INSTRUCTION.findall(text)
-        return len(matches) * 1.2
+        deliverables = self._RE_DELIVERABLES_LIST.findall(text)
+        return (len(matches) + len(deliverables)) * 1.2
 
     def _detect_range_constraints(self, text: str) -> tuple:
         """
@@ -810,13 +896,35 @@ class HeuristicScorer:
 
     def _detect_tool_and_deliverable_constraints(self, text: str) -> float:
         """
-        Detect tool requirements, file format mentions, and structural
-        execution constraints.  Each match contributes weight 1.0.
+        Detect tool requirements, file format mentions, structural
+        execution constraints, and named frameworks.  Tools/files/exec
+        contribute 1.0 each; framework names contribute 0.6 each (weaker
+        signal than an explicit language directive).
         """
         tool_count = len(self._RE_TOOL_REQUIREMENT.findall(text))
         file_count = len(self._RE_FILE_FORMAT.findall(text))
         exec_count = len(self._RE_STRUCTURAL_EXECUTION.findall(text))
-        return (tool_count + file_count + exec_count) * 1.0
+        framework_count = len(self._RE_FRAMEWORK_REQUIREMENT.findall(text))
+        return (tool_count + file_count + exec_count) * 1.0 + framework_count * 0.6
+
+    def _detect_negation_constraints(self, text: str) -> float:
+        """
+        Detect negation-style constraints ("Do not", "Never", "Avoid",
+        "Strictly refuse", "Without using"). Each match contributes
+        weight 1.0 — same scale as a scalar nummod, since a negation
+        clause meaningfully bounds the response.
+        """
+        return len(self._RE_NEGATION_CONSTRAINT.findall(text)) * 1.0
+
+    def _detect_persona_declarations(self, text: str) -> float:
+        """
+        Detect persona / role declarations at the start of a line or
+        sentence ("You are an expert...", "Act as a senior engineer",
+        "ROLE: You are..."). Each match contributes weight 0.8 — slightly
+        below entity weight, since persona constrains style/tone rather
+        than the substantive output.
+        """
+        return len(self._RE_PERSONA_DECLARATION.findall(text)) * 0.8
 
     def _compute_local_ambiguity_ratio(self, informative_tokens: list) -> float:
         """
@@ -842,19 +950,24 @@ class HeuristicScorer:
         """
         SOP §3B — Specificity Score (0.0–1.0).
 
-        Measures constraint density across multiple signal types:
-          - amod:  adjectival modifiers with diminishing returns per head noun
-          - nummod: scalar numeric modifiers (weight 1.0)
-          - Entities: attachment-validated, span-length-weighted (weight 1.2)
-          - Range constraints: "3-5", "at least X" (weight 1.5)
-          - Format instructions: "Return JSON", "output table" (weight 1.2)
-          - Tool/deliverable constraints: "using Python", ".csv" (weight 1.0)
+        Hybrid coverage + intensity scoring across constraint categories:
+          - modifiers (amod + nummod, combined)
+          - Entities: attachment-validated, span-length-weighted
+          - Range constraints: "3-5", "at least X"
+          - Format instructions: "Return JSON", "output table"
+          - Tool/deliverable constraints: "using Python", ".csv"
+          - Negation constraints: "Do not / Never / Avoid ..."
+          - Persona declarations: "You are an expert ..."
 
-        Density uses informative tokens only (excludes punctuation,
-        stopwords, whitespace, symbols) for a fair denominator.
+        Score = 0.85·coverage + 0.15·intensity, where coverage is the
+        fraction of categories represented and intensity is a saturating
+        function of total signal weight. This makes specificity
+        length-invariant: a tight, well-specified short prompt and a
+        verbose, well-specified long prompt receive comparable scores.
 
-        Ambiguity dampening (exponential decay) prevents vague-but-numeric
-        prompts from receiving inflated specificity.
+        Ambiguity dampening (exponential decay) still applies to penalise
+        vague-but-numeric prompts. The length floor still protects against
+        unreliable signals on very short samples.
 
         Signal separation: this function never rewards formatting structure
         (headers, bullets, numbered lists, layout) — those belong to clarity.
@@ -915,19 +1028,37 @@ class HeuristicScorer:
         # ── Tool & deliverable constraints (Issues 3, 11) ─────────────
         tool_deliverable_score: float = self._detect_tool_and_deliverable_constraints(prompt)
 
-        # ── Weighted signal aggregation ───────────────────────────────
-        total_signal: float = (
-            amod_score
-            + nummod_score
-            + entity_score
-            + range_score
-            + format_score
-            + tool_deliverable_score
-        )
+        # ── Negation & persona constraints ────────────────────────────
+        # Real specificity signals that previously scored zero: negative
+        # constraints bound the output space, persona declarations bound
+        # tone/voice.
+        negation_score: float = self._detect_negation_constraints(prompt)
+        persona_score: float = self._detect_persona_declarations(prompt)
 
-        # ── Density & normalisation ───────────────────────────────────
-        density: float = total_signal / n
-        score: float = min(density / self.config.specificity_ideal_density, 1.0)
+        # ── Hybrid coverage + intensity scoring ───────────────────────
+        # Length-invariant by design. Each constraint *category* gets
+        # binary credit, so a 30-token prompt with all dimensions
+        # specified scores the same as a 300-token one. A small
+        # intensity term breaks ties (e.g. "1 negation" vs "5 negations")
+        # without letting any single category dominate.
+        category_scores: tuple = (
+            amod_score + nummod_score,   # modifiers (combined — weakest signal pair)
+            entity_score,
+            range_score,
+            format_score,
+            tool_deliverable_score,
+            negation_score,
+            persona_score,
+        )
+        present: int = sum(1 for s in category_scores if s > 0)
+        coverage: float = present / len(category_scores)
+
+        total_signal: float = sum(category_scores)
+        # k = 0.2 → intensity ≈ 0.5 at signal weight ~3.5,
+        # saturates near 1.0 by signal ≥ ~15. Prevents stuffing.
+        intensity: float = 1.0 - math.exp(-0.2 * total_signal)
+
+        score: float = 0.85 * coverage + 0.15 * intensity
 
         # ── Ambiguity dampening (Issue 12) ────────────────────────────
         # Exponential decay: mild ambiguity → mild reduction,
@@ -935,6 +1066,15 @@ class HeuristicScorer:
         ambig_ratio: float = self._compute_local_ambiguity_ratio(informative)
         dampening: float = math.exp(-2.0 * ambig_ratio)
         score *= dampening
+
+        # ── Length floor ──────────────────────────────────────────────
+        # Density on tiny samples is unreliable. A 5-token prompt anchored
+        # on a single named entity can hit density ≥ ideal trivially. Linearly
+        # down-scale specificity for prompts below `specificity_length_floor`
+        # informative tokens; full credit at or above the floor.
+        floor: int = self.config.specificity_length_floor
+        if floor > 0 and n < floor:
+            score *= n / floor
 
         return max(min(score, 1.0), 0.0)
 
