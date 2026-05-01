@@ -170,6 +170,46 @@ Rewrite rules:
 - Return only the final rewritten prompt."""
 
 
+# Per-archetype guidance lifted from architecture/auto-rewriter.md §Archetype-Specific Rewrite Rules.
+# Injected into the system prompt as a hint so the model emphasizes the right axes for each archetype.
+_ARCHETYPE_GUIDANCE = {
+    Archetype.CREATIVE: (
+        "This is a Creative prompt. Use Semi Modular rewriting.\n"
+        "Improve: tone, audience, style, mood, originality, output constraints.\n"
+        "Avoid overly rigid section labels unless the original prompt is complex."
+    ),
+    Archetype.CODING: (
+        "This is a Coding prompt. Use Full Modular rewriting with sections like:\n"
+        "TASK / LANGUAGE/STACK / INPUTS / OUTPUT / CONSTRAINTS / EDGE CASES.\n"
+        "Improve: language clarity, framework/stack details, expected files or functions, "
+        "input/output behavior, validation, edge cases.\n"
+        "Ask for the code or explanation — do not write the implementation yourself."
+    ),
+    Archetype.CONVERSATIONAL: (
+        "This is a Conversational prompt. Use Natural Language Modular rewriting.\n"
+        "Improve: warmth, empathy, interaction flow, practical guidance, user-centered phrasing.\n"
+        "Output one or two flowing paragraphs — no labeled sections."
+    ),
+    Archetype.STRUCTURED: (
+        "This is a Structured prompt. Use Full Modular rewriting with sections like:\n"
+        "OBJECTIVE / SECTIONS / FORMAT / DETAIL LEVEL / ORDER / CONSTRAINTS.\n"
+        "Improve: expected structure, section order, completeness, formatting instructions, "
+        "output usability."
+    ),
+    Archetype.ANALYTICAL: (
+        "This is an Analytical prompt. Use Semi Modular or Full Modular rewriting depending on complexity.\n"
+        "For complex prompts use sections like: QUESTION / SUBJECT / CRITERIA / ANALYSIS DEPTH / "
+        "OUTPUT FORMAT / FINAL RECOMMENDATION.\n"
+        "Improve: comparison criteria, reasoning depth, conceptual scope, final synthesis, examples."
+    ),
+    Archetype.CONCISE: (
+        "This is a Concise prompt. Use Minimal Modular rewriting.\n"
+        "Improve: directness, brevity, clear output limit, simple wording.\n"
+        "Output a single sharpened command or question — no labels, no scaffolding."
+    ),
+}
+
+
 @dataclass(frozen=True)
 class PromptPlan:
     archetype: Archetype
@@ -181,6 +221,8 @@ class PromptPlan:
 def build_plan(raw_prompt: str) -> PromptPlan:
     """Return the full prompt plan (archetype, modularity, system + user messages)."""
     archetype = detect_archetype(raw_prompt)
+    modularity = modularity_for(archetype)
+    guidance = _ARCHETYPE_GUIDANCE[archetype]
     system = f"{_BASE_SYSTEM}\n\nArchetype hint for the current row (do not echo this back):\n{guidance}"
     user = (
         "Raw prompt:\n"
