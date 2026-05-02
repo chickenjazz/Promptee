@@ -13,6 +13,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tools.heuristic_scorer import HeuristicScorer
 from tools.prompt_optimizer import PromptOptimizer
 from tools.external_llm import ExternalLLMService
+from tools.weakness_analyzer import WeaknessAnalyzer
 
 # Configure structured logging for all promptee modules
 logging.basicConfig(
@@ -32,6 +33,7 @@ logger = logging.getLogger("promptee.api")
 scorer = HeuristicScorer()
 optimizer = PromptOptimizer()
 ext_llm = ExternalLLMService()
+weakness_analyzer = WeaknessAnalyzer()
 
 
 @asynccontextmanager
@@ -78,6 +80,8 @@ class OptimizationResponse(BaseModel):
     optimized_prompt: str
     raw_score: dict
     optimized_score: dict
+    raw_weaknesses: list
+    raw_missing_components: list
     external_llm_response_raw: str
     external_llm_response_optimized: str
     improvement_score: float
@@ -90,8 +94,9 @@ async def optimize_prompt(request: PromptRequest):
     if not raw.strip():
         raise HTTPException(status_code=400, detail="Prompt cannot be empty.")
 
-    # 1. Compute Raw Score
+    # 1. Compute Raw Score + locate per-span weaknesses
     raw_score = scorer.evaluate(raw)
+    weakness_report = weakness_analyzer.analyze(raw)
 
     # 2. Generate Rewrite
     try:
@@ -133,6 +138,8 @@ async def optimize_prompt(request: PromptRequest):
         optimized_prompt=optimized,
         raw_score=raw_score,
         optimized_score=opt_score,
+        raw_weaknesses=weakness_report["spans"],
+        raw_missing_components=weakness_report["missing_components"],
         external_llm_response_raw=resp_raw,
         external_llm_response_optimized=resp_opt,
         improvement_score=round(improvement, 4),

@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Promptee — AI-powered prompt optimization evaluation pipeline using multi-criteria heuristic scoring and transformer fine-tuning." />
+  <meta name="description"
+    content="Promptee — AI-powered prompt optimization evaluation pipeline using multi-criteria heuristic scoring and transformer fine-tuning." />
   <title>Promptee — Prompt Optimization Engine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
+
 <body>
   <div class="app" id="app">
     <!-- Header -->
@@ -18,7 +23,8 @@
         <div class="header__icon" id="header-icon">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <circle cx="16" cy="16" r="14" stroke="url(#grad)" stroke-width="2.5" />
-            <path d="M10 16 L14 20 L22 12" stroke="url(#grad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M10 16 L14 20 L22 12" stroke="url(#grad)" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round" />
             <defs>
               <linearGradient id="grad" x1="0" y1="0" x2="32" y2="32">
                 <stop offset="0%" stop-color="#6C5CE7" />
@@ -41,13 +47,8 @@
       <div class="card glass-card input-card">
         <label for="prompt-input" class="input-label">Enter your prompt</label>
         <div class="input-wrapper">
-          <textarea
-            id="prompt-input"
-            class="prompt-textarea"
-            placeholder="e.g., write a python script to sort a list..."
-            rows="4"
-            maxlength="2000"
-          ></textarea>
+          <textarea id="prompt-input" class="prompt-textarea"
+            placeholder="e.g., write a python script to sort a list..." rows="4" maxlength="2000"></textarea>
           <span class="char-count" id="char-count">0 / 2000</span>
         </div>
         <button class="btn btn--primary" id="optimize-btn" type="button">
@@ -76,16 +77,24 @@
             <div class="prompt-card__header">
               <span class="prompt-card__label label--raw">Raw Prompt</span>
               <button class="copy-btn" id="copy-raw" type="button" title="Copy to clipboard">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
               </button>
             </div>
             <p class="prompt-text" id="raw-prompt-text"></p>
+            <div class="weakness-legend" id="weakness-legend"></div>
+            <div class="missing-components" id="missing-components"></div>
           </div>
           <div class="card glass-card prompt-card">
             <div class="prompt-card__header">
               <span class="prompt-card__label label--optimized">Optimized Prompt</span>
               <button class="copy-btn" id="copy-optimized" type="button" title="Copy to clipboard">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
               </button>
             </div>
             <p class="prompt-text" id="optimized-prompt-text"></p>
@@ -209,4 +218,5 @@
 
   <script src="/static/app.js"></script>
 </body>
+
 </html>
