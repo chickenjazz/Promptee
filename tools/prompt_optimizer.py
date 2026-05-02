@@ -1,7 +1,6 @@
 import os
 import sys
 import re
-import json
 import logging
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
@@ -18,13 +17,7 @@ DEFAULT_ADAPTER_PATH = os.path.join(PROJECT_ROOT, "models", "adapters")
 # reuse the same archetype classifier the training data was generated with.
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
-from dataset_builder.prompt_templates import (
-    Archetype,
-    detect_archetype,
-    modularity_for,
-    _BASE_SYSTEM,
-    _ARCHETYPE_GUIDANCE,
-)
+from dataset_builder.prompt_templates import Archetype, detect_archetype, modularity_for
 
 # Maximum input length (tokens) — Qwen2.5-3B supports 32k, keep headroom for generation
 MAX_INPUT_TOKENS = 4096
@@ -34,6 +27,15 @@ MAX_INPUT_TOKENS = 4096
 # runtime meta-prompt matches the regime the DPO `chosen` outputs were drawn
 # from. The classifier returns one of six archetypes; each maps to a scaffold
 # the model is asked to emit.
+
+_BASE_RULES = (
+    "Rules:\n"
+    "1. Output ONLY the rewritten prompt — no explanations, preamble, or closing remarks.\n"
+    "2. Do NOT answer the prompt, discuss it, or act as a chatbot.\n"
+    "3. Preserve the original intent, topic, and constraints exactly.\n"
+    "4. Do not over-engineer simple prompts; do not invent requirements not implied by the original.\n"
+    "5. Use [Insert ...] placeholders only for details the user genuinely did not provide."
+)
 
 _FULL_MODULAR_TEMPLATE = (
     "ROLE: <one-line expert persona appropriate for the task>\n"
@@ -62,53 +64,11 @@ _SEMI_MODULAR_TEMPLATE = (
 )
 
 
-# Archetype-gated few-shot exemplars. Each shows ONE input -> correct rewrite,
-# anchoring the model on "rewrite, do not answer" for the two archetypes where
-# that failure mode is most common (Coding: write-the-function trap;
-# Analytical: explain-instead-of-asking-for-explanation trap). Use [Insert ...]
-# placeholders so the model copies STRUCTURE, not content.
-_CODING_FEWSHOT = (
-    "Example — input prompt:\n"
-    "  Write a Python function that sorts a list.\n"
-    "Example — CORRECT rewrite (asks for the function, does not contain code):\n"
-    "  ROLE: You are a senior Python engineer.\n"
-    "  TASK:\n"
-    "  Write a Python function that sorts [Insert list element type] by [Insert sort key].\n"
-    "  INPUTS:\n"
-    "  - The unsorted list\n"
-    "  OUTPUTS:\n"
-    "  - A function that returns the sorted list\n"
-    "  CONSTRAINTS:\n"
-    "  - [Insert performance / stability requirements]\n"
-    "Example — INCORRECT (do NOT do this — this is the user's job, not yours):\n"
-    "  def sort_list(items): return sorted(items)"
-)
-
-_ANALYTICAL_FEWSHOT = (
-    "Example — input prompt:\n"
-    "  Do you know what gradient checkpointing is?\n"
-    "Example — CORRECT rewrite (asks for an explanation, does not give one):\n"
-    "  ROLE: You are a senior ML engineer.\n"
-    "  TASK:\n"
-    "  Explain gradient checkpointing — what it is, why it matters, "
-    "and when to use it.\n"
-    "  REQUIREMENTS:\n"
-    "  - Cover the memory-vs-compute tradeoff explicitly.\n"
-    "  - [Insert audience and depth level]\n"
-    "  - Include one concrete example or use case.\n"
-    "Example — INCORRECT (do NOT do this — answering is the user's job, not yours):\n"
-    "  Yes, gradient checkpointing is a technique that trades extra "
-    "computation for reduced memory by recomputing activations during "
-    "the backward pass instead of storing them all..."
-)
-
-
 def _build_system_prompt(archetype: Archetype) -> str:
     """Return the archetype-specific system meta-prompt.
 
-    Composed from training-time `_BASE_SYSTEM` + a runtime scaffold + the
-    training-time `_ARCHETYPE_GUIDANCE` for this archetype, so the tokens
-    the LoRA adapter was DPO-trained against remain anchored at runtime.
+    The scaffold tracks `_DEFAULT_MODULARITY` in dataset_builder so the runtime
+    asks the model for the same shape of output the adapter was trained to prefer.
     """
     if archetype in (Archetype.CODING, Archetype.STRUCTURED):
         scaffold = (
@@ -146,106 +106,14 @@ def _build_system_prompt(archetype: Archetype) -> str:
             f"{_SEMI_MODULAR_TEMPLATE}"
         )
 
-    guidance = _ARCHETYPE_GUIDANCE.get(archetype, "")
-
-    # Inject one archetype-matched few-shot exemplar for the two archetypes
-    # where the answer-instead-of-rewrite failure mode is most common.
-    if archetype == Archetype.CODING:
-        fewshot = f"\n\n{_CODING_FEWSHOT}"
-    elif archetype == Archetype.ANALYTICAL:
-        fewshot = f"\n\n{_ANALYTICAL_FEWSHOT}"
-    else:
-        fewshot = ""
-
     return (
-        f"{_BASE_SYSTEM}\n\n"
+        "You are an expert Prompt Rewriter, Prompt Architect, and Prompt Quality "
+        "Optimizer.\n\n"
+        "Rewrite the user's raw prompt into a clearer, more specific, better-"
+        "structured, and more reliable prompt while preserving the original intent.\n\n"
         f"{scaffold}\n\n"
-        f"Archetype hint for this rewrite (do not echo this back):\n{guidance}"
-        f"{fewshot}"
+        f"{_BASE_RULES}"
     )
-
-
-# ───────────────────────────────────────────────────────────────────────
-# Answer-shape detector — heuristic check that catches the failure mode
-# where the model produced an actual answer/code instead of a rewritten
-# prompt. Signals are computed on the candidate AFTER subtracting tokens
-# present in the raw prompt, so we don't false-positive when the rewrite
-# legitimately quotes the user's own code.
-# ───────────────────────────────────────────────────────────────────────
-
-_ANSWER_SHAPE_LINE_STARTS = re.compile(
-    r"^\s*(?:def\s+\w+|class\s+\w+|function\s+\w+|"
-    r"import\s+[\w.]+|from\s+[\w.]+\s+import|"
-    r"SELECT\s+[\w*,\s]|"
-    r"const\s+\w+\s*=|let\s+\w+\s*=|var\s+\w+\s*=|public\s+\w+|"
-    r"#include|<\?php|<\w+[\s>])",
-    re.IGNORECASE | re.MULTILINE,
-)
-_ANSWER_PREAMBLES = re.compile(
-    r"^\s*(?:Yes[,!.]|No[,!.]|Sure[,!.]?\s*here|Here'?s|Here is|"
-    r"Of course[,!.]|Certainly[,!.]|Absolutely[,!.])",
-    re.IGNORECASE,
-)
-_REWRITE_MARKERS = re.compile(
-    r"\[Insert[^\]]+\]|"
-    r"\bROLE\s*:|^\s*TASK\s*:|^\s*INPUTS?\s*:|^\s*OUTPUTS?\s*:|"
-    r"^\s*CONSTRAINTS?\s*:|^\s*REQUIREMENTS?\s*:",
-    re.MULTILINE,
-)
-
-
-def detect_answer_shape(raw: str, candidate: str) -> tuple[bool, list[str]]:
-    """Return (is_answer_shaped, reasons).
-
-    Heuristics run on `candidate`; signals are suppressed when they're
-    already present in `raw` so legitimate code-quoting doesn't false-
-    positive. A rewrite is flagged when it shows answer signals AND lacks
-    rewrite markers (ROLE/TASK/REQUIREMENTS/INPUTS/OUTPUTS or [Insert ...]).
-    Any 2+ signals also fires regardless of marker presence.
-    """
-    reasons: list[str] = []
-    if not candidate.strip():
-        return False, reasons
-
-    raw_lower = raw.lower()
-    cand = candidate
-    has_rewrite_markers = bool(_REWRITE_MARKERS.search(cand))
-
-    # 1. Fenced code block introduced (not present in raw)
-    if "```" in cand and "```" not in raw:
-        reasons.append("fenced_code_block_introduced")
-
-    # 2. Lines beginning with code-like patterns (def/class/import/SELECT/...)
-    #    Only count lines whose content isn't a substring of raw.
-    code_line_hits = 0
-    for m in _ANSWER_SHAPE_LINE_STARTS.finditer(cand):
-        line = m.group(0).strip().lower()
-        if line and line not in raw_lower:
-            code_line_hits += 1
-    if code_line_hits >= 1:
-        reasons.append(f"code_like_line_starts={code_line_hits}")
-
-    # 3. Sentence-initial answer preamble (Yes,/No,/Sure,/Here is...)
-    if _ANSWER_PREAMBLES.match(cand) and not _ANSWER_PREAMBLES.match(raw):
-        reasons.append("answer_preamble")
-
-    # 4. Long output with no rewrite markers — usually an answer in disguise.
-    token_count = len(cand.split())
-    if token_count > 80 and not has_rewrite_markers:
-        reasons.append(f"long_unstructured_output_tokens={token_count}")
-
-    if not reasons:
-        return False, reasons
-
-    # Trigger:
-    #   (a) any answer signal + no rewrite markers (no scaffolding to anchor it
-    #       as a rewrite), or
-    #   (b) two or more signals regardless of markers (strong evidence even
-    #       if the model decorated an answer with section labels).
-    triggered = (not has_rewrite_markers) or (len(reasons) >= 2)
-    if triggered and not has_rewrite_markers:
-        reasons.append("no_rewrite_markers")
-    return triggered, reasons
 
 
 # Common LLM preamble patterns to strip from output
@@ -313,11 +181,9 @@ class PromptOptimizer:
             if os.path.exists(self.adapter_path) and os.listdir(self.adapter_path):
                 logger.info(f"Loading LoRA adapters from: {self.adapter_path}")
                 self.model = PeftModel.from_pretrained(base_model, self.adapter_path)
-                self._log_adapter_self_check()
             else:
                 logger.warning(
-                    f"ADAPTER CHECK FAIL | No adapters found in {self.adapter_path}. "
-                    f"Using base model weights — rewriter will be significantly weaker."
+                    f"No adapters found in {self.adapter_path}. Using base model weights."
                 )
                 self.model = base_model
 
@@ -334,49 +200,6 @@ class PromptOptimizer:
                 f"PromptOptimizer failed to initialize: {e}. "
                 f"Ensure the model '{self.base_model_id}' is accessible and GPU memory is sufficient."
             ) from e
-
-    def _log_adapter_self_check(self) -> None:
-        """Verify the LoRA adapter is actually attached to the base model.
-
-        Logs a single PASS/FAIL line with base model id, adapter base id,
-        and the count of LoRA-wrapped modules. Catches silent mismatches
-        where PeftModel.from_pretrained accepts an adapter trained against
-        a different base than the one we just loaded.
-        """
-        try:
-            cfg_path = os.path.join(self.adapter_path, "adapter_config.json")
-            with open(cfg_path, "r", encoding="utf-8") as f:
-                cfg = json.load(f)
-            adapter_base = cfg.get("base_model_name_or_path", "<unknown>")
-            target_modules = cfg.get("target_modules", []) or []
-
-            lora_module_count = sum(
-                1 for _ in self.model.modules()
-                if type(_).__name__.startswith("Lora")
-            )
-
-            base_match = adapter_base == self.base_model_id
-            attached = lora_module_count > 0
-            status = "PASS" if (base_match and attached) else "FAIL"
-
-            logger.info(
-                f"ADAPTER CHECK {status} | runtime_base={self.base_model_id} "
-                f"adapter_base={adapter_base} base_match={base_match} "
-                f"lora_modules_attached={lora_module_count} "
-                f"target_modules={target_modules}"
-            )
-            if not base_match:
-                logger.warning(
-                    "Adapter base model does not match runtime base. The LoRA "
-                    "weights will not align correctly — expect degraded rewrites."
-                )
-            if not attached:
-                logger.warning(
-                    "PeftModel.from_pretrained returned a model with no Lora "
-                    "modules attached. Adapter is effectively bypassed."
-                )
-        except Exception as e:
-            logger.warning(f"ADAPTER CHECK SKIPPED | self-check failed: {e}")
 
     @staticmethod
     def _clean_output(text: str) -> str:
@@ -444,6 +267,29 @@ class PromptOptimizer:
         #     "3. Preserve the original intent and meaning exactly.\n"
         #     "4. Add structure, clarity, specificity, and constraints where missing."
         # )
+        # --- OLD static Full-Modular template (replaced by archetype-aware routing) ---
+        # sys_prompt = sys_prompt_override or (
+        #     "You are a prompt refinement engine. Your ONLY task is to rewrite the user's "
+        #     "raw prompt into a structured prompt template. Output the rewrite in this exact "
+        #     "section format, in this order:\n"
+        #     "\n"
+        #     "ROLE: <one-line expert persona appropriate for the task>\n"
+        #     "\n"
+        #     "TASK:\n<concise restatement of what to produce>\n"
+        #     "\n"
+        #     "INPUTS:\n- <bulleted inputs the user must fill in, using [Insert ...] placeholders where the raw prompt is unspecified>\n"
+        #     "\n"
+        #     "OUTPUTS:\n<numbered or bulleted list of concrete deliverables>\n"
+        #     "\n"
+        #     "CONSTRAINTS:\n- <bulleted rules, best practices, or quality bars>\n"
+        #     "\n"
+        #     "Rules:\n"
+        #     "1. Output ONLY the template above — no explanations, no preamble, no closing remarks.\n"
+        #     "2. Do NOT answer the prompt, discuss it, or act as a chatbot.\n"
+        #     "3. Preserve the original intent and meaning exactly; do not invent new requirements.\n"
+        #     "4. Use [Insert ...] placeholders for any detail the user did not provide.\n"
+        #     "5. Add an EDGE CASES or BEST PRACTICES section after CONSTRAINTS only if the task clearly warrants it."
+        # )
 
         # Archetype-aware dynamic meta-prompt — mirrors dataset_builder/prompt_templates.py
         # so the runtime asks for the same modularity the DPO data was generated under.
@@ -458,18 +304,7 @@ class PromptOptimizer:
                 f"(modularity={modularity_for(archetype).value})"
             )
 
-        if user_prompt_template:
-            user_content = user_prompt_template.format(raw_prompt)
-        else:
-            user_content = (
-                "Rewrite the following prompt to be clearer and more specific. "
-                "Preserve every named entity, constraint, language, framework, "
-                "count, file path, and requirement from the original. "
-                "Output only the rewritten prompt — do not answer it.\n\n"
-                "Original prompt:\n"
-                f"{raw_prompt}\n\n"
-                "Final rewritten prompt only:"
-            )
+        user_content = user_prompt_template.format(raw_prompt) if user_prompt_template else f"Optimize this prompt: {raw_prompt}"
 
         messages = [
             {"role": "system", "content": sys_prompt},

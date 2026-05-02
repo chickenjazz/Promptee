@@ -69,8 +69,7 @@ class ScoreResult(TypedDict):
 
     # ── Semantic constraint ───────────────────────────────────────────
     semantic_preservation: float   # 0.0–1.0, cosine similarity
-    specificity_recall: float      # 0.0–1.0, fraction of raw entities/tokens preserved in candidate
-    rejected: bool                 # True if semantic < hard floor OR specificity_recall < floor
+    rejected: bool                 # True if semantic < hard rejection floor
 
     # ── Final output ──────────────────────────────────────────────────
     final_score: float             # Gated improvement score (reward signal)
@@ -100,15 +99,6 @@ class ScorerConfig:
         # Soft threshold: between floor and this → improvement is scaled
         # by the semantic score itself (§12 soft penalty)
         semantic_soft_threshold: float = 0.70,
-
-        # ── Specificity-recall gate ───────────────────────────────────
-        # Fraction of raw "specific" tokens (named entities, numbers,
-        # quoted strings, code fences, file paths, framework names) that
-        # must appear in the candidate. Catches the failure mode where
-        # cosine similarity passes but the rewrite has dropped the
-        # original task's named constraints (e.g. "TypeScript",
-        # "Next.js 14", a specific framework or count).
-        specificity_recall_floor: float = 0.80,
 
         # ── Specificity tuning ────────────────────────────────────────
         # Raised from 0.25 to 0.50 to account for weighted constraint
@@ -157,7 +147,6 @@ class ScorerConfig:
         self.w_s = w_s
         self.semantic_hard_floor = semantic_hard_floor
         self.semantic_soft_threshold = semantic_soft_threshold
-        self.specificity_recall_floor = specificity_recall_floor
         self.specificity_ideal_density = specificity_ideal_density
         self.specificity_length_floor = specificity_length_floor
         self.ambiguity_max_penalty = ambiguity_max_penalty
@@ -1314,98 +1303,6 @@ class HeuristicScorer:
         return max(sim, 0.0)
 
     # ═══════════════════════════════════════════════════════════════════
-    # Specificity-Recall Gate (catches entity/constraint loss)
-    # ═══════════════════════════════════════════════════════════════════
-
-    # Frameworks / languages / well-known products. Lowercase, word-bounded.
-    # Kept small on purpose — high-precision allow-list, not exhaustive.
-    _SPECIFICITY_TERMS: frozenset = frozenset({
-        "python", "javascript", "typescript", "java", "kotlin", "swift",
-        "golang", "rust", "ruby", "php", "scala", "haskell", "elixir",
-        "react", "vue", "angular", "svelte", "next.js", "nextjs",
-        "node", "node.js", "django", "flask", "fastapi", "spring",
-        "express", ".net", "laravel", "rails",
-        "postgres", "postgresql", "mysql", "mongodb", "redis", "sqlite",
-        "kubernetes", "docker", "terraform", "aws", "gcp", "azure",
-        "openai", "anthropic", "claude", "gpt", "llama", "mamba", "qwen",
-        "sse", "websocket", "graphql", "rest", "grpc", "oauth", "jwt",
-    })
-
-    def _score_specificity_recall(self, raw: str, candidate: str) -> float:
-        """Fraction of raw 'specific' tokens that appear in the candidate.
-
-        Extracts from raw: numbers, named entities (spaCy NER), code-fence
-        contents, quoted strings, file paths, and known framework/language
-        tokens. Returns the fraction of those that survive in the candidate
-        (1.0 if no specific tokens were found in raw — nothing to lose).
-
-        This catches the failure mode where cosine similarity passes (topic
-        overlap is high) but the rewrite has dropped concrete constraints
-        like "TypeScript", "Next.js 14", or a specific count.
-        """
-        if not raw.strip() or not candidate.strip():
-            return 1.0
-
-        cand_lower = candidate.lower()
-
-        items: set = set()
-
-        # 1. Numbers (integers, decimals, percentages)
-        for m in re.findall(r"\b\d+(?:\.\d+)?%?\b", raw):
-            items.add(m.lower())
-
-        # 2. Quoted strings (single + double + backticks)
-        for m in re.findall(r"\"([^\"\n]+)\"|'([^'\n]+)'|`([^`\n]+)`", raw):
-            for s in m:
-                if s and len(s) > 1:
-                    items.add(s.lower())
-
-        # 3. Fenced code blocks
-        for m in re.findall(r"```[\w]*\n?(.*?)```", raw, flags=re.DOTALL):
-            stripped = m.strip().lower()
-            if stripped:
-                items.add(stripped)
-
-        # 4. File paths and dotted module names (e.g. utils/foo.py, App Router)
-        for m in re.findall(r"\b[\w./-]+\.(?:py|js|ts|tsx|jsx|java|go|rs|rb|sql|html|css|json|yaml|yml|md)\b", raw):
-            items.add(m.lower())
-
-        # 5. Framework / language allow-list
-        raw_lower = raw.lower()
-        for term in self._SPECIFICITY_TERMS:
-            # word-boundary match, but allow dots inside terms like "next.js"
-            pattern = r"(?<!\w)" + re.escape(term) + r"(?!\w)"
-            if re.search(pattern, raw_lower):
-                items.add(term)
-
-        # 6. Named entities via spaCy (PERSON, ORG, PRODUCT, GPE, WORK_OF_ART, EVENT, LAW)
-        if self._nlp is not None:
-            try:
-                doc = self._nlp(raw)
-                for ent in doc.ents:
-                    if ent.label_ in {
-                        "PERSON", "ORG", "PRODUCT", "GPE", "LOC",
-                        "WORK_OF_ART", "EVENT", "LAW", "FAC",
-                    }:
-                        text = ent.text.strip().lower()
-                        if len(text) > 1:
-                            items.add(text)
-            except Exception as e:
-                logger.debug(f"spaCy NER failed in specificity_recall: {e}")
-
-        if not items:
-            return 1.0
-
-        # Substring match in candidate (lowercased). Normalises whitespace
-        # so a multi-word entity still matches.
-        cand_normalized = re.sub(r"\s+", " ", cand_lower)
-        preserved = sum(
-            1 for item in items
-            if re.sub(r"\s+", " ", item) in cand_normalized
-        )
-        return preserved / len(items)
-
-    # ═══════════════════════════════════════════════════════════════════
     # Stage 9 & 10: Metric Deltas + Rejection Logic
     # ═══════════════════════════════════════════════════════════════════
     # (Implemented within the public evaluate() method below)
@@ -1507,7 +1404,6 @@ class HeuristicScorer:
                 clarity_delta=0.0,
                 specificity_delta=0.0,
                 semantic_preservation=1.0,
-                specificity_recall=1.0,
                 rejected=False,
                 final_score=round(raw_metrics["quality"], 4),
             )
@@ -1521,15 +1417,7 @@ class HeuristicScorer:
         # ── Step 4: Semantic preservation (§3C) ───────────────────────
         semantic: float = self._score_semantic_preservation(raw_prompt, candidate_prompt)
 
-        # ── Step 4b: Specificity-recall gate ──────────────────────────
-        # Catches the failure mode where cosine similarity passes but the
-        # rewrite has dropped the original task's named entities, numbers,
-        # frameworks, or quoted constraints.
-        specificity_recall: float = self._score_specificity_recall(
-            raw_prompt, candidate_prompt
-        )
-
-        # ── Step 5: Gating (§3 + §12) ─────────────────────────────────
+        # ── Step 5: Semantic gating (§3 + §12) ────────────────────────
         rejected: bool = False
         final_score: float = quality_improvement
 
@@ -1540,15 +1428,6 @@ class HeuristicScorer:
             logger.warning(
                 f"Semantic preservation below hard floor: {semantic:.4f} < "
                 f"{self.config.semantic_hard_floor}. Rewrite REJECTED."
-            )
-        elif specificity_recall < self.config.specificity_recall_floor:
-            # Specificity rejection: rewrite lost named entities / constraints
-            rejected = True
-            final_score = 0.0
-            logger.warning(
-                f"Specificity recall below floor: {specificity_recall:.4f} < "
-                f"{self.config.specificity_recall_floor}. Rewrite REJECTED "
-                f"(named entities or constraints from raw not preserved)."
             )
         elif semantic < self.config.semantic_soft_threshold:
             # Soft penalty: scale improvement by semantic similarity (§12)
@@ -1580,7 +1459,6 @@ class HeuristicScorer:
             clarity_delta=round(clarity_delta, 4),
             specificity_delta=round(specificity_delta, 4),
             semantic_preservation=round(semantic, 4),
-            specificity_recall=round(specificity_recall, 4),
             rejected=rejected,
             final_score=round(final_score, 4),
         )
