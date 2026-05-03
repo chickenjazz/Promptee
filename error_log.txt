@@ -2164,3 +2164,4 @@ RuntimeError: Error(s) in loading state_dict for PeftModelForCausalLM:
 2026-05-03 14:18:41,128 [promptee.api] INFO: Rewrite rejected (rejected=False, improvement=-0.0264). Falling back to raw prompt.
 2026-05-03 14:19:45,432 [promptee.heuristic_scorer] WARNING: Semantic preservation below hard floor: 0.3957 < 0.4. Rewrite REJECTED.
 2026-05-03 14:19:45,432 [promptee.api] INFO: Rewrite rejected (rejected=True, improvement=0.1764). Falling back to raw prompt.
+2026-05-03 15:07:03,593 [promptee.api] INFO: Rewrite rejected (rejected=False, improvement=-0.0421). Falling back to raw prompt.

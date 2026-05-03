@@ -22,100 +22,6 @@ from dataset_builder.prompt_templates import Archetype, detect_archetype, modula
 # Maximum input length (tokens) — Qwen2.5-3B supports 32k, keep headroom for generation
 MAX_INPUT_TOKENS = 4096
 
-# --- Archetype-aware system prompts ---------------------------------------
-# Mirrors the modularity rules in dataset_builder/prompt_templates.py so the
-# runtime meta-prompt matches the regime the DPO `chosen` outputs were drawn
-# from. The classifier returns one of six archetypes; each maps to a scaffold
-# the model is asked to emit.
-
-_BASE_RULES = (
-    "Rules:\n"
-    "1. Output ONLY the rewritten prompt — no explanations, preamble, or closing remarks.\n"
-    "2. Do NOT answer the prompt, discuss it, or act as a chatbot.\n"
-    "3. Preserve the original intent, topic, and constraints exactly.\n"
-    "4. Do not over-engineer simple prompts; do not invent requirements not implied by the original.\n"
-    "5. Use [Insert ...] placeholders only for details the user genuinely did not provide."
-)
-
-_FULL_MODULAR_TEMPLATE = (
-    "ROLE: <one-line expert persona appropriate for the task>\n"
-    "\n"
-    "TASK:\n"
-    "<concise restatement of what to produce>\n"
-    "\n"
-    "INPUTS:\n"
-    "- <bulleted inputs the user must fill in, using [Insert ...] placeholders where unspecified>\n"
-    "\n"
-    "OUTPUTS:\n"
-    "<numbered or bulleted list of concrete deliverables>\n"
-    "\n"
-    "CONSTRAINTS:\n"
-    "- <bulleted rules, best practices, or quality bars>"
-)
-
-_SEMI_MODULAR_TEMPLATE = (
-    "ROLE: <one-line expert persona>\n"
-    "\n"
-    "TASK:\n"
-    "<concise restatement of what to produce>\n"
-    "\n"
-    "REQUIREMENTS:\n"
-    "- <bulleted requirements, constraints, or stylistic guidance>"
-)
-
-
-def _build_system_prompt(archetype: Archetype) -> str:
-    """Return the archetype-specific system meta-prompt.
-
-    The scaffold tracks `_DEFAULT_MODULARITY` in dataset_builder so the runtime
-    asks the model for the same shape of output the adapter was trained to prefer.
-    """
-    if archetype in (Archetype.CODING, Archetype.STRUCTURED):
-        scaffold = (
-            "Modularity: Full Modular. Output the rewrite using this exact section "
-            "format, in this order:\n\n"
-            f"{_FULL_MODULAR_TEMPLATE}\n\n"
-            "You may add an EDGE CASES or BEST PRACTICES section after CONSTRAINTS "
-            "only if clearly warranted by the task."
-        )
-    elif archetype in (Archetype.CREATIVE, Archetype.ANALYTICAL):
-        scaffold = (
-            "Modularity: Semi Modular. Output a structured rewrite using these sections:\n\n"
-            f"{_SEMI_MODULAR_TEMPLATE}\n\n"
-            "Keep the rewrite expressive — do not force [Insert ...] placeholders "
-            "unless something is genuinely missing."
-        )
-    elif archetype == Archetype.CONVERSATIONAL:
-        scaffold = (
-            "Modularity: Natural Language Modular. Output the rewrite as one or two "
-            "flowing paragraphs of natural English — no labeled sections, no ROLE / "
-            "TASK / OUTPUTS headers, no bullet scaffolding. The rewrite should read "
-            "like a thoughtfully phrased request, with role, context, tone, and any "
-            "constraints woven in naturally."
-        )
-    elif archetype == Archetype.CONCISE:
-        scaffold = (
-            "Modularity: Minimal Modular. Output the rewrite as a single sharpened "
-            "command or question — ideally one sentence, at most two. No labels, no "
-            "bullets, no scaffolding. Add only the minimum specificity the original "
-            "lacked."
-        )
-    else:
-        scaffold = (
-            "Modularity: Semi Modular. Output a structured rewrite using these sections:\n\n"
-            f"{_SEMI_MODULAR_TEMPLATE}"
-        )
-
-    return (
-        "You are an expert Prompt Rewriter, Prompt Architect, and Prompt Quality "
-        "Optimizer.\n\n"
-        "Rewrite the user's raw prompt into a clearer, more specific, better-"
-        "structured, and more reliable prompt while preserving the original intent.\n\n"
-        f"{scaffold}\n\n"
-        f"{_BASE_RULES}"
-    )
-
-
 # Common LLM preamble patterns to strip from output
 _PREAMBLE_PATTERNS = [
     r"^(?:Sure[,!.]?\s*)?[Hh]ere(?:'s| is) (?:the |an? )?(?:optimized|refined|improved|rewritten|updated) (?:version|prompt|text)[:\s]*",
@@ -279,12 +185,12 @@ class PromptOptimizer:
             "Allowed section headers for structured rewrites you can choose from:\n"
 
             "Allowed section headers for structured rewrites:\n"
-            "ROLE: <one-line expert persona appropriate for the task>\n"
-            "TASK: <concise restatement of what to produce>\n"
-            "CONTEXT: <brief background, audience, purpose, or situation when needed>\n"
-            "INPUTS: <bulleted inputs, data, files, examples, variables, or missing user-provided details when needed>\n"
-            "OUTPUTS: <numbered or bulleted list of expected deliverables or response components>\n"
-            "FORMAT: <specific formatting instructions such as bullets, table, JSON, markdown, paragraph, or step-by-step guide>\n"
+            "ROLE:\n <one-line expert persona appropriate for the task, starting with the word 'You' or 'Act as'>\n"
+            "TASK:\n <concise restatement of what to produce>\n"
+            "CONTEXT:\n <brief background, audience, purpose, or situation when needed>\n"
+            "INPUTS:\n <bulleted inputs, data, files, examples, variables, or missing user-provided details when needed>\n"
+            "OUTPUTS:\n <numbered or bulleted list of expected deliverables or response components>\n"
+            "FORMAT:\n <specific formatting instructions such as bullets, table, JSON, markdown, paragraph, or step-by-step guide>\n"
             "CONSTRAINTS: <numbered or bulleted list of rules, limitations, requirements, or quality bars>\n"
             "EDGE CASES: <special cases, exceptions, boundary conditions, or failure scenarios when relevant>\n\n"
 
@@ -308,19 +214,6 @@ class PromptOptimizer:
             "5. The original task must NOT change into 'generate a structured prompt', 'create a prompt', or any other meta-task unless the user explicitly asked for prompt creation.\n"
             "6. The goal is to structure and clarify the user's intent, not to change it.\n"
         )
-
-        # Archetype-aware dynamic meta-prompt — mirrors dataset_builder/prompt_templates.py
-        # so the runtime asks for the same modularity the DPO data was generated under.
-        #if sys_prompt_override is not None:
-            #sys_prompt = sys_prompt_override
-            #archetype = None
-        #else:
-        #    archetype = detect_archetype(raw_prompt)
-        #    sys_prompt = _build_system_prompt(archetype)
-        #    logger.info(
-        #        f"Archetype routed: {archetype.value} "
-        #        f"(modularity={modularity_for(archetype).value})"
-        #    )
 
         user_content = user_prompt_template.format(raw_prompt) if user_prompt_template else f"Optimize this prompt: {raw_prompt}"
 
