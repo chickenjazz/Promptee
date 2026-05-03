@@ -268,41 +268,59 @@ class PromptOptimizer:
         #     "4. Add structure, clarity, specificity, and constraints where missing."
         # )
         # --- OLD static Full-Modular template (replaced by archetype-aware routing) ---
-        # sys_prompt = sys_prompt_override or (
-        #     "You are a prompt refinement engine. Your ONLY task is to rewrite the user's "
-        #     "raw prompt into a structured prompt template. Output the rewrite in this exact "
-        #     "section format, in this order:\n"
-        #     "\n"
-        #     "ROLE: <one-line expert persona appropriate for the task>\n"
-        #     "\n"
-        #     "TASK:\n<concise restatement of what to produce>\n"
-        #     "\n"
-        #     "INPUTS:\n- <bulleted inputs the user must fill in, using [Insert ...] placeholders where the raw prompt is unspecified>\n"
-        #     "\n"
-        #     "OUTPUTS:\n<numbered or bulleted list of concrete deliverables>\n"
-        #     "\n"
-        #     "CONSTRAINTS:\n- <bulleted rules, best practices, or quality bars>\n"
-        #     "\n"
-        #     "Rules:\n"
-        #     "1. Output ONLY the template above — no explanations, no preamble, no closing remarks.\n"
-        #     "2. Do NOT answer the prompt, discuss it, or act as a chatbot.\n"
-        #     "3. Preserve the original intent and meaning exactly; do not invent new requirements.\n"
-        #     "4. Use [Insert ...] placeholders for any detail the user did not provide.\n"
-        #     "5. Add an EDGE CASES or BEST PRACTICES section after CONSTRAINTS only if the task clearly warrants it."
-        # )
+        sys_prompt = sys_prompt_override or (
+           "You are a prompt refinement engine. Your ONLY task is to rewrite the user's "
+            "raw prompt into a clearer, more specific, and better-structured prompt while preserving the original intent.\n\n"
+
+            "Your output should adapt to the context of the raw prompt:\n"
+            "- For complex, technical, academic, coding, planning, or multi-step prompts, use a structured template.\n"
+            "- Do not force section headers when they do not improve the prompt.\n\n"
+
+            "Allowed section headers for structured rewrites you can choose from:\n"
+
+            "Allowed section headers for structured rewrites:\n"
+            "ROLE: <one-line expert persona appropriate for the task>\n"
+            "TASK: <concise restatement of what to produce>\n"
+            "CONTEXT: <brief background, audience, purpose, or situation when needed>\n"
+            "INPUTS: <bulleted inputs, data, files, examples, variables, or missing user-provided details when needed>\n"
+            "OUTPUTS: <numbered or bulleted list of expected deliverables or response components>\n"
+            "FORMAT: <specific formatting instructions such as bullets, table, JSON, markdown, paragraph, or step-by-step guide>\n"
+            "CONSTRAINTS: <numbered or bulleted list of rules, limitations, requirements, or quality bars>\n"
+            "EDGE CASES: <special cases, exceptions, boundary conditions, or failure scenarios when relevant>\n\n"
+
+            "Section usage rules:\n"
+            "- Use ONLY the sections that are APPLICABLE to the raw prompt.\n"
+            "- Do not include empty, generic, redundant, or unnecessary sections just to complete a template.\n"
+            "- Use [Insert ...] placeholders only for genuinely missing details that are necessary to complete the prompt.\n"
+            "- DO NOT USE ALL SECTION HEADERS BY DEFAULT.\n"
+            "- If section headers are used, each selected header must be followed by meaningful content, not 'NONE'.\n"
+            "- Do not print section names as a slash-separated list.\n"
+            "- Do not list possible section names before the rewritten prompt.\n"
+            "- Keep the selected sections in a logical order based on the task.\n"
+            "- Prefer fewer well-filled sections over many shallow sections.\n"
+            "- Add EDGE CASES only when the task involves code, systems, processes, risk, validation, or possible failure conditions.\n"
+            
+            "Rules:\n"
+            "1. Output ONLY the rewritten prompt — no explanations, no preamble, no closing remarks.\n"
+            "2. Do NOT answer the prompt, discuss it, solve it, or act as a chatbot.\n"
+            "3. Preserve the original intent, task type, topic, and constraints exactly.\n"
+            "4. Do not invent requirements that are not implied by the original prompt.\n"
+            "5. The original task must NOT change into 'generate a structured prompt', 'create a prompt', or any other meta-task unless the user explicitly asked for prompt creation.\n"
+            "6. The goal is to structure and clarify the user's intent, not to change it.\n"
+        )
 
         # Archetype-aware dynamic meta-prompt — mirrors dataset_builder/prompt_templates.py
         # so the runtime asks for the same modularity the DPO data was generated under.
-        if sys_prompt_override is not None:
-            sys_prompt = sys_prompt_override
-            archetype = None
-        else:
-            archetype = detect_archetype(raw_prompt)
-            sys_prompt = _build_system_prompt(archetype)
-            logger.info(
-                f"Archetype routed: {archetype.value} "
-                f"(modularity={modularity_for(archetype).value})"
-            )
+        #if sys_prompt_override is not None:
+            #sys_prompt = sys_prompt_override
+            #archetype = None
+        #else:
+        #    archetype = detect_archetype(raw_prompt)
+        #    sys_prompt = _build_system_prompt(archetype)
+        #    logger.info(
+        #        f"Archetype routed: {archetype.value} "
+        #        f"(modularity={modularity_for(archetype).value})"
+        #    )
 
         user_content = user_prompt_template.format(raw_prompt) if user_prompt_template else f"Optimize this prompt: {raw_prompt}"
 

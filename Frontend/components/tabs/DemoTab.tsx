@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { Sparkles, ShieldAlert, CheckCircle2, FileText, Lock, Loader2, RefreshCw, BarChart3, TrendingUp, Zap } from 'lucide-react';
+import { Sparkles, ShieldAlert, CheckCircle2, FileText, Lock, Loader2, RefreshCw, BarChart3, TrendingUp, Zap, Lightbulb, AlertTriangle } from 'lucide-react';
 import { OptimizedData } from '@/app/page';
+import PromptHighlighter from '@/components/PromptHighlighter';
+import IssuePanel from '@/components/IssuePanel';
+import RecommendationPanel from '@/components/RecommendationPanel';
 
 export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedData }: { user: any, onSignIn: () => void, optimizedData: OptimizedData | null, setOptimizedData: (data: OptimizedData | null) => void }) {
   const [rawPrompt, setRawPrompt] = useState('');
@@ -270,6 +273,68 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
           )}
         </div>
       </div>
+
+      {/* DIAGNOSTICS, ISSUES, AND RECOMMENDATIONS - Full width below the top row */}
+      {status === 'success' && optimizedData && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 animate-in fade-in">
+          {/* Highlighted prompt */}
+          <div className="bg-white border border-slate-200 rounded-lg flex flex-col shadow-sm">
+            <div className="p-4 border-b border-slate-100 font-bold text-sm bg-slate-50 flex items-center">
+              <AlertTriangle className="w-4 h-4 mr-2 text-amber-500" />
+              Prompt Diagnostics
+              {optimizedData.rewrite_metadata?.archetype && (
+                <span className="ml-auto text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  {optimizedData.rewrite_metadata.archetype} / {optimizedData.rewrite_metadata.modularity}
+                </span>
+              )}
+            </div>
+            <div className="p-4 flex-1 overflow-auto">
+              <h4 className="text-xs font-bold text-slate-800 mb-2 uppercase tracking-wider">Highlighted Raw Prompt</h4>
+              <div className="rounded-md border border-slate-100 bg-slate-50 p-3">
+                <PromptHighlighter
+                  text={optimizedData.raw_prompt}
+                  issues={optimizedData.issues ?? []}
+                />
+              </div>
+              {optimizedData.validation && optimizedData.validation.status === 'invalid' && (
+                <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                  <strong>Rewrite validation flagged issues:</strong>{' '}
+                  {optimizedData.validation.issues.map((i) => i.type).join(', ')}.
+                  Falling back to the raw prompt where applicable.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Issue list */}
+          <div className="bg-white border border-slate-200 rounded-lg flex flex-col shadow-sm">
+            <div className="p-4 border-b border-slate-100 font-bold text-sm bg-slate-50 flex items-center">
+              <FileText className="w-4 h-4 mr-2 text-slate-600" />
+              Detected Issues
+              <span className="ml-auto text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                {(optimizedData.issues ?? []).length} found
+              </span>
+            </div>
+            <div className="p-4 flex-1 overflow-auto">
+              <IssuePanel issues={optimizedData.issues ?? []} />
+            </div>
+          </div>
+
+          {/* Recommendations + guideline */}
+          <div className="bg-white border border-slate-200 rounded-lg flex flex-col shadow-sm">
+            <div className="p-4 border-b border-slate-100 font-bold text-sm bg-slate-50 flex items-center">
+              <Lightbulb className="w-4 h-4 mr-2 text-amber-500" />
+              Tutor Guidance
+            </div>
+            <div className="p-4 flex-1 overflow-auto">
+              <RecommendationPanel
+                recommendations={optimizedData.recommendations ?? []}
+                institutionalGuideline={optimizedData.institutional_guideline}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* LLM OUTPUT - Full width below */}
       <div className="bg-white border border-slate-200 rounded-lg flex flex-col shadow-sm mb-6">
