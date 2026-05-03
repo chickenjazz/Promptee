@@ -54,6 +54,9 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<'none' | 'like' | 'dislike'>('none');
+  // External-LLM benchmarking is off by default — it adds 1-3s of network round-trip
+  // to every request. Users opt in when they want the side-by-side comparison.
+  const [runBenchmark, setRunBenchmark] = useState(false);
 
   // Auto-resize optimized prompt textarea and scroll to card
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -85,7 +88,7 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
       const response = await fetch('http://127.0.0.1:8000/optimize_prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: rawPrompt })
+        body: JSON.stringify({ prompt: rawPrompt, benchmark: runBenchmark })
       });
 
       if (!response.ok) {
@@ -184,6 +187,16 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                   {status === 'loading' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
                   {status === 'loading' ? 'Processing via Qwen...' : 'Run Optimization'}
                 </button>
+                <label className="mt-2 flex items-center justify-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={runBenchmark}
+                    onChange={(e) => setRunBenchmark(e.target.checked)}
+                    disabled={status === 'loading'}
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  Compare with external LLM <span className="text-slate-400">(adds 1–3s)</span>
+                </label>
                 {status === 'error' && <p className="text-red-500 text-xs font-medium mt-2 text-center">Optimization failed. Try again.</p>}
               </div>
               <div className="bg-blue-50 p-4 border-t border-blue-100 flex items-start text-blue-800 text-xs">
@@ -193,9 +206,9 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
             </div>
 
             {/* 2. OPTIMIZED PROMPT OUTPUT */}
+            <div ref={optimizedCardRef} className="scroll-mt-6" aria-hidden="true" />
             <div 
-              ref={optimizedCardRef}
-              className={`rounded-xl border border-slate-200 bg-white p-0 shadow-sm flex flex-col relative overflow-hidden scroll-mt-6 ${status === 'success' ? 'animate-in slide-in-from-bottom-12 fade-in duration-700 ease-out' : ''}`}
+              className={`rounded-xl border border-slate-200 bg-white p-0 shadow-sm flex flex-col relative overflow-hidden ${status === 'success' ? 'animate-in slide-in-from-bottom-12 fade-in duration-700 ease-out' : ''}`}
             >
               <div className="p-4 border-b border-slate-100 font-bold text-sm bg-slate-50 flex justify-between items-center">
                 Optimized Prompt
@@ -273,14 +286,14 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                       <span className="w-2 h-2 rounded-full bg-red-400 mr-2"></span>
                       Raw Prompt Output
                     </div>
-                    {status === 'success' && optimizedData ? (
+                    {status === 'success' && optimizedData?.external_llm_response_raw ? (
                       <div className="bg-slate-50 border border-slate-200 p-3 rounded-md flex-1 font-mono text-xs text-slate-700 overflow-auto min-h-[150px] max-h-[300px] animate-in fade-in">
                         <pre className="whitespace-pre-wrap font-inherit m-0">
                           {optimizedData.external_llm_response_raw}
                         </pre>
                       </div>
                     ) : (
-                      <textarea className="w-full flex-1 min-h-[150px] border border-slate-200 rounded-md p-3 text-sm bg-slate-50 text-slate-400 resize-none" readOnly placeholder="Raw prompt LLM output will appear here..." />
+                      <textarea className="w-full flex-1 min-h-[150px] border border-slate-200 rounded-md p-3 text-sm bg-slate-50 text-slate-400 resize-none" readOnly placeholder={status === 'success' ? "Enable 'Compare with external LLM' to view raw prompt output." : "Raw prompt LLM output will appear here..."} />
                     )}
                   </div>
 
@@ -290,14 +303,14 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                       <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
                       Optimized Prompt Output
                     </div>
-                    {status === 'success' && optimizedData ? (
+                    {status === 'success' && optimizedData?.external_llm_response_optimized ? (
                       <div className="bg-slate-50 border border-slate-200 p-3 rounded-md flex-1 font-mono text-xs text-slate-700 overflow-auto min-h-[150px] max-h-[300px] animate-in fade-in">
                         <pre className="whitespace-pre-wrap font-inherit m-0">
                           {optimizedData.external_llm_response_optimized}
                         </pre>
                       </div>
                     ) : (
-                      <textarea className="w-full flex-1 min-h-[150px] border border-slate-200 rounded-md p-3 text-sm bg-slate-50 text-slate-400 resize-none" readOnly placeholder="Optimized prompt LLM output will appear here..." />
+                      <textarea className="w-full flex-1 min-h-[150px] border border-slate-200 rounded-md p-3 text-sm bg-slate-50 text-slate-400 resize-none" readOnly placeholder={status === 'success' ? "Enable 'Compare with external LLM' to view optimized prompt output." : "Optimized prompt LLM output will appear here..."} />
                     )}
                   </div>
                 </div>
