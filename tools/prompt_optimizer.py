@@ -36,6 +36,28 @@ _PREAMBLE_PATTERNS = [
     r"^(?:The )?[Rr]efined prompt[:\s]*",
     r"^[Cc]ertainly[!,.]?\s*",
     r"^[Oo]f course[!,.]?\s*",
+
+    # Rule / metaprompt leakage
+    r"^(?:Allowed )?[Ss]ection headers(?: for structured rewrites)?[:\s]*",
+    r"^(?:Use only|Use these|Allowed) (?:the )?(?:applicable )?(?:section )?headers.*[:\s]*",
+    r"^(?:Header|Content format|Strict|Output) rules[:\s]*",
+    r"^Rules[:\s]*",
+    r"^You are rewriting the prompt, not answering it\.?\s*",
+    r"^The output must be a prompt that another AI can answer later\.?\s*",
+
+    # Leaked ROLE instruction
+    r"^You are a one-line expert persona appropriate for the task(?:,? starting with (?:the phrase )?'You are')?[:\s]*",
+    r"^You are an? one-line expert persona appropriate for the task(?:,? starting with (?:the phrase )?'You are')?[:\s]*",
+    r"^one-line expert persona appropriate for the task(?:,? starting with (?:the phrase )?'You are')?[:\s]*",
+
+    # Other leaked section descriptions
+    r"^concise (?:restatement|statement) of what to produce[:\s]*",
+    r"^brief background, audience, purpose, or situation when needed[:\s]*",
+    r"^bulleted inputs, data, files, examples, variables, or missing user-provided details when needed[:\s]*",
+    r"^(?:numbered or )?bulleted list of expected deliverables or response components[:\s]*",
+    r"^specific formatting instructions such as bullets, table, JSON, markdown, paragraph, or step-by-step guide[:\s]*",
+    r"^(?:numbered or )?bulleted list of rules, limitations, requirements, or quality bars[:\s]*",
+    r"^special cases, exceptions, boundary conditions, or failure scenarios when relevant[:\s]*",
 ]
 
 
@@ -156,8 +178,8 @@ class PromptOptimizer:
         raw_prompt: str,
         sys_prompt_override: str = None,
         user_prompt_template: str = None,
-        temperature: float = 0.0,
-        top_p: float = 1.0,
+        temperature: float = 0.6,
+        top_p: float = 0.9,
     ) -> str:
         """
         Transform a raw prompt into an optimized version.
@@ -192,34 +214,23 @@ class PromptOptimizer:
             "more specific, and better-structured prompt while preserving its original intent, "
             "task, topic, and constraints.\n\n"
 
-            "You are rewriting the prompt, not answering it. The output must be a prompt that "
-            "another AI can answer later.\n\n"
-
-            "Use only applicable headers from this set:\n"
+            "Add appropriate headers and content from this set:\n"
             "ROLE:\n"
             "TASK:\n"
-            "CONTEXT:\n"
             "INPUTS:\n"
             "OUTPUTS:\n"
             "FORMAT:\n"
             "CONSTRAINTS:\n"
             "EDGE CASES:\n\n"
 
-            "Header rules:\n"
-            "- ROLE is a one-line expert persona appropriate for the task.\n"
-            "- TASK is a concise restatement of what to produce.\n"
-            "- CONTEXT is brief background, audience, purpose, or situation.\n"
-            "- INPUTS, OUTPUTS, FORMAT, CONSTRAINTS, and EDGE CASES use bullet points.\n"
-            "- EDGE CASES is only for code, systems, validation, calculations, or failure-prone tasks.\n\n"
-
             "Strict rules:\n"
             "- Output only the rewritten prompt.\n"
+            "- ROLE and TASK headers are required."
             "- Do not answer, solve, explain, or provide the requested deliverable.\n"
             "- Do not repeat these rules or describe the section headers.\n"
             "- Do not prefix headers with bullets, numbers, or dashes.\n"
             "- Do not include empty, generic, redundant, or shallow sections.\n"
             "- Do not write None, N/A, TBD, not specified, or similar filler.\n"
-            "- Do not output placeholders such as [Insert ...], <...>, or {placeholder}.\n"
             "- If details are missing, either infer a reasonable general instruction or omit the section.\n"
             "- Do not invent requirements beyond what is implied by the raw prompt.\n"
         )
