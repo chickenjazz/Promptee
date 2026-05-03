@@ -185,9 +185,9 @@ class PromptOptimizer:
             "Allowed section headers for structured rewrites you can choose from:\n"
 
             "Allowed section headers for structured rewrites:\n"
-            "ROLE:\n <\none-line expert persona appropriate for the task, starting with the word 'You' or 'Act as'>\n"
-            "TASK:\n <\nconcise restatement of what to produce>\n"
-            "CONTEXT:\n <\nbrief background, audience, purpose, or situation when needed>\n"
+            "ROLE:\n <one-line expert persona appropriate for the task, starting with the word 'You' or 'Act as'>\n"
+            "TASK:\n <concise restatement of what to produce>\n"
+            "CONTEXT:\n <brief background, audience, purpose, or situation when needed>\n"
             "INPUTS:\n <bulleted inputs, data, files, examples, variables, or missing user-provided details when needed>\n"
             "OUTPUTS:\n <numbered or bulleted list of expected deliverables or response components>\n"
             "FORMAT:\n <specific formatting instructions such as bullets, table, JSON, markdown, paragraph, or step-by-step guide>\n"
@@ -195,6 +195,8 @@ class PromptOptimizer:
             "EDGE CASES: <special cases, exceptions, boundary conditions, or failure scenarios when relevant>\n\n"
 
             "Section usage rules:\n"
+            "- do not output the <> and the instructions with it"
+            "- do NOT ECHO the instructions with the sections"
             "- Use ONLY the sections that are APPLICABLE to the raw prompt.\n"
             "- Do not include empty, generic, redundant, or unnecessary sections just to complete a template.\n"
             "- Use [Insert ...] placeholders only for genuinely missing details that are necessary to complete the prompt.\n"
