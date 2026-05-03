@@ -25,7 +25,7 @@ import shutil
 import sys
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_PATH = os.path.join(PROJECT_ROOT, "datasets", "preference_pairs.jsonl")
+DEFAULT_PATH = os.path.join(PROJECT_ROOT, "datasets", "test_preference_pairs.jsonl")
 
 PROMPT_KEY = "x"
 COMPLETION_KEYS = ("y_w", "y_l")

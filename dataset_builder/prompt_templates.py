@@ -139,39 +139,51 @@ def modularity_for(archetype: Archetype) -> Modularity:
 
 _BASE_SYSTEM = """You are an expert Prompt Rewriter, Prompt Architect, and Prompt Quality Optimizer.
 
-Your task is to rewrite the raw prompt into a clearer, more specific, better structured, and more reliable prompt while preserving the original user intent.
+Your task is to rewrite the raw prompt into a clearer, more specific, better-structured, and more reliable prompt while preserving the original user intent.
 
-You must first internally detect the prompt archetype and choose the correct modularity style, but you must NOT output the archetype, diagnosis, explanation, or improvement summary.
+Internally judge what kind of task the prompt represents and pick a rewrite shape that fits the content. Do NOT output any archetype label, diagnosis, explanation, or improvement summary.
 
-Supported archetypes:
-- Creative
-- Coding
-- Conversational
-- Structured
-- Analytical
-- Concise
+Choose the rewrite shape that fits the task:
+- Coding, technical specifications, or build-this-thing requests: use modular sections drawn from ROLE, TASK, INPUTS, OUTPUT, CONSTRAINTS, EDGE CASES, TESTING, CONTEXT — and only the ones the request actually warrants.
+- Structured deliverables (plans, checklists, lesson plans, frameworks): use modular sections drawn from OBJECTIVE, SECTIONS, FORMAT, DETAIL LEVEL, ORDER, CONSTRAINTS — and only the ones that fit.
+- Analytical, comparative, or evaluative requests: use light modular structure (e.g. ROLE, TASK, REQUIREMENTS, or QUESTION, SUBJECT, CRITERIA, OUTPUT FORMAT) only when sections add clarity. Otherwise keep it as a clear paragraph instruction.
+- Creative writing: prefer a clear single-paragraph instruction; use lightly-labeled sections (ROLE, TASK, REQUIREMENTS) only when the request is genuinely complex.
+- Conversational, advisory, or interpersonal requests: write one or two flowing paragraphs of natural language. Do NOT impose ROLE / TASK / OUTPUT scaffolding.
 
-Default modularity rules:
-- Creative: Semi Modular
-- Coding: Full Modular
-- Conversational: Natural Language Modular
-- Structured: Full Modular
-- Analytical: Semi Modular or Full Modular
-- Concise: Minimal Modular
+Section header rules:
+- Only use section headers that GENUINELY FIT the task. Do NOT use coding-style headers (LANGUAGE/STACK, INPUTS, EDGE CASES, FILES/FUNCTIONS, TESTING) for non-coding tasks.
+- Use section names as real headings (each on its own line, followed by content).
+- Do not add empty or generic sections just to complete a template. Use the smallest structure that preserves the task and improves clarity.
 
 Rewrite rules:
 - Improve clarity, specificity, completeness, output instructions, readability, logical flow, and token efficiency.
 - Preserve the original intent, topic, constraints, and expected task.
-- Do not answer the prompt.
-- Do not generate the requested output.
-- Do not add irrelevant requirements.
-- Do not overcomplicate simple prompts.
+- DO NOT ANSWER the prompt.
+- Do NOT generate the requested output.
+- Do NOT add irrelevant requirements.
+- Do not transform the task into "create a prompt for this task" unless the original user explicitly asks for prompt creation.
+- If the raw prompt is a question, rewrite it as a clearer prompt. Do not answer the question.
+- If the raw prompt asks for code, rewrite the coding request. Do not provide the code implementation.
+- If the raw prompt asks for an explanation, rewrite the explanation request. Do not provide the explanation.
+- Keep the rewritten prompt as a direct instruction to the assistant, not as a meta-instruction about prompt writing.
 - Do not include labels such as Archetype, Weaknesses Found, Rewritten Prompt, or Improvement Summary.
 - Return only the final rewritten prompt."""
 
 
 # Per-archetype guidance lifted from architecture/auto-rewriter.md §Archetype-Specific Rewrite Rules.
-# Injected into the system prompt as a hint so the model emphasizes the right axes for each archetype.
+#
+# REFERENCE ONLY — no longer injected into the runtime system prompt.
+#
+# The runtime instruction is now a single stable prompt (_BASE_SYSTEM) so a
+# misclassified prompt cannot drag the rewriter into a wrong-shape scaffold —
+# e.g., an HR question that hits the Coding regex on the word "function" used
+# to be force-fit into TASK / LANGUAGE/STACK / EDGE CASES sections, which
+# tanked semantic preservation and tripped the API's improvement gate.
+#
+# Archetype detection is preserved for metadata, diagnostics, highlighting,
+# recommendations, analytics, and Chapter 4 reporting. This dictionary keeps
+# the canonical per-archetype guidance text so those layers can consult it
+# without re-deriving it.
 _ARCHETYPE_GUIDANCE = {
     Archetype.CREATIVE: (
         "This is a Creative prompt. Use Semi Modular rewriting.\n"
@@ -179,11 +191,29 @@ _ARCHETYPE_GUIDANCE = {
         "Avoid overly rigid section labels unless the original prompt is complex."
     ),
     Archetype.CODING: (
-        "This is a Coding prompt. Use Full Modular rewriting with sections like:\n"
-        "TASK / LANGUAGE/STACK / INPUTS / OUTPUT / CONSTRAINTS / EDGE CASES.\n"
-        "Improve: language clarity, framework/stack details, expected files or functions, "
-        "input/output behavior, validation, edge cases.\n"
-        "Ask for the code or explanation — do not write the implementation yourself."
+        "This is a Coding prompt. Use structured rewriting.\n"
+        "Improve clarity, specificity, completeness, expected behavior, constraints, and output usability.\n"
+        "Preserve the original coding task exactly. Do not answer it or write the implementation.\n\n"
+
+        "Use clear section headings. Include these core sections when applicable:\n"
+        "TASK:\n"
+        "LANGUAGE/STACK:\n"
+        "OUTPUT:\n"
+        "CONSTRAINTS:\n\n"
+
+        "Optional section headings. Include only when clearly relevant or implied by the raw prompt:\n"
+        "INPUTS:\n"
+        "FILES/FUNCTIONS:\n"
+        "EDGE CASES:\n"
+        "TESTING:\n"
+        "CONTEXT:\n\n"
+
+        "Rules for Coding prompts:\n"
+        "- Use section names as actual headings, not as a slash-separated list.\n"
+        "- Use the smallest structured format that preserves the original task and improves clarity.\n"
+        "- Do not add empty or generic sections just to complete a template.\n"
+        "- Do not phrase the rewrite as 'create a prompt that asks...' or 'ask the assistant to...'.\n"
+        "- Rewrite the user's coding request directly."
     ),
     Archetype.CONVERSATIONAL: (
         "This is a Conversational prompt. Use Natural Language Modular rewriting.\n"
@@ -219,11 +249,23 @@ class PromptPlan:
 
 
 def build_plan(raw_prompt: str) -> PromptPlan:
-    """Return the full prompt plan (archetype, modularity, system + user messages)."""
+    """Return the full prompt plan (archetype, modularity, system + user messages).
+
+    The system prompt is a single stable instruction that does NOT vary by
+    archetype. Archetype + modularity are returned as metadata for
+    diagnostics, highlighting, recommendations, and analytics — they are
+    never injected into the model-facing prompt. This protects the rewriter
+    from an archetype misclassification pulling it into a wrong-shape scaffold.
+    """
     archetype = detect_archetype(raw_prompt)
     modularity = modularity_for(archetype)
-    guidance = _ARCHETYPE_GUIDANCE[archetype]
-    system = f"{_BASE_SYSTEM}\n\nArchetype hint for the current row (do not echo this back):\n{guidance}"
+    system = _BASE_SYSTEM
+    # User wrapper kept identical to the form used when the DPO `chosen` pairs
+    # were generated. Anti-answer / anti-meta rules live in _BASE_SYSTEM so the
+    # adapter sees the same user-role shell it was trained against — duplicating
+    # them in the user role caused the adapter to echo this wrapper verbatim
+    # instead of producing a rewrite (observed on "Create a C++ code about oop
+    # and games" — distribution shift, not a generation parameter issue).
     user = (
         "Raw prompt:\n"
         f"{raw_prompt.strip()}\n\n"

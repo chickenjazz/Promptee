@@ -9,6 +9,7 @@ import AboutTab from '@/components/tabs/AboutTab';
 import ResultsTab from '@/components/tabs/ResultsTab';
 import SignInModal from '@/components/auth/SignInModal';
 import SplashScreen from '@/components/SplashScreen';
+import type { PromptIssue, RewriteMetadata, ValidationResult } from '@/types/prompt';
 
 export interface ScoreResult {
   raw_quality: number;
@@ -35,6 +36,11 @@ export interface OptimizationResponse {
   external_llm_response_raw: string;
   external_llm_response_optimized: string;
   improvement_score: number;
+  rewrite_metadata: RewriteMetadata;
+  issues: PromptIssue[];
+  recommendations: string[];
+  institutional_guideline: string;
+  validation: ValidationResult;
 }
 
 export interface OptimizedData extends OptimizationResponse {

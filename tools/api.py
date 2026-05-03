@@ -13,6 +13,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tools.heuristic_scorer import HeuristicScorer
 from tools.prompt_optimizer import PromptOptimizer
 from tools.external_llm import ExternalLLMService
+from tools.prompt_diagnostics import find_prompt_issues
+from tools.prompt_validator import validate_rewrite
+from tools.recommendation_engine import build_recommendations
+from dataset_builder.prompt_templates import detect_archetype, modularity_for
 
 # Configure structured logging for all promptee modules
 logging.basicConfig(
@@ -81,6 +85,11 @@ class OptimizationResponse(BaseModel):
     external_llm_response_raw: str
     external_llm_response_optimized: str
     improvement_score: float
+    rewrite_metadata: dict
+    issues: list
+    recommendations: list[str]
+    institutional_guideline: str
+    validation: dict
 
 
 @app.post("/optimize_prompt", response_model=OptimizationResponse)
@@ -90,10 +99,15 @@ async def optimize_prompt(request: PromptRequest):
     if not raw.strip():
         raise HTTPException(status_code=400, detail="Prompt cannot be empty.")
 
-    # 1. Compute Raw Score
+    # 1. Deterministic diagnostics on the raw prompt (no model required)
+    issues = find_prompt_issues(raw)
+    archetype = detect_archetype(raw)
+    modularity = modularity_for(archetype)
+
+    # 2. Compute Raw Score
     raw_score = scorer.evaluate(raw)
 
-    # 2. Generate Rewrite
+    # 3. Generate Rewrite
     try:
         optimized = optimizer.rewrite(raw)
     except RuntimeError as e:
@@ -103,10 +117,10 @@ async def optimize_prompt(request: PromptRequest):
             detail="Prompt optimizer model is not loaded. Please try again later.",
         )
 
-    # 3. Compute Optimized Score (with semantic preservation gate)
+    # 4. Compute Optimized Score (with semantic preservation gate)
     opt_score = scorer.evaluate(raw, optimized)
 
-    # 4. Safety / Boundary checks (Self-Annealing)
+    # 5. Safety / Boundary checks (Self-Annealing)
     improvement = opt_score["quality_improvement"]
 
     # Reject if: semantic preservation gate failed OR no improvement
@@ -119,7 +133,18 @@ async def optimize_prompt(request: PromptRequest):
         opt_score = raw_score
         improvement = 0.0
 
-    # 5. External LLM Benchmarking (run in thread pool to avoid blocking event loop)
+    # 6. Post-rewrite validation (deterministic guard)
+    validation = validate_rewrite(raw, optimized)
+
+    # 7. Build educational recommendations from issues + scores + archetype
+    recommendation_result = build_recommendations(
+        raw_prompt=raw,
+        issues=issues,
+        score_result=opt_score,
+        archetype=archetype.value,
+    )
+
+    # 8. External LLM Benchmarking (run in thread pool to avoid blocking event loop)
     import asyncio
 
     loop = asyncio.get_event_loop()
@@ -136,6 +161,16 @@ async def optimize_prompt(request: PromptRequest):
         external_llm_response_raw=resp_raw,
         external_llm_response_optimized=resp_opt,
         improvement_score=round(improvement, 4),
+        rewrite_metadata={
+            "archetype": archetype.value,
+            "modularity": modularity.value,
+            "adapter_safe_mode": True,
+            "runtime_generation_policy": "structured_adapter_aligned",
+        },
+        issues=issues,
+        recommendations=recommendation_result["recommendations"],
+        institutional_guideline=recommendation_result["institutional_guideline"],
+        validation=validation,
     )
 
 
