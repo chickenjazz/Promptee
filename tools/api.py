@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import sys
 import os
@@ -75,6 +76,9 @@ async def serve_frontend():
 
 class PromptRequest(BaseModel):
     prompt: str
+    # When False (default), skip the external Gemini benchmarking round-trips
+    # to keep end-to-end latency low. The UI can opt in for side-by-side comparison.
+    benchmark: bool = False
 
 
 class OptimizationResponse(BaseModel):
@@ -99,17 +103,21 @@ async def optimize_prompt(request: PromptRequest):
     if not raw.strip():
         raise HTTPException(status_code=400, detail="Prompt cannot be empty.")
 
-    # 1. Deterministic diagnostics on the raw prompt (no model required)
+    # 1. Deterministic diagnostics on the raw prompt (cheap, <50ms — keep on main thread)
     issues = find_prompt_issues(raw)
     archetype = detect_archetype(raw)
     modularity = modularity_for(archetype)
 
-    # 2. Compute Raw Score
-    raw_score = scorer.evaluate(raw)
+    loop = asyncio.get_event_loop()
 
-    # 3. Generate Rewrite
+    # 2 & 3. Raw scoring (CPU) and rewrite (GPU) are both heavy and independent of
+    # each other — run them concurrently. spaCy / sentence-transformers / model.generate
+    # all release the GIL during their hot loops, so a ThreadPoolExecutor gives real overlap.
     try:
-        optimized = optimizer.rewrite(raw)
+        raw_score, optimized = await asyncio.gather(
+            loop.run_in_executor(None, scorer.evaluate, raw),
+            loop.run_in_executor(None, optimizer.rewrite, raw),
+        )
     except RuntimeError as e:
         logger.error(f"Optimizer not available: {e}")
         raise HTTPException(
@@ -144,14 +152,15 @@ async def optimize_prompt(request: PromptRequest):
         archetype=archetype.value,
     )
 
-    # 8. External LLM Benchmarking (run in thread pool to avoid blocking event loop)
-    import asyncio
-
-    loop = asyncio.get_event_loop()
-    resp_raw, resp_opt = await asyncio.gather(
-        loop.run_in_executor(None, ext_llm.generate_response, raw),
-        loop.run_in_executor(None, ext_llm.generate_response, optimized),
-    )
+    # 8. External LLM Benchmarking — opt-in only. Skipping this saves 1–3s of network
+    # round-trip per request; the UI can toggle benchmark=True for the comparison view.
+    if request.benchmark:
+        resp_raw, resp_opt = await asyncio.gather(
+            loop.run_in_executor(None, ext_llm.generate_response, raw),
+            loop.run_in_executor(None, ext_llm.generate_response, optimized),
+        )
+    else:
+        resp_raw, resp_opt = "", ""
 
     return OptimizationResponse(
         raw_prompt=raw,
