@@ -388,12 +388,12 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                           {/* Raw bar (red) */}
                           <div
                             className="absolute top-0 left-0 h-full bg-red-400 rounded-full transition-all duration-700 ease-out"
-                            style={{ width: `${metric.raw}%`, zIndex: metric.raw > metric.opt ? 2 : 1 }}
+                            style={{ width: `${metric.raw}%`, zIndex: metric.raw <= metric.opt ? 2 : 1 }}
                           ></div>
                           {/* Optimized bar (green) */}
                           <div
                             className="absolute top-0 left-0 h-full bg-green-500 rounded-full transition-all duration-700 ease-out"
-                            style={{ width: `${metric.opt}%`, zIndex: metric.opt >= metric.raw ? 2 : 1 }}
+                            style={{ width: `${metric.opt}%`, zIndex: metric.opt < metric.raw ? 2 : 1 }}
                           ></div>
                         </div>
                         {/* Labels */}
