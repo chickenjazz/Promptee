@@ -13,3 +13,20 @@ __pycache__/
 *$py.class
 
 error_log.txt
+
+# Base model snapshot (re-downloadable from Hugging Face)
+models/sft_baseline/
+
+# Training dataset (regenerable via training/build_sft_dataset.py)
+datasets/sft_dataset.jsonl
+
+# Intermediate training checkpoints (only final adapters are kept for inference)
+training/checkpoints/checkpoint-*/
+training/checkpoints/sft/checkpoint-*/
+
+# Training-only state and reference adapter (not needed for inference)
+training/checkpoints/**/ref/
+**/optimizer.pt
+**/scheduler.pt
+**/rng_state.pth
+**/training_args.bin
