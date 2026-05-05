@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import json
 import logging
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
@@ -78,11 +79,48 @@ class PromptOptimizer:
         base_model_id: str = "Qwen/Qwen2.5-3B-Instruct",
         adapter_path: str = DEFAULT_ADAPTER_PATH,
     ):
-        self.base_model_id = base_model_id
+        # If adapter_metadata.json pins a specific base (e.g. models/sft_baseline
+        # produced by merge_sft_adapter.py), use that instead of the caller's
+        # default. The DPO adapter is trained against the merged SFT baseline;
+        # loading it on vanilla Qwen2.5-3B silently produces degraded output.
+        self.base_model_id = self._resolve_base_model(base_model_id, adapter_path)
         self.adapter_path = adapter_path
         self.tokenizer = None
         self.model = None
         self._loaded = False
+
+    @staticmethod
+    def _resolve_base_model(default_base: str, adapter_path: str) -> str:
+        meta_path = os.path.join(adapter_path, "adapter_metadata.json")
+        if not os.path.exists(meta_path):
+            return default_base
+        try:
+            with open(meta_path, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            logger.warning(
+                f"Could not read {meta_path}: {e}. Using default base {default_base}."
+            )
+            return default_base
+        pinned = meta.get("base_model_path")
+        if not pinned:
+            return default_base
+        # Relative paths in adapter_metadata.json are resolved against PROJECT_ROOT,
+        # not the process CWD — otherwise launching the API from any other directory
+        # silently falls back to the wrong base model.
+        candidates = [pinned] if os.path.isabs(pinned) else [
+            os.path.join(PROJECT_ROOT, pinned),
+            pinned,
+        ]
+        for cand in candidates:
+            if os.path.isdir(cand):
+                logger.info(f"adapter_metadata.json pins base model: {cand}")
+                return cand
+        logger.warning(
+            f"adapter_metadata.json points at {pinned} but no matching directory "
+            f"found (checked {candidates}). Falling back to {default_base}."
+        )
+        return default_base
 
     def load_model(self) -> None:
         """
@@ -178,7 +216,7 @@ class PromptOptimizer:
         raw_prompt: str,
         sys_prompt_override: str = None,
         user_prompt_template: str = None,
-        temperature: float = 0.6,
+        temperature: float = 0.0,
         top_p: float = 0.9,
     ) -> str:
         """
@@ -210,36 +248,7 @@ class PromptOptimizer:
 
         # System meta-prompt (SOP §3B.1)
         sys_prompt = sys_prompt_override or (
-            "You are a prompt refinement engine. Rewrite the user's raw prompt into a clearer, "
-            "more specific, and better-structured prompt while preserving its original intent, "
-            "task, topic, and constraints.\n\n"
-
-            "ALWAYS INCLUDE ROLE and TASK headers. Add additional appropriate headers from this set:\n"
-            "ROLE:\n"
-            "TASK:\n"
-            "CONTEXT:\n"
-            "INPUTS:\n"
-            "OUTPUTS:\n"
-            "FORMAT:\n"
-            "CONSTRAINTS:\n"
-            "EDGE CASES:\n\n"
-
-            "Header rules:\n"
-            "- ROLE must contain one concrete expert persona sentence that starts directly with 'You are'.\n"
-            "- TASK is a concise restatement of what to produce.\n"
-            "- CONTEXT is brief background, audience, purpose, or situation.\n"
-            "- INPUTS, OUTPUTS, FORMAT, CONSTRAINTS, and EDGE CASES use bullet points.\n"
-            "- EDGE CASES is only for code, systems, validation, calculations, or failure-prone tasks.\n\n"
-
-            "Strict rules:\n"
-            "- Output only the rewritten prompt.\n"
-            "- Do not answer, solve, explain, or provide the requested deliverable.\n"
-            "- Do not repeat these rules or describe the section headers.\n"
-            "- Do not prefix headers with bullets, numbers, or dashes.\n"
-            "- Do not include empty, generic, redundant, or shallow sections.\n"
-            "- Do not write None, N/A, TBD, not specified, or similar filler.\n"
-            "- If details are missing, either infer a reasonable general instruction or omit the section.\n"
-            "- Do not invent requirements beyond what is implied by the raw prompt.\n"
+            "Rewrite this prompt to make it better."
         )
 
         user_content = user_prompt_template.format(raw_prompt) if user_prompt_template else f"Optimize this prompt: {raw_prompt}"
