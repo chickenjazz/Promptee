@@ -88,7 +88,7 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
       const response = await fetch('http://127.0.0.1:8000/optimize_prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: rawPrompt, benchmark: runBenchmark })
+        body: JSON.stringify({ prompt: rawPrompt, benchmark: runBenchmark, user_id: user?.id })
       });
 
       if (!response.ok) {
@@ -112,19 +112,7 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
       setOptimizedData(newData);
       setStatus('success');
 
-      // Simulate saving to history if logged in
-      if (user) {
-        const history = JSON.parse(localStorage.getItem('promptee_history') || '[]');
-        history.unshift({
-          id: `EXP-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`,
-          date: new Date().toISOString().split('T')[0],
-          raw: rawPrompt,
-          delta: `+${((data.improvement_score || 0) * 100).toFixed(0)}%`,
-          score: (data.optimized_score?.candidate_quality || 0).toFixed(2),
-          accept: 'High'
-        });
-        localStorage.setItem('promptee_history', JSON.stringify(history));
-      }
+      // Simulate saving to history is now handled by the backend
     } catch (err) {
       console.error(err);
       setStatus('error');
@@ -354,6 +342,19 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                     : 'Run optimization to see the evaluation report.'}
                 </p>
                 {status === 'loading' && <Loader2 className="w-5 h-5 text-blue-500 animate-spin mt-4" />}
+              </div>
+            ) : !user ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center mt-10 animate-in fade-in">
+                <div className="w-14 h-14 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
+                  <ShieldAlert className="w-7 h-7" />
+                </div>
+                <h3 className="text-sm font-bold mb-2 text-slate-800">Sign In to View Report</h3>
+                <p className="text-slate-500 text-xs max-w-[220px] mb-6">
+                  The detailed evaluation report is available to registered users. Sign in to view scores, diagnostics, and recommendations.
+                </p>
+                <button onClick={onSignIn} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md font-medium text-sm transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  Sign In
+                </button>
               </div>
             ) : (
               <div className="animate-in fade-in">

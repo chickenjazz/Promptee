@@ -49,11 +49,12 @@ export interface OptimizedData extends OptimizationResponse {
 
 export default function PrompteeApp() {
   const [activeTab, setActiveTab] = useState('Overview');
-  const [user, setUser] = useState<{ email: string } | null>(null);
+  const [user, setUser] = useState<{ id: number, username: string } | null>(null);
   const [showSignIn, setShowSignIn] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
   const [optimizedData, setOptimizedData] = useState<OptimizedData | null>(null);
+  const [demoTabKey, setDemoTabKey] = useState(0);
 
   // Simulated Backend: Check LocalStorage on mount
   useEffect(() => {
@@ -66,6 +67,8 @@ export default function PrompteeApp() {
     localStorage.removeItem('promptee_user');
     setUser(null);
     setActiveTab('Overview');
+    setOptimizedData(null);
+    setDemoTabKey(k => k + 1);
   };
 
   const handleSplashComplete = useCallback(() => {
@@ -104,7 +107,7 @@ export default function PrompteeApp() {
           {user ? (
             <div className="flex items-center space-x-4 text-sm">
               <span className="flex items-center text-slate-600 bg-slate-100 px-3 py-1.5 rounded-md" aria-label="Logged in user">
-                <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span> {user.email.split('@')[0]}
+                <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span> {user.username}
               </span>
               <button onClick={handleSignOut} className="border border-slate-300 px-4 py-1.5 rounded-md hover:bg-slate-50 focus:ring-2 focus:ring-blue-500">Sign Out</button>
             </div>
@@ -117,21 +120,50 @@ export default function PrompteeApp() {
       </nav>
 
       <main className="pb-20 focus:outline-none" tabIndex={-1}>
-        {activeTab === 'Overview' && <OverviewTab onTryDemo={() => setActiveTab('Demo')} />}
-        {activeTab === 'Demo' && <DemoTab user={user} onSignIn={() => setShowSignIn(true)} optimizedData={optimizedData} setOptimizedData={setOptimizedData} />}
-
-        {activeTab === 'Results' && user && <ResultsTab />}
-        {activeTab === 'Pipeline' && <PipelineTab />}
-        {activeTab === 'About' && <AboutTab />}
+        <div className={activeTab === 'Overview' ? 'block' : 'hidden'}>
+          <OverviewTab onTryDemo={() => setActiveTab('Demo')} />
+        </div>
+        <div className={activeTab === 'Demo' ? 'block' : 'hidden'} key={demoTabKey}>
+          <DemoTab user={user} onSignIn={() => setShowSignIn(true)} optimizedData={optimizedData} setOptimizedData={setOptimizedData} />
+        </div>
+        <div className={activeTab === 'Results' && user ? 'block' : 'hidden'}>
+          {user && <ResultsTab user={user} isActive={activeTab === 'Results'} />}
+        </div>
+        <div className={activeTab === 'Pipeline' ? 'block' : 'hidden'}>
+          <PipelineTab />
+        </div>
+        <div className={activeTab === 'About' ? 'block' : 'hidden'}>
+          <AboutTab />
+        </div>
       </main>
 
       {showSignIn && (
         <SignInModal
           onClose={() => setShowSignIn(false)}
-          onSuccess={(userData) => {
+          onSuccess={async (userData) => {
             setUser(userData);
             localStorage.setItem('promptee_user', JSON.stringify(userData));
             setShowSignIn(false);
+
+            // Retroactively save the guest session's optimized data to the user's history
+            if (optimizedData) {
+              try {
+                await fetch('http://127.0.0.1:8000/save_history', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    user_id: userData.id,
+                    raw_prompt: optimizedData.raw_prompt,
+                    optimized_prompt: optimizedData.optimized_prompt,
+                    raw_score: optimizedData.raw_score,
+                    optimized_score: optimizedData.optimized_score,
+                    improvement_score: optimizedData.improvement_score,
+                  })
+                });
+              } catch (err) {
+                console.error("Failed to retroactively save history", err);
+              }
+            }
           }}
         />
       )}
