@@ -76,7 +76,7 @@ class PromptOptimizer:
 
     def __init__(
         self,
-        base_model_id: str = "Qwen/Qwen2.5-3B-Instruct",
+        base_model_id: str = "chickenjazz/promptee-3b",
         adapter_path: str = DEFAULT_ADAPTER_PATH,
     ):
         # If adapter_metadata.json pins a specific base (e.g. models/sft_baseline

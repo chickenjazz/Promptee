@@ -58,9 +58,23 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Prompt Optimization Pipeline", lifespan=lifespan)
 
+# Local dev origins are always allowed. Production origins (e.g. the Vercel URL)
+# are appended from the comma-separated FRONTEND_ORIGINS env var so the image
+# does not need a rebuild when the deployed frontend domain changes.
+_default_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+]
+_extra_origins = [
+    o.strip() for o in os.environ.get("FRONTEND_ORIGINS", "").split(",") if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000"],
+    allow_origins=_default_origins + _extra_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
