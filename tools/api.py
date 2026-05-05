@@ -18,6 +18,7 @@ from tools.prompt_diagnostics import find_prompt_issues
 from tools.prompt_validator import validate_rewrite
 from tools.recommendation_engine import build_recommendations
 from dataset_builder.prompt_templates import detect_archetype, modularity_for
+from tools.db import init_db, create_user, verify_user, save_optimization_history, get_user_history
 
 # Configure structured logging for all promptee modules
 logging.basicConfig(
@@ -42,6 +43,7 @@ ext_llm = ExternalLLMService()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load heavy models at startup, clean up on shutdown."""
+    init_db()
     try:
         optimizer.load_model()
         logger.info("Startup complete — optimizer model loaded.")
@@ -90,6 +92,7 @@ async def serve_frontend():
 
 class PromptRequest(BaseModel):
     prompt: str
+    user_id: int = None
     # When False (default), skip the external Gemini benchmarking round-trips
     # to keep end-to-end latency low. The UI can opt in for side-by-side comparison.
     benchmark: bool = False
@@ -108,6 +111,54 @@ class OptimizationResponse(BaseModel):
     recommendations: list[str]
     institutional_guideline: str
     validation: dict
+
+
+class AuthRequest(BaseModel):
+    username: str
+    password: str
+
+
+@app.post("/signup")
+async def signup(request: AuthRequest):
+    success, message = create_user(request.username, request.password)
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+    return {"message": message}
+
+
+@app.post("/signin")
+async def signin(request: AuthRequest):
+    success, user_id = verify_user(request.username, request.password)
+    if not success:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    return {"message": "Signin successful", "user_id": user_id, "username": request.username}
+
+
+@app.get("/history/{user_id}")
+async def get_history(user_id: int):
+    history = get_user_history(user_id)
+    return {"history": history}
+
+
+class SaveHistoryRequest(BaseModel):
+    user_id: int
+    raw_prompt: str
+    optimized_prompt: str
+    raw_score: dict
+    optimized_score: dict
+    improvement_score: float
+
+@app.post("/save_history")
+async def save_history(request: SaveHistoryRequest):
+    save_optimization_history(
+        request.user_id,
+        request.raw_prompt,
+        request.optimized_prompt,
+        request.raw_score,
+        request.optimized_score,
+        request.improvement_score
+    )
+    return {"message": "History saved successfully"}
 
 
 @app.post("/optimize_prompt", response_model=OptimizationResponse)
@@ -176,7 +227,7 @@ async def optimize_prompt(request: PromptRequest):
     else:
         resp_raw, resp_opt = "", ""
 
-    return OptimizationResponse(
+    resp = OptimizationResponse(
         raw_prompt=raw,
         optimized_prompt=optimized,
         raw_score=raw_score,
@@ -195,6 +246,18 @@ async def optimize_prompt(request: PromptRequest):
         institutional_guideline=recommendation_result["institutional_guideline"],
         validation=validation,
     )
+
+    if request.user_id is not None:
+        save_optimization_history(
+            request.user_id,
+            raw,
+            optimized,
+            raw_score,
+            opt_score,
+            round(improvement, 4)
+        )
+
+    return resp
 
 
 if __name__ == "__main__":
