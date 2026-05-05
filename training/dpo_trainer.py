@@ -11,6 +11,7 @@ This script is OFFLINE-ONLY. It must never be imported by runtime code.
 
 import os
 import sys
+import random
 import logging
 import argparse
 
@@ -28,6 +29,8 @@ if 'SSL_CERT_FILE' in os.environ and not os.path.exists(os.environ['SSL_CERT_FIL
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(PROJECT_ROOT)
 
+from training._prompts import STRONG_PROMPT, WEAK_PROMPT, USER_TEMPLATE
+
 if not torch.cuda.is_available():
     raise RuntimeError("CUDA is not available. DPO training requires a GPU.")
 
@@ -37,10 +40,41 @@ logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
 )
 
-# Defaults from SOP
-BASE_MODEL_ID = "Qwen/Qwen2.5-3B-Instruct"
+# Defaults from SOP. After SFT, prefer the merged baseline as the DPO start point —
+# falls back to the original Qwen base if the merged model hasn't been built yet
+# so this script remains runnable in isolation.
+SFT_BASELINE_PATH = os.path.join(PROJECT_ROOT, "models", "sft_baseline")
+BASE_MODEL_ID = SFT_BASELINE_PATH if os.path.isdir(SFT_BASELINE_PATH) else "Qwen/Qwen2.5-3B-Instruct"
 DATASET_PATH = os.path.join(PROJECT_ROOT, "datasets", "preference_pairs.jsonl")
 CHECKPOINT_DIR = os.path.join(PROJECT_ROOT, "training", "checkpoints")
+
+# System-prompt dropout boundaries (must match build_sft_dataset.py)
+P_STRONG = 0.30
+P_WEAK = 0.70
+DROPOUT_SEED = 42
+
+
+def _format_with_dropout(example, tokenizer, rng):
+    """Pre-format the DPO prompt with the same 30/40/30 system-prompt dropout
+    used in SFT. Without this, DPO would only ever see the no-system template
+    (DPOTrainer's default) and would partially undo the SFT decoupling.
+
+    chosen/rejected stay as raw text — DPOTrainer concatenates them onto the
+    formatted prompt verbatim, so the assistant turn ends up identical to the
+    SFT format.
+    """
+    r = rng.random()
+    if r < P_STRONG:
+        msgs = [{"role": "system", "content": STRONG_PROMPT}]
+    elif r < P_WEAK:
+        msgs = [{"role": "system", "content": WEAK_PROMPT}]
+    else:
+        msgs = []
+    msgs.append({"role": "user", "content": USER_TEMPLATE.format(raw_prompt=example["prompt"])})
+    example["prompt"] = tokenizer.apply_chat_template(
+        msgs, tokenize=False, add_generation_prompt=True,
+    )
+    return example
 
 
 def train(
@@ -48,13 +82,13 @@ def train(
     dataset_path: str = DATASET_PATH,
     checkpoint_dir: str = CHECKPOINT_DIR,
     epochs: int = 3,
-    batch_size: int = 2,
-    learning_rate: float = 5e-5,
-    beta: float = 0.1,
+    batch_size: int = 1,
+    learning_rate: float = 1e-5,
+    beta: float = 0.05,
     lora_r: int = 16,
     lora_alpha: int = 32,
     lora_dropout: float = 0.05,
-    max_length: int = 512,
+    max_length: int = 1024,
 ):
     """
     Run DPO training on the preference dataset.
@@ -129,6 +163,13 @@ def train(
         "y_l": "rejected",
     })
 
+    # Apply system-prompt dropout to match the SFT training distribution.
+    rng = random.Random(DROPOUT_SEED)
+    dataset = dataset.map(
+        lambda ex: _format_with_dropout(ex, tokenizer, rng),
+        desc="Applying system-prompt dropout",
+    )
+
     # ── 5. Configure DPO Training ────────────────────────────────────────
     os.makedirs(checkpoint_dir, exist_ok=True)
 
@@ -136,7 +177,7 @@ def train(
         output_dir=checkpoint_dir,
         num_train_epochs=epochs,
         per_device_train_batch_size=batch_size,
-        gradient_accumulation_steps=4,
+        gradient_accumulation_steps=8,
         gradient_checkpointing=True,
         learning_rate=learning_rate,
         beta=beta,
@@ -175,15 +216,18 @@ def train(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DPO Training for Prompt Optimizer")
     parser.add_argument("--epochs", type=int, default=3)
-    parser.add_argument("--batch-size", type=int, default=2)
-    parser.add_argument("--lr", type=float, default=5e-5)
-    parser.add_argument("--beta", type=float, default=0.1)
+    parser.add_argument("--batch-size", type=int, default=1)
+    parser.add_argument("--lr", type=float, default=1e-5)
+    parser.add_argument("--beta", type=float, default=0.05)
     parser.add_argument("--lora-r", type=int, default=16)
+    parser.add_argument("--base-model", default=BASE_MODEL_ID,
+                        help="Base model path. Defaults to models/sft_baseline if present.")
     parser.add_argument("--dataset", default=DATASET_PATH)
     parser.add_argument("--output", default=CHECKPOINT_DIR)
     args = parser.parse_args()
 
     train(
+        base_model_id=args.base_model,
         dataset_path=args.dataset,
         checkpoint_dir=args.output,
         epochs=args.epochs,

@@ -3,7 +3,7 @@
   "alpha_pattern": {},
   "arrow_config": null,
   "auto_mapping": null,
-  "base_model_name_or_path": "Qwen/Qwen2.5-3B-Instruct",
+  "base_model_name_or_path": "C:\\Users\\quadcore\\Documents\\CODES\\Promptee (v1- Test)\\models\\sft_baseline",
   "bias": "none",
   "corda_config": null,
   "ensure_weight_tying": false,
@@ -31,9 +31,9 @@
   "revision": null,
   "target_modules": [
     "q_proj",
-    "o_proj",
+    "k_proj",
     "v_proj",
-    "k_proj"
+    "o_proj"
   ],
   "target_parameters": null,
   "task_type": "CAUSAL_LM",

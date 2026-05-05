@@ -1,5 +1,4 @@
 ---
-base_model: Qwen/Qwen2.5-3B-Instruct
 library_name: transformers
 model_name: checkpoints
 tags:
@@ -11,7 +10,7 @@ licence: license
 
 # Model Card for checkpoints
 
-This model is a fine-tuned version of [Qwen/Qwen2.5-3B-Instruct](https://huggingface.co/Qwen/Qwen2.5-3B-Instruct).
+This model is a fine-tuned version of [None](https://huggingface.co/None).
 It has been trained using [TRL](https://github.com/huggingface/trl).
 
 ## Quick start

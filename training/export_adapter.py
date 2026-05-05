@@ -11,6 +11,7 @@ This script is OFFLINE-ONLY. It must never be imported by runtime code.
 
 import os
 import sys
+import json
 import shutil
 import logging
 import argparse
@@ -42,6 +43,7 @@ def export(
     checkpoint_dir: str = CHECKPOINT_DIR,
     adapter_output: str = ADAPTER_OUTPUT,
     verify: bool = True,
+    base_model_path: str | None = None,
 ):
     """
     Export adapter weights from a training checkpoint to the runtime directory.
@@ -50,6 +52,8 @@ def export(
         checkpoint_dir: Path to training checkpoint (e.g., training/checkpoints/final)
         adapter_output: Path to runtime adapter directory (e.g., models/adapters)
         verify: If True, verify the exported adapter loads correctly
+        base_model_path: If set, written to adapter_metadata.json so runtime knows
+            to load this base (e.g., models/sft_baseline) instead of vanilla Qwen.
     """
     if not os.path.exists(checkpoint_dir):
         raise FileNotFoundError(
@@ -91,6 +95,17 @@ def export(
             shutil.copy2(src, dst)
             logger.info(f"Copied tokenizer file: {tok_file}")
 
+    # Record the base model the adapter was trained against. After SFT+DPO,
+    # the adapter targets the merged SFT baseline, NOT vanilla Qwen2.5-3B —
+    # loading it on the wrong base would produce garbage. The runtime reads
+    # this file to pick the correct base.
+    if base_model_path:
+        metadata = {"base_model_path": base_model_path}
+        meta_dst = os.path.join(adapter_output, "adapter_metadata.json")
+        with open(meta_dst, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2)
+        logger.info(f"Wrote adapter_metadata.json with base_model_path={base_model_path}")
+
     logger.info(f"Adapter exported to: {adapter_output}")
 
     # Verification step
@@ -129,10 +144,19 @@ if __name__ == "__main__":
         action="store_true",
         help="Skip adapter verification after export",
     )
+    parser.add_argument(
+        "--base-model-path",
+        default=None,
+        help=(
+            "Path to the base model the adapter targets (e.g. models/sft_baseline). "
+            "Recorded in adapter_metadata.json so runtime loads the right base."
+        ),
+    )
     args = parser.parse_args()
 
     export(
         checkpoint_dir=args.checkpoint,
         adapter_output=args.output,
         verify=not args.no_verify,
+        base_model_path=args.base_model_path,
     )
