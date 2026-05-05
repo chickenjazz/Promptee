@@ -85,7 +85,8 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
     setLlmView('optimized'); // Reset view to optimized upon new run
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/optimize_prompt', {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+      const response = await fetch(`${apiBase}/optimize_prompt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: rawPrompt, benchmark: runBenchmark })
