@@ -14,17 +14,22 @@ __pycache__/
 
 error_log.txt
 
-# Base model snapshot (re-downloadable from Hugging Face)
+# Local model artifacts — collaborators load the merged model from Hugging Face Hub
+# (chickenjazz/promptee-3b) instead. See SETUP.md.
 models/sft_baseline/
+models/adapters/
+models/promptee-3b/
 
 # Training dataset (regenerable via training/build_sft_dataset.py)
 datasets/sft_dataset.jsonl
 
-# Intermediate training checkpoints (only final adapters are kept for inference)
+# Training checkpoints — adapters are folded into the released merged model
 training/checkpoints/checkpoint-*/
 training/checkpoints/sft/checkpoint-*/
+training/checkpoints/final/
+training/checkpoints/sft/final/
 
-# Training-only state and reference adapter (not needed for inference)
+# Training-only state and reference adapter
 training/checkpoints/**/ref/
 **/optimizer.pt
 **/scheduler.pt

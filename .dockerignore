@@ -1,0 +1,36 @@
+# Keep the image small. Anything excluded here will NOT be copied by `COPY . .`
+# in the Dockerfile.
+
+# Frontend ships to Vercel separately, not into the backend image.
+Frontend/
+
+# Local virtualenvs and Python caches
+.venv/
+.env
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Local model artifacts are not needed at runtime — production loads the
+# fully merged release `chickenjazz/promptee-3b` from Hugging Face Hub.
+# Excludes models/sft_baseline/ (~5.5 GB), models/adapters/ (DPO LoRA),
+# and the local merged output dir, all of which are training-time artifacts.
+models/
+
+# Training artefacts not needed at inference time
+datasets/
+dataset/
+logs/
+error_log.txt
+
+# Editor / VCS metadata
+.git/
+.github/
+.vscode/
+.idea/
+*.md
+!README.md
+
+# OS junk
+.DS_Store
+Thumbs.db
