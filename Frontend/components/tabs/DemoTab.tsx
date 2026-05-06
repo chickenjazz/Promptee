@@ -286,10 +286,17 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                       <span className="w-2 h-2 rounded-full bg-red-400 mr-2"></span>
                       Raw Prompt Output
                     </div>
-                    {status === 'success' && optimizedData?.external_llm_response_raw ? (
+                    {status === 'success' && optimizedData?.external_llm_status_raw === 'ok' ? (
                       <div className="bg-slate-50 border border-slate-200 p-3 rounded-md flex-1 font-mono text-xs text-slate-700 overflow-auto min-h-[150px] max-h-[300px] animate-in fade-in">
                         <pre className="whitespace-pre-wrap font-inherit m-0">
                           {optimizedData.external_llm_response_raw}
+                        </pre>
+                      </div>
+                    ) : status === 'success' && optimizedData?.external_llm_status_raw === 'error' ? (
+                      <div className="bg-red-50 border border-red-200 p-3 rounded-md flex-1 text-xs text-red-700 overflow-auto min-h-[150px] max-h-[300px] animate-in fade-in">
+                        <div className="font-semibold mb-1">External LLM call failed</div>
+                        <pre className="whitespace-pre-wrap font-mono text-[11px] m-0">
+                          {optimizedData.external_llm_error_raw || 'Unknown error.'}
                         </pre>
                       </div>
                     ) : (
@@ -303,10 +310,17 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                       <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
                       Optimized Prompt Output
                     </div>
-                    {status === 'success' && optimizedData?.external_llm_response_optimized ? (
+                    {status === 'success' && optimizedData?.external_llm_status_optimized === 'ok' ? (
                       <div className="bg-slate-50 border border-slate-200 p-3 rounded-md flex-1 font-mono text-xs text-slate-700 overflow-auto min-h-[150px] max-h-[300px] animate-in fade-in">
                         <pre className="whitespace-pre-wrap font-inherit m-0">
                           {optimizedData.external_llm_response_optimized}
+                        </pre>
+                      </div>
+                    ) : status === 'success' && optimizedData?.external_llm_status_optimized === 'error' ? (
+                      <div className="bg-red-50 border border-red-200 p-3 rounded-md flex-1 text-xs text-red-700 overflow-auto min-h-[150px] max-h-[300px] animate-in fade-in">
+                        <div className="font-semibold mb-1">External LLM call failed</div>
+                        <pre className="whitespace-pre-wrap font-mono text-[11px] m-0">
+                          {optimizedData.external_llm_error_optimized || 'Unknown error.'}
                         </pre>
                       </div>
                     ) : (
