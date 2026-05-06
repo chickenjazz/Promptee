@@ -23,6 +23,9 @@ dataset/
 logs/
 error_log.txt
 
+# Local SQLite databases — production uses its own persistent volume/DB
+*.db
+
 # Editor / VCS metadata
 .git/
 .github/

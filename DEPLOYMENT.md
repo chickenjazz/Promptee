@@ -25,13 +25,40 @@ The runtime model is the public Hugging Face release [chickenjazz/promptee-3b](h
 
 ### A1. Build and push the backend image
 
+Tag every build with the current git SHA. **Do not deploy `:latest`** — it's a moving target with no rollback path, and RunPod can't reliably tell when it changed.
+
+Bash (Git Bash / WSL / Linux / macOS):
 ```bash
 # from repo root
-docker build -t <your-dockerhub-user>/promptee-api:latest .
+TAG=$(git rev-parse --short HEAD)
+docker build \
+  -t <your-dockerhub-user>/promptee-api:$TAG \
+  -t <your-dockerhub-user>/promptee-api:latest \
+  .
+docker push <your-dockerhub-user>/promptee-api:$TAG
 docker push <your-dockerhub-user>/promptee-api:latest
+echo "Deploy this tag in RunPod: $TAG"
 ```
 
+PowerShell (Windows):
+```powershell
+$TAG = git rev-parse --short HEAD
+docker build -t chickenjazz/promptee-api:$TAG -t chickenjazz/promptee-api:latest .
+docker push chickenjazz/promptee-api:$TAG
+docker push chickenjazz/promptee-api:latest
+"Deploy this tag in RunPod: $TAG"
+```
+
+The `:latest` tag is pushed alongside the SHA only as a convenience for `docker pull` on dev machines — RunPod itself should always reference the immutable SHA tag (see A3 step 2).
+
 If you don't have Docker Hub, GitHub Container Registry (`ghcr.io/<user>/promptee-api`) works the same.
+
+**For defense day specifically**, freeze a known-good build under a named tag and never overwrite it:
+```bash
+docker tag <user>/promptee-api:<verified-sha> <user>/promptee-api:defense-locked
+docker push <user>/promptee-api:defense-locked
+```
+Then point the RunPod template at `:defense-locked`. Future builds on the SHA tag won't affect this frozen image.
 
 ### A2. (Recommended) Create a small HF cache volume
 
@@ -47,7 +74,7 @@ If you want to skip this, the pod still works — every cold start just re-downl
 ### A3. Deploy the GPU Pod
 
 1. RunPod → **Pods → Deploy** → pick a GPU (RTX 4090 or L4 are the cheapest that fit ≥16 GB VRAM).
-2. **Container Image**: `<your-dockerhub-user>/promptee-api:latest`.
+2. **Container Image**: `<your-dockerhub-user>/promptee-api:<sha>` — the immutable SHA tag from A1, **not** `:latest`. To deploy a new version later, edit the template's image tag to the new SHA and restart the pod; RunPod sees the tag change and pulls cleanly.
 3. **Volume Disk** (optional but recommended): attach the volume from A2, mount path `/app/.cache/huggingface`.
 4. **Expose HTTP Ports**: `8000`.
 5. **Environment Variables**:
@@ -107,6 +134,33 @@ git push
 
 ---
 
+## Pushing updates
+
+### Frontend changes
+Vercel auto-deploys from the GitHub branch.
+```bash
+git add Frontend/...
+git commit -m "ui: ..."
+git push
+```
+Build runs in ~60 s, production URL updates automatically.
+
+### Backend changes
+Three steps: rebuild → push → restart pod with the new SHA.
+```bash
+TAG=$(git rev-parse --short HEAD)
+docker build -t <user>/promptee-api:$TAG -t <user>/promptee-api:latest .
+docker push <user>/promptee-api:$TAG
+```
+Then in RunPod → your pod → **Edit** → change **Container Image** to `<user>/promptee-api:$TAG` → **Save** → **Restart**. The new SHA forces a clean pull. Roll back by editing the template back to the previous SHA — old image versions stay in the registry.
+
+### What does NOT need a rebuild
+- Editing `*.md` docs (excluded from the image by `.dockerignore`).
+- Changing env vars (`FRONTEND_ORIGINS`, `HF_TOKEN`, etc.) — edit in RunPod, restart pod.
+- Frontend changes — those go through Vercel only.
+
+---
+
 ## Local development (unchanged)
 
 ```bash
@@ -142,3 +196,4 @@ Stop the pod when you're not actively demoing. That single habit is the differen
 - **`No adapters found in models/adapters` log line** → Expected on every production start. The DPO adapter is already merged into `chickenjazz/promptee-3b`; the runtime correctly falls through to use the merged weights.
 - **Vercel build fails with "module not found" for backend imports** → Root Directory wasn't set to `Frontend`. Fix in Vercel project settings.
 - **First request after pod start times out from the frontend** → Increase frontend fetch timeout, or hit `/optimize_prompt` once with a throwaway curl after starting the pod to warm the model.
+- **Restarted the pod but it's still running old code** → You're on `:latest` (or any non-immutable tag) and RunPod served a cached image. Switch the template to the explicit SHA tag from A1 and restart — that forces a clean pull.
