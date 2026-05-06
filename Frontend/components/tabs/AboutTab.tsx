@@ -21,8 +21,8 @@ export default function AboutTab() {
         </div>
         <div className="text-sm text-slate-600 space-y-4 leading-relaxed">
           <p>Promptee is a prompt optimization pipeline that addresses the critical challenge of <em>prompt brittleness</em> in large language model (LLM) applications. By combining multi-criteria heuristic evaluation with transformer fine-tuning algorithms, this system provides a structured, reproducible approach to prompt engineering.</p>
-          <p>The system evaluates prompts across four key dimensions: Clarity, Specificity, Structural Completeness, and Semantic Preservation. Using Quantized Low-Rank Adaptation (QLoRA) and Direct Preference Optimization (DPO), a fine-tuned Qwen model learns to transform raw prompts into optimized versions that consistently produce better LLM outputs.</p>
-          <p>This research addresses the widespread adoption of AI in the Philippines, where repetitive or inaccurate outputs hinder productivity. By providing measurable quality metrics (BLEU, ROUGE-L) and transparent evaluation criteria, Promptee offers a scientifically grounded alternative to ad hoc trial-and-error prompt development.</p>
+          <p>The system evaluates prompts across four key dimensions: Clarity, Specificity, Structural Completeness, and Semantic Preservation. Using Supervised Fine-Tuning (SFT) paired with Direct Preference Optimization (DPO), a fine-tuned Qwen Instruct 3B model learns to transform raw prompts into optimized versions that consistently produce better LLM outputs.</p>
+          <p>This research addresses the widespread adoption of AI in the Philippines, where repetitive or inaccurate outputs hinder productivity. By providing measurable quality metrics using MCDM heuristics and all-MiniLM-L6-v2 semantic embeddings alongside transparent evaluation criteria, Promptee offers a scientifically grounded alternative to ad hoc trial-and-error prompt development.</p>
         </div>
       </div>
 
@@ -152,15 +152,14 @@ export default function AboutTab() {
               <li>• FastAPI (Python 3.10+)</li>
               <li>• Hugging Face Transformers</li>
               <li>• PyTorch with CUDA support</li>
-              <li>• Qwen model with QLoRA/DPO</li>
+              <li>• Qwen model with QLoRA/SFT/DPO</li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-semibold text-slate-900 mb-3 text-sm">Evaluation</h3>
             <ul className="space-y-2 text-sm text-slate-500">
-              <li>• NLTK for BLEU scoring</li>
-              <li>• Rouge for ROUGE-L metrics</li>
+              <li>• all-MiniLM-L6-v2 for Semantic Similarity</li>
               <li>• Custom MCDM implementation</li>
               <li>• NumPy for numerical computation</li>
             </ul>
@@ -183,7 +182,7 @@ export default function AboutTab() {
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 shadow-sm">
         <h2 className="font-bold text-lg mb-4 text-slate-900">Citation</h2>
         <div className="bg-white border border-slate-200 p-5 rounded-md text-sm font-mono text-slate-600 italic">
-          [Author Name]. (2026). Promptee: Prompt Optimization Pipeline Using Multi-Criteria Heuristic Evaluation and Transformer Fine-Tuning Algorithms. [Institution Name], Philippines.
+          Bagayan, J. C., Manuzon, J. M. R., Reyes, A. G. T., & San Diego, C. G. O. (2026). Promptee: Prompt Optimization Pipeline Using Multi-Criteria Heuristic Evaluation and Transformer Fine-Tuning Algorithms. FEU Institute of Technology, Philippines.
         </div>
       </div>
 

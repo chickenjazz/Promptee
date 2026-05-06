@@ -89,11 +89,11 @@ export default function PrompteeApp() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      <nav className="flex flex-wrap items-center justify-between px-6 py-4 bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="text-2xl font-bold text-blue-600">Promptee</div>
+      <nav className="grid grid-cols-[1fr_auto_1fr] items-center px-6 py-4 bg-white border-b border-slate-200 sticky top-0 z-50 gap-4">
+        <div className="text-2xl font-bold text-blue-600 justify-self-start">Promptee</div>
 
         {/* Mobile-responsive tab scrolling */}
-        <div className="flex space-x-6 overflow-x-auto w-full md:w-auto order-3 md:order-2 mt-4 md:mt-0 pb-2 md:pb-0 scrollbar-hide">
+        <div className="flex space-x-6 overflow-x-auto justify-self-center scrollbar-hide">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -107,13 +107,14 @@ export default function PrompteeApp() {
           ))}
         </div>
 
-        <div className="order-2 md:order-3">
+        <div className="justify-self-end min-w-0">
           {user ? (
-            <div className="flex items-center space-x-4 text-sm">
-              <span className="flex items-center text-slate-600 bg-slate-100 px-3 py-1.5 rounded-md" aria-label="Logged in user">
-                <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span> {user.username}
+            <div className="flex items-center space-x-4 text-sm min-w-0">
+              <span className="flex items-center text-slate-600 bg-slate-100 px-3 py-1.5 rounded-md max-w-[220px] min-w-0" aria-label="Logged in user" title={user.username}>
+                <span className="w-2 h-2 rounded-full bg-green-500 mr-2 flex-shrink-0 animate-pulse"></span>
+                <span className="truncate">{user.username}</span>
               </span>
-              <button onClick={handleSignOut} className="border border-slate-300 px-4 py-1.5 rounded-md hover:bg-slate-50 focus:ring-2 focus:ring-blue-500">Sign Out</button>
+              <button onClick={handleSignOut} className="border border-slate-300 px-4 py-1.5 rounded-md hover:bg-slate-50 focus:ring-2 focus:ring-blue-500 flex-shrink-0">Sign Out</button>
             </div>
           ) : (
             <button onClick={() => setShowSignIn(true)} className="bg-blue-600 text-white px-5 py-2 rounded-md font-medium hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">

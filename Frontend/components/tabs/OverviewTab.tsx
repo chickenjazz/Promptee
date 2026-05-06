@@ -23,9 +23,9 @@ export default function OverviewTab({ onTryDemo }: { onTryDemo: () => void }) {
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 md:space-x-4">
           {[
             { id: 1, title: 'Input Raw Prompt', desc: 'User provides initial prompt' },
-            { id: 2, title: 'Multi-Criteria Heuristic Evaluation (Q_raw)', desc: 'Evaluate prompt using MCDM methods' },
-            { id: 3, title: 'Transformation via LoRA/DPO', desc: 'Fine-tuned Qwen Model optimizes prompt' },
-            { id: 4, title: 'Post-Evaluation (Q_opt)', desc: 'Evaluate optimized prompt quality' },
+            { id: 2, title: 'Multi-Criteria Heuristic Evaluation', desc: 'Evaluate prompt using MCDM methods' },
+            { id: 3, title: 'Transformation via SFT/DPO', desc: 'Fine-tuned Qwen Model optimizes prompt' },
+            { id: 4, title: 'Post-Evaluation', desc: 'Evaluate optimized prompt quality' },
             { id: 5, title: 'LLM Output Generation', desc: 'Generate improved output using external LLM' }
           ].map((step, idx) => (
             <React.Fragment key={step.id}>
@@ -87,7 +87,7 @@ export default function OverviewTab({ onTryDemo }: { onTryDemo: () => void }) {
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-3">Transformer Fine-Tuning</h3>
               <p className="text-sm text-slate-600 leading-relaxed max-w-xs mx-auto">
-                Leveraging QLoRA and DPO for efficient parameter-space adaptation
+                Leveraging Supervised Fine-Tuning (SFT) and Direct Preference Optimization (DPO) on the Qwen Instruct 3B model for efficient parameter-space adaptation.
               </p>
             </div>
 
@@ -98,7 +98,7 @@ export default function OverviewTab({ onTryDemo }: { onTryDemo: () => void }) {
               </div>
               <h3 className="text-lg font-bold text-slate-900 mb-3">Transparent Metrics</h3>
               <p className="text-sm text-slate-600 leading-relaxed max-w-xs mx-auto">
-                Reproducible results with BLEU and ROUGE-L scoring for output integrity
+                Reproducible results using MCDM heuristics and all-MiniLM-L6-v2 embeddings for fast, accurate semantic scoring.
               </p>
             </div>
           </div>
