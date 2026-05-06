@@ -17,8 +17,9 @@ def test_gemini_connection():
         print("[-] GEMINI_API_KEY is not set in .env")
         return False
         
-    print("[*] Testing Gemini API Connection...")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    model = settings.GEMINI_MODEL
+    print(f"[*] Testing Gemini API Connection (model: {model})...")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     
     headers = {
         "Content-Type": "application/json"

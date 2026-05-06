@@ -112,6 +112,10 @@ class OptimizationResponse(BaseModel):
     optimized_score: dict
     external_llm_response_raw: str
     external_llm_response_optimized: str
+    external_llm_status_raw: str = "off"          # off | ok | error
+    external_llm_status_optimized: str = "off"
+    external_llm_error_raw: str | None = None
+    external_llm_error_optimized: str | None = None
     improvement_score: float
     rewrite_metadata: dict
     issues: list
@@ -227,12 +231,24 @@ async def optimize_prompt(request: PromptRequest):
     # 8. External LLM Benchmarking — opt-in only. Skipping this saves 1–3s of network
     # round-trip per request; the UI can toggle benchmark=True for the comparison view.
     if request.benchmark:
-        resp_raw, resp_opt = await asyncio.gather(
+        raw_result, opt_result = await asyncio.gather(
             loop.run_in_executor(None, ext_llm.generate_response, raw),
             loop.run_in_executor(None, ext_llm.generate_response, optimized),
         )
+        resp_raw = raw_result["text"]
+        resp_opt = opt_result["text"]
+        status_raw = "ok" if raw_result["ok"] else "error"
+        status_opt = "ok" if opt_result["ok"] else "error"
+        err_raw = raw_result["error"]
+        err_opt = opt_result["error"]
+        if not raw_result["ok"]:
+            logger.warning(f"External LLM (raw) failed: {err_raw}")
+        if not opt_result["ok"]:
+            logger.warning(f"External LLM (optimized) failed: {err_opt}")
     else:
         resp_raw, resp_opt = "", ""
+        status_raw = status_opt = "off"
+        err_raw = err_opt = None
 
     resp = OptimizationResponse(
         raw_prompt=raw,
@@ -241,6 +257,10 @@ async def optimize_prompt(request: PromptRequest):
         optimized_score=opt_score,
         external_llm_response_raw=resp_raw,
         external_llm_response_optimized=resp_opt,
+        external_llm_status_raw=status_raw,
+        external_llm_status_optimized=status_opt,
+        external_llm_error_raw=err_raw,
+        external_llm_error_optimized=err_opt,
         improvement_score=round(improvement, 4),
         rewrite_metadata={
             "archetype": archetype.value,

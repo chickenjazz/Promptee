@@ -35,6 +35,10 @@ export interface OptimizationResponse {
   optimized_score: ScoreResult;
   external_llm_response_raw: string;
   external_llm_response_optimized: string;
+  external_llm_status_raw?: 'off' | 'ok' | 'error';
+  external_llm_status_optimized?: 'off' | 'ok' | 'error';
+  external_llm_error_raw?: string | null;
+  external_llm_error_optimized?: string | null;
   improvement_score: number;
   rewrite_metadata: RewriteMetadata;
   issues: PromptIssue[];
