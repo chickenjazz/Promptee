@@ -9,7 +9,10 @@
 #
 # Runtime env vars expected:
 #   FRONTEND_ORIGINS   comma-separated list of allowed CORS origins
-#                      (e.g. https://promptee-fawn.vercel.app/)
+#                      WITHOUT trailing slashes (browsers never send one in
+#                      the Origin header, so a trailing slash here causes the
+#                      CORS preflight to 400 and the frontend silently fails).
+#                      e.g. https://promptee-fawn.vercel.app
 #   GEMINI_API_KEY     if you want the external-LLM benchmark path enabled
 #   HF_HOME            cache dir for Hugging Face downloads. Point at a
 #                      mounted volume (e.g. /app/.cache/huggingface) so the

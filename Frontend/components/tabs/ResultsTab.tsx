@@ -12,7 +12,8 @@ export default function ResultsTab({ user, isActive }: { user: { id: number, use
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`http://127.0.0.1:8000/history/${user.id}`);
+        const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+        const res = await fetch(`${apiBase}/history/${user.id}`);
         const data = await res.json();
         setRuns(data.history || []);
       } catch (err) {
