@@ -9,7 +9,7 @@
 #
 # Runtime env vars expected:
 #   FRONTEND_ORIGINS   comma-separated list of allowed CORS origins
-#                      (e.g. https://your-app.vercel.app)
+#                      (e.g. https://promptee-fawn.vercel.app/)
 #   GEMINI_API_KEY     if you want the external-LLM benchmark path enabled
 #   HF_HOME            cache dir for Hugging Face downloads. Point at a
 #                      mounted volume (e.g. /app/.cache/huggingface) so the
@@ -24,9 +24,13 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
     HF_HOME=/app/.cache/huggingface
 
+# Ubuntu 22.04 ships Python 3.10 by default; the `python3-pip` apt package
+# binds to it. Keep them aligned so `pip install` and `python -m ...` use the
+# same interpreter — installing python3.11 alongside breaks this and produces
+# "No module named X" errors at runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.11 python3.11-venv python3-pip git \
-    && ln -sf /usr/bin/python3.11 /usr/bin/python \
+        python3 python3-pip python3-venv git \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
