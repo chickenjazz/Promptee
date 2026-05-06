@@ -80,14 +80,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve frontend static files
+# Optional legacy static-frontend mount. The current production frontend ships
+# to Vercel from the Next.js project under Frontend/ (capital F), so this path
+# is only present in older local checkouts. Skip the mount when missing — the
+# API runs headless behind a CORS-allowed Vercel client.
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
-app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+if os.path.isdir(FRONTEND_DIR):
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
-
-@app.get("/", include_in_schema=False)
-async def serve_frontend():
-    return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+    @app.get("/", include_in_schema=False)
+    async def serve_frontend():
+        return FileResponse(os.path.join(FRONTEND_DIR, "index.html"))
+else:
+    @app.get("/", include_in_schema=False)
+    async def serve_frontend():
+        return {"status": "ok", "service": "promptee-api", "docs": "/docs"}
 
 
 class PromptRequest(BaseModel):

@@ -34,7 +34,8 @@ WORKDIR /app
 # Install Python deps first so source edits don't bust the layer cache.
 COPY requirements.txt ./
 RUN pip install --upgrade pip \
- && pip install -r requirements.txt
+ && pip install -r requirements.txt \
+ && python -m spacy download en_core_web_sm
 
 # Project code (the .dockerignore excludes node_modules, .venv, datasets,
 # logs, and the heavy models/sft_baseline directory).
