@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # Override in .env to switch models. Defaults to flash-lite for the most
     # generous free-tier quota; bump to "gemini-2.0-flash" or "gemini-2.5-flash"
     # if you have billing enabled and want higher quality.
-    GEMINI_MODEL: str = "gemini-2.0-flash-lite"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     OPENAI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
 

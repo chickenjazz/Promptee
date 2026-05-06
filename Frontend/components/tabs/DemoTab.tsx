@@ -196,7 +196,7 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
 
             {/* 2. OPTIMIZED PROMPT OUTPUT */}
             <div ref={optimizedCardRef} className="scroll-mt-6" aria-hidden="true" />
-            <div 
+            <div
               className={`rounded-xl border border-slate-200 bg-white p-0 shadow-sm flex flex-col relative overflow-hidden ${status === 'success' ? 'animate-in slide-in-from-bottom-12 fade-in duration-700 ease-out' : ''}`}
             >
               <div className="p-4 border-b border-slate-100 font-bold text-sm bg-slate-50 flex justify-between items-center">
@@ -244,7 +244,7 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                     <button
                       onClick={() => setFeedback('like')}
                       className={`flex items-center justify-center font-medium px-4 py-2 rounded-md text-sm transition-colors focus:ring-2 focus:ring-slate-400 ${feedback === 'like' ? 'bg-green-100 text-green-700 shadow-inner' :
-                          'bg-green-50 text-green-600 hover:bg-green-100'
+                        'bg-green-50 text-green-600 hover:bg-green-100'
                         }`}
                       aria-label="Like"
                     >
@@ -253,7 +253,7 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                     <button
                       onClick={() => setFeedback('dislike')}
                       className={`flex items-center justify-center font-medium px-4 py-2 rounded-md text-sm transition-colors focus:ring-2 focus:ring-slate-400 ${feedback === 'dislike' ? 'bg-red-100 text-red-700 shadow-inner' :
-                          'bg-red-50 text-red-600 hover:bg-red-100'
+                        'bg-red-50 text-red-600 hover:bg-red-100'
                         }`}
                       aria-label="Dislike"
                     >
@@ -321,7 +321,7 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
               {status === 'success' && (
                 <div className="p-4 border-t border-slate-100 bg-green-50/50 text-green-800 text-xs flex items-center">
                   <Sparkles className="w-4 h-4 mr-2" />
-                  <p><strong>Powered by:</strong> External Large Language Model (GPT-4 / Claude / etc.)</p>
+                  <p><strong>Powered by:</strong> Gemini 2.5 Flash</p>
                 </div>
               )}
             </div>
