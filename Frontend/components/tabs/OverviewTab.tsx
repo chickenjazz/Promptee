@@ -22,10 +22,10 @@ export default function OverviewTab({ onTryDemo }: { onTryDemo: () => void }) {
         <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0 md:space-x-4">
           {[
-            { id: 1, title: 'Input Raw Prompt', desc: 'User provides initial prompt' },
+            { id: 1, title: 'Raw Prompt Input', desc: 'User provides initial, unstructured, and weak instructional prompt' },
             { id: 2, title: 'Multi-Criteria Heuristic Evaluation', desc: 'Evaluate prompt using MCDM methods' },
-            { id: 3, title: 'Transformation via SFT/DPO', desc: 'Fine-tuned Qwen Model optimizes prompt' },
-            { id: 4, title: 'Post-Evaluation', desc: 'Evaluate optimized prompt quality' },
+            { id: 3, title: 'Transformation via SFT + DPO', desc: 'Fine-tuned Qwen Model optimizes prompt' },
+            { id: 4, title: 'Post-Evaluation and Recommendation', desc: 'Evaluate optimized prompt quality' },
             { id: 5, title: 'LLM Output Generation', desc: 'Generate improved output using external LLM' }
           ].map((step, idx) => (
             <React.Fragment key={step.id}>

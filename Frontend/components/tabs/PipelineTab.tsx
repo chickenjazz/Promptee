@@ -99,8 +99,8 @@ export default function PipelineTab() {
                 <p className="text-sm text-slate-600 leading-relaxed">Combines individual criterion scores using configurable weights to produce an overall quality score (Q).</p>
               </div>
               <div>
-                <h4 className="font-medium text-slate-900 mb-2">Diff Generation</h4>
-                <p className="text-sm text-slate-600 leading-relaxed">Highlights specific changes made during optimization with explanations for transparency.</p>
+                <h4 className="font-medium text-slate-900 mb-2">Recommendation Engine</h4>
+                <p className="text-sm text-slate-600 leading-relaxed">Highlights specific weaknesses in prompt with explanations and provides actionable recommendations for improvement.</p>
               </div>
             </div>
           )}

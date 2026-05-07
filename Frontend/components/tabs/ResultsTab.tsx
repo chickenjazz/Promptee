@@ -8,7 +8,7 @@ export default function ResultsTab({ user, isActive }: { user: { id: number, use
 
   useEffect(() => {
     if (!isActive) return;
-    
+
     const fetchHistory = async () => {
       setLoading(true);
       try {
@@ -50,7 +50,7 @@ export default function ResultsTab({ user, isActive }: { user: { id: number, use
         <div className="bg-blue-50 text-blue-800 text-xs px-6 py-3 border-b border-slate-200">
           {loading ? 'Loading...' : <>Showing <strong>{runs.length}</strong> experiments</>}
         </div>
-        
+
         {loading ? (
           <div className="flex justify-center p-8">
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -61,8 +61,8 @@ export default function ResultsTab({ user, isActive }: { user: { id: number, use
               <tr>
                 <th className="px-6 py-4">Date</th>
                 <th className="px-6 py-4">Raw Prompt Snippet</th>
-                <th className="px-6 py-4">ΔQ</th>
-                <th className="px-6 py-4">BERT Score</th>
+                <th className="px-6 py-4">Improvement</th>
+                <th className="px-6 py-4">Semantic Preserved</th>
                 <th className="px-6 py-4">Acceptance</th>
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
@@ -128,7 +128,7 @@ export default function ResultsTab({ user, isActive }: { user: { id: number, use
       <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 shadow-sm">
         <h4 className="font-bold text-yellow-800 mb-2">Why Output Integrity Metrics?</h4>
         <p className="text-sm text-yellow-700 leading-relaxed">
-          <strong>BERTScore:</strong> Uses contextual embeddings from BERT to evaluate semantic similarity between the optimized output and reference outputs. Unlike traditional n-gram matching metrics, BERTScore captures deeper semantic meaning and context, ensuring the system preserves the user's original intent while improving prompt quality and structure.
+          <strong>all-MiniLM-L6-v2:</strong> Uses dense vector embeddings to evaluate semantic similarity between the optimized output and reference outputs. Unlike traditional n-gram matching metrics, this lightweight and highly efficient sentence-transformer model captures deeper semantic meaning and context. This ensures the system preserves the user's original intent while improving prompt quality and structure, doing so with significantly lower computational overhead than larger models.
         </p>
       </div>
     </div>
