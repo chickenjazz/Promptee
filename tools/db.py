@@ -4,7 +4,16 @@ import os
 import secrets
 import json
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "promptee.db")
+# Default to project-root/promptee.db for local dev. Override with the
+# PROMPTEE_DB_PATH env var in production so the SQLite file lives on a
+# persistent volume (e.g. /app/.cache/huggingface/promptee.db on RunPod) —
+# without that, the DB is wiped every time the container is replaced by a
+# new image tag.
+DB_PATH = os.environ.get(
+    "PROMPTEE_DB_PATH",
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "promptee.db"),
+)
+os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
