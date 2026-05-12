@@ -143,7 +143,7 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
         {/* ========================================================= */}
         {/* MAIN WORKSPACE (LEFT) */}
         {/* ========================================================= */}
-        <main className="min-w-0 pl-20 pr-4 py-6">
+        <main className="min-w-0 px-4 sm:px-6 xl:pl-20 xl:pr-4 py-6">
           <div className="w-full space-y-4">
 
             <div className="mb-6">
