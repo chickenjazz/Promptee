@@ -32,9 +32,15 @@ def init_db():
             raw_score TEXT NOT NULL,
             optimized_score TEXT NOT NULL,
             improvement_score REAL NOT NULL,
+            feedback TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     ''')
+    # Idempotent migration for DBs created before the feedback column existed.
+    try:
+        c.execute('ALTER TABLE optimization_history ADD COLUMN feedback TEXT')
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
@@ -68,15 +74,33 @@ def verify_user(username: str, password: str):
             return True, user['id']
     return False, None
 
-def save_optimization_history(user_id: int, raw_prompt: str, optimized_prompt: str, raw_score: dict, optimized_score: dict, improvement_score: float):
+def save_optimization_history(user_id: int, raw_prompt: str, optimized_prompt: str, raw_score: dict, optimized_score: dict, improvement_score: float) -> int:
     conn = get_db_connection()
     c = conn.cursor()
     c.execute('''
         INSERT INTO optimization_history (user_id, raw_prompt, optimized_prompt, raw_score, optimized_score, improvement_score)
         VALUES (?, ?, ?, ?, ?, ?)
     ''', (user_id, raw_prompt, optimized_prompt, json.dumps(raw_score), json.dumps(optimized_score), improvement_score))
+    run_id = c.lastrowid
     conn.commit()
     conn.close()
+    return run_id
+
+
+def set_feedback(run_id: int, user_id: int, feedback):
+    """Set 'like' / 'dislike' / None on a history row. Returns True if a row matched."""
+    if feedback not in (None, "like", "dislike"):
+        return False
+    conn = get_db_connection()
+    c = conn.cursor()
+    c.execute(
+        'UPDATE optimization_history SET feedback = ? WHERE id = ? AND user_id = ?',
+        (feedback, run_id, user_id),
+    )
+    updated = c.rowcount > 0
+    conn.commit()
+    conn.close()
+    return updated
 
 def get_user_history(user_id: int):
     conn = get_db_connection()

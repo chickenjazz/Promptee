@@ -54,6 +54,7 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState<'none' | 'like' | 'dislike'>('none');
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
   // External-LLM benchmarking is off by default — it adds 1-3s of network round-trip
   // to every request. Users opt in when they want the side-by-side comparison.
   const [runBenchmark, setRunBenchmark] = useState(false);
@@ -127,6 +128,37 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
     navigator.clipboard.writeText(optimizedData?.optimized_prompt || '');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Persist the user's thumbs-up/down vote for this run. Clicking the active
+  // button clears the vote; clicking the other one switches. We optimistically
+  // update local state and roll back if the request fails.
+  const handleFeedback = async (value: 'like' | 'dislike') => {
+    if (!user || !optimizedData?.run_id || submittingFeedback) return;
+
+    const next: 'none' | 'like' | 'dislike' = feedback === value ? 'none' : value;
+    const previous = feedback;
+    setFeedback(next);
+    setSubmittingFeedback(true);
+
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+      const res = await fetch(`${apiBase}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          run_id: optimizedData.run_id,
+          user_id: user.id,
+          feedback: next === 'none' ? null : next,
+        })
+      });
+      if (!res.ok) throw new Error(`Feedback failed: ${res.statusText}`);
+    } catch (err) {
+      console.error(err);
+      setFeedback(previous);
+    } finally {
+      setSubmittingFeedback(false);
+    }
   };
 
   // Compute metrics for the evaluation report
@@ -245,20 +277,26 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
                       {copied ? 'Copied!' : 'Copy'}
                     </button>
                     <button
-                      onClick={() => setFeedback('like')}
-                      className={`flex items-center justify-center font-medium px-4 py-2 rounded-md text-sm transition-colors focus:ring-2 focus:ring-slate-400 ${feedback === 'like' ? 'bg-green-100 text-green-700 shadow-inner' :
+                      onClick={() => handleFeedback('like')}
+                      disabled={!user || !optimizedData.run_id || submittingFeedback}
+                      className={`flex items-center justify-center font-medium px-4 py-2 rounded-md text-sm transition-colors focus:ring-2 focus:ring-slate-400 disabled:opacity-50 disabled:cursor-not-allowed ${feedback === 'like' ? 'bg-green-100 text-green-700 shadow-inner' :
                         'bg-green-50 text-green-600 hover:bg-green-100'
                         }`}
                       aria-label="Like"
+                      aria-pressed={feedback === 'like'}
+                      title={!user ? 'Sign in to leave feedback' : undefined}
                     >
                       <ThumbsUp className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => setFeedback('dislike')}
-                      className={`flex items-center justify-center font-medium px-4 py-2 rounded-md text-sm transition-colors focus:ring-2 focus:ring-slate-400 ${feedback === 'dislike' ? 'bg-red-100 text-red-700 shadow-inner' :
+                      onClick={() => handleFeedback('dislike')}
+                      disabled={!user || !optimizedData.run_id || submittingFeedback}
+                      className={`flex items-center justify-center font-medium px-4 py-2 rounded-md text-sm transition-colors focus:ring-2 focus:ring-slate-400 disabled:opacity-50 disabled:cursor-not-allowed ${feedback === 'dislike' ? 'bg-red-100 text-red-700 shadow-inner' :
                         'bg-red-50 text-red-600 hover:bg-red-100'
                         }`}
                       aria-label="Dislike"
+                      aria-pressed={feedback === 'dislike'}
+                      title={!user ? 'Sign in to leave feedback' : undefined}
                     >
                       <ThumbsDown className="w-4 h-4" />
                     </button>

@@ -18,7 +18,7 @@ from tools.prompt_diagnostics import find_prompt_issues
 from tools.prompt_validator import validate_rewrite
 from tools.recommendation_engine import build_recommendations
 from dataset_builder.prompt_templates import detect_archetype, modularity_for
-from tools.db import init_db, create_user, verify_user, save_optimization_history, get_user_history
+from tools.db import init_db, create_user, verify_user, save_optimization_history, get_user_history, set_feedback
 
 # Configure structured logging for all promptee modules
 logging.basicConfig(
@@ -122,6 +122,7 @@ class OptimizationResponse(BaseModel):
     recommendations: list[str]
     institutional_guideline: str
     validation: dict
+    run_id: int | None = None
 
 
 class AuthRequest(BaseModel):
@@ -161,7 +162,7 @@ class SaveHistoryRequest(BaseModel):
 
 @app.post("/save_history")
 async def save_history(request: SaveHistoryRequest):
-    save_optimization_history(
+    run_id = save_optimization_history(
         request.user_id,
         request.raw_prompt,
         request.optimized_prompt,
@@ -169,7 +170,23 @@ async def save_history(request: SaveHistoryRequest):
         request.optimized_score,
         request.improvement_score
     )
-    return {"message": "History saved successfully"}
+    return {"message": "History saved successfully", "run_id": run_id}
+
+
+class FeedbackRequest(BaseModel):
+    run_id: int
+    user_id: int
+    feedback: str | None  # "like" | "dislike" | None (to clear)
+
+
+@app.post("/feedback")
+async def post_feedback(request: FeedbackRequest):
+    if request.feedback not in (None, "like", "dislike"):
+        raise HTTPException(status_code=400, detail="feedback must be 'like', 'dislike', or null")
+    ok = set_feedback(request.run_id, request.user_id, request.feedback)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Run not found for this user")
+    return {"message": "Feedback saved"}
 
 
 @app.post("/optimize_prompt", response_model=OptimizationResponse)
@@ -275,7 +292,7 @@ async def optimize_prompt(request: PromptRequest):
     )
 
     if request.user_id is not None:
-        save_optimization_history(
+        resp.run_id = save_optimization_history(
             request.user_id,
             raw,
             optimized,

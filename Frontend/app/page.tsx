@@ -45,6 +45,7 @@ export interface OptimizationResponse {
   recommendations: string[];
   institutional_guideline: string;
   validation: ValidationResult;
+  run_id?: number | null;
 }
 
 export interface OptimizedData extends OptimizationResponse {
@@ -150,11 +151,13 @@ export default function PrompteeApp() {
             localStorage.setItem('promptee_user', JSON.stringify(userData));
             setShowSignIn(false);
 
-            // Retroactively save the guest session's optimized data to the user's history
+            // Retroactively save the guest session's optimized data to the user's history.
+            // We capture the returned run_id so the user can leave feedback on this run
+            // after signing in, without having to re-run optimization.
             if (optimizedData) {
               try {
                 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
-                await fetch(`${apiBase}/save_history`, {
+                const res = await fetch(`${apiBase}/save_history`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -166,6 +169,12 @@ export default function PrompteeApp() {
                     improvement_score: optimizedData.improvement_score,
                   })
                 });
+                if (res.ok) {
+                  const body = await res.json();
+                  if (typeof body?.run_id === 'number') {
+                    setOptimizedData({ ...optimizedData, run_id: body.run_id });
+                  }
+                }
               } catch (err) {
                 console.error("Failed to retroactively save history", err);
               }
