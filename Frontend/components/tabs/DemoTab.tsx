@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, ShieldAlert, CheckCircle2, FileText, Loader2, RefreshCw, BarChart3, TrendingUp, Zap, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Sparkles, ShieldAlert, CheckCircle2, FileText, Loader2, RefreshCw, BarChart3, TrendingUp, Zap, ThumbsUp, ThumbsDown, X } from 'lucide-react';
 import { OptimizedData } from '@/app/page';
 import PromptHighlighter from '@/components/PromptHighlighter';
 import IssuePanel from '@/components/IssuePanel';
@@ -75,6 +75,9 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
 
   // State to manage which LLM Output is currently being viewed
   const [llmView, setLlmView] = useState<'raw' | 'optimized'>('optimized');
+
+  // Mobile/tablet drawer for the evaluation sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // --- Backend Simulation Logic ---
   const handleOptimize = async () => {
@@ -332,15 +335,44 @@ export default function DemoTab({ user, onSignIn, optimizedData, setOptimizedDat
         {/* ========================================================= */}
         {/* SIDEBAR (RIGHT) */}
         {/* ========================================================= */}
-        <aside className="hidden xl:block xl:sticky xl:top-0 h-screen bg-white border-l border-slate-200 flex flex-col text-slate-600 shadow-sm">
+        {/* Mobile backdrop */}
+        {sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            className="xl:hidden fixed inset-0 bg-black/40 z-40 animate-in fade-in"
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Mobile floating toggle */}
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          className="xl:hidden fixed bottom-6 right-6 z-30 bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          aria-label="Show evaluation report"
+        >
+          <BarChart3 className="w-5 h-5" />
+        </button>
+
+        <aside
+          className={`fixed inset-y-0 right-0 z-50 w-[min(380px,90vw)] transform transition-transform duration-300 ease-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'} bg-white border-l border-slate-200 flex flex-col text-slate-600 shadow-xl xl:static xl:sticky xl:top-0 xl:z-auto xl:w-auto xl:h-screen xl:translate-x-0 xl:transform-none xl:transition-none xl:shadow-sm`}
+        >
           <div className="h-full overflow-y-auto custom-scrollbar pb-6">
 
             {/* Header */}
-            <div className="px-5 py-4 border-b border-slate-200 bg-white sticky top-0 z-10">
+            <div className="px-5 py-4 border-b border-slate-200 bg-white sticky top-0 z-10 flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-800 flex items-center">
                 <BarChart3 className="w-4 h-4 mr-2 text-blue-600" />
                 Evaluation Report
               </h2>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                className="xl:hidden text-slate-400 hover:text-slate-600 focus:ring-2 focus:ring-blue-500 rounded p-1"
+                aria-label="Close evaluation report"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
             {status !== 'success' || !optimizedData ? (
