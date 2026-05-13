@@ -152,9 +152,10 @@ export default function PrompteeApp() {
             setShowSignIn(false);
 
             // Retroactively save the guest session's optimized data to the user's history.
-            // We capture the returned run_id so the user can leave feedback on this run
-            // after signing in, without having to re-run optimization.
-            if (optimizedData) {
+            // Gate on the absence of run_id: a run_id means this prompt was already
+            // persisted server-side under some user, so re-saving would either duplicate
+            // it under the same account or, worse, attach another user's run to this one.
+            if (optimizedData && !optimizedData.run_id) {
               try {
                 const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
                 const res = await fetch(`${apiBase}/save_history`, {
