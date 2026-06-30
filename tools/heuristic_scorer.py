@@ -1124,9 +1124,9 @@ class HeuristicScorer:
     # Stage 2: Specificity Scoring
     # ═══════════════════════════════════════════════════════════════════
 
-    def _score_specificity(self, prompt: str) -> float:
+    def _score_specificity(self, prompt: str) -> Dict[str, Any]:
         """
-        SOP §3B — Specificity Score (0.0–1.0).
+        SOP §3B — Specificity Score (0.0–1.0) with diagnostics.
 
         Hybrid coverage + intensity scoring across constraint categories:
           - modifiers (amod + nummod, combined)
@@ -1149,19 +1149,29 @@ class HeuristicScorer:
 
         Signal separation: this function never rewards formatting structure
         (headers, bullets, numbered lists, layout) — those belong to clarity.
+
+        Returns:
+            dict with 'score' (float 0.0–1.0) and diagnostic sub-scores.
         """
+        empty_result: Dict[str, Any] = {
+            'score': 0.0,
+            'modifiers': 0.0, 'entities': 0.0, 'ranges': 0.0,
+            'formats': 0.0, 'tools': 0.0, 'negation': 0.0,
+            'persona': 0.0, 'coverage': 0.0, 'intensity': 0.0,
+        }
+
         if not self._nlp or not prompt.strip():
-            return 0.0
+            return empty_result
 
         doc = self._nlp(prompt)
         if len(doc) == 0:
-            return 0.0
+            return empty_result
 
         # ── Informative token denominator (Issues 1, 6) ──────────────
         informative = self._get_informative_tokens(doc)
         n = len(informative)
         if n == 0:
-            return 0.0
+            return empty_result
 
         # ── Range constraints (Issue 9) — detect before nummod ───────
         range_score, range_char_spans = self._detect_range_constraints(prompt)
@@ -1219,8 +1229,9 @@ class HeuristicScorer:
         # specified scores the same as a 300-token one. A small
         # intensity term breaks ties (e.g. "1 negation" vs "5 negations")
         # without letting any single category dominate.
+        modifier_score: float = amod_score + nummod_score
         category_scores: tuple = (
-            amod_score + nummod_score,   # modifiers (combined — weakest signal pair)
+            modifier_score,   # modifiers (combined — weakest signal pair)
             entity_score,
             range_score,
             format_score,
@@ -1254,7 +1265,20 @@ class HeuristicScorer:
         if floor > 0 and n < floor:
             score *= n / floor
 
-        return max(min(score, 1.0), 0.0)
+        score = max(min(score, 1.0), 0.0)
+
+        return {
+            'score': round(score, 4),
+            'modifiers': round(modifier_score, 4),
+            'entities': round(entity_score, 4),
+            'ranges': round(range_score, 4),
+            'formats': round(format_score, 4),
+            'tools': round(tool_deliverable_score, 4),
+            'negation': round(negation_score, 4),
+            'persona': round(persona_score, 4),
+            'coverage': round(coverage, 4),
+            'intensity': round(intensity, 4),
+        }
 
     # ═══════════════════════════════════════════════════════════════════
     # Stage 3: Ambiguity Penalty
@@ -1500,7 +1524,8 @@ class HeuristicScorer:
         """
         clarity_result = self._score_clarity(prompt)
         clarity: float = clarity_result['score']
-        specificity: float = self._score_specificity(prompt)
+        specificity_result = self._score_specificity(prompt)
+        specificity: float = specificity_result['score']
         ambiguity_penalty: float = self._compute_ambiguity_penalty(prompt)
         redundancy_penalty: float = self._compute_redundancy_penalty(prompt)
         length_penalty: float = self._compute_length_penalty(prompt)
@@ -1532,6 +1557,16 @@ class HeuristicScorer:
             "clarity_fragment_penalty": clarity_result.get('fragment_penalty', 0.0),
             "clarity_actionable_units": clarity_result.get('actionable_units', 0),
             "clarity_total_units": clarity_result.get('total_units', 0),
+            # Specificity diagnostics
+            "specificity_modifiers": specificity_result.get('modifiers', 0.0),
+            "specificity_entities": specificity_result.get('entities', 0.0),
+            "specificity_ranges": specificity_result.get('ranges', 0.0),
+            "specificity_formats": specificity_result.get('formats', 0.0),
+            "specificity_tools": specificity_result.get('tools', 0.0),
+            "specificity_negation": specificity_result.get('negation', 0.0),
+            "specificity_persona": specificity_result.get('persona', 0.0),
+            "specificity_coverage": specificity_result.get('coverage', 0.0),
+            "specificity_intensity": specificity_result.get('intensity', 0.0),
         }
 
     # ═══════════════════════════════════════════════════════════════════
