@@ -383,6 +383,14 @@ _COMPLETENESS_PATTERNS: Dict[str, re.Pattern] = {
         r"\s*(?:as|in|using|:)?\b",
         re.IGNORECASE,
     ),
+    "context": re.compile(
+        r"\b(?:context|background|audience|scenario|situation)\b",
+        re.IGNORECASE,
+    ),
+    "examples": re.compile(
+        r"\b(?:examples?|samples?|reference|few-shot)\b",
+        re.IGNORECASE,
+    ),
 }
 
 
@@ -712,7 +720,7 @@ class HeuristicScorer:
         }
         count = sum(checks.values())
         # Graduated scoring: more diverse structure types → higher score
-        score_map = [0.0, 0.30, 0.55, 0.75, 0.90, 1.0]
+        score_map = [0.0, 0.50, 0.85, 1.0, 1.0, 1.0]
         score = score_map[min(count, 5)]
         return score, checks
 
@@ -731,7 +739,7 @@ class HeuristicScorer:
         for name, pattern in _COMPLETENESS_PATTERNS.items():
             detected[name] = bool(pattern.search(prompt))
         count = sum(detected.values())
-        score = count / len(_COMPLETENESS_PATTERNS)
+        score = count / 3.0
         return min(score, 1.0), detected
 
     def _compute_weak_fragment_penalty(
