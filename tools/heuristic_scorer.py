@@ -1247,7 +1247,15 @@ class HeuristicScorer:
         # saturates near 1.0 by signal ≥ ~15. Prevents stuffing.
         intensity: float = 1.0 - math.exp(-0.2 * total_signal)
 
-        score: float = 0.85 * coverage + 0.15 * intensity
+        # Rebalanced from 0.85/0.15 → 0.65/0.35. The original 85% weight
+        # on binary category presence made it structurally impossible for
+        # prompts covering 3–4 of 7 categories to exceed ~0.60 specificity,
+        # even with strong signal intensity. The new blend rewards depth
+        # over breadth: a prompt with persona + negation + entities + formats
+        # (4/7 coverage = 0.57) and high intensity (≈0.90) now scores
+        # 0.65*0.57 + 0.35*0.90 ≈ 0.69 → after structural bonus and clarity,
+        # the quality ceiling rises from ~88% to ~95%.
+        score: float = 0.65 * coverage + 0.35 * intensity
 
         # ── Ambiguity dampening (Issue 12) ────────────────────────────
         # Exponential decay: mild ambiguity → mild reduction,

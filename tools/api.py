@@ -34,6 +34,105 @@ logging.basicConfig(
 )
 logger = logging.getLogger("promptee.api")
 
+# ── Diagnostic-Guided Refinement (Pass 2) ─────────────────────────────────
+# When a Pass 1 rewrite scores below this quality threshold, a second
+# rewrite pass is attempted with a targeted meta-prompt that tells the
+# model exactly which quality dimensions are weak. This addresses the
+# "re-optimization stall" where feeding an already-optimized prompt back
+# into the generic rewriter produces no improvement.
+REFINEMENT_QUALITY_THRESHOLD = 0.85
+
+# Maximum quality threshold for attempting refinement — if Pass 1 already
+# scores at or above this, no second pass is needed.
+REFINEMENT_MAX_ATTEMPTS = 1  # Additional attempts beyond Pass 1
+
+
+def _build_refinement_prompt(score_result: dict) -> str | None:
+    """
+    Analyse scorer diagnostics and build a targeted system prompt for Pass 2.
+
+    Examines which specificity categories scored zero and which clarity
+    sub-components are weak, then constructs explicit instructions for the
+    model to add the missing elements.
+
+    Returns None if no actionable gaps are found (the prompt is already
+    well-optimised and a second pass would not help).
+    """
+    gaps: list[str] = []
+
+    # ── Specificity gaps: which categories scored zero? ────────────────
+    if score_result.get("specificity_persona", 0) == 0:
+        gaps.append(
+            "Add a clear persona or role declaration at the start "
+            "(e.g. 'You are a senior [relevant expert]')."
+        )
+    if score_result.get("specificity_negation", 0) == 0:
+        gaps.append(
+            "Add at least one explicit constraint or boundary "
+            "(e.g. 'Do not include...', 'Avoid...', 'Never...')."
+        )
+    if score_result.get("specificity_ranges", 0) == 0:
+        gaps.append(
+            "Add specific numeric bounds where appropriate "
+            "(e.g. 'between 3 and 5 examples', 'at least 200 words', "
+            "'no more than 10 items')."
+        )
+    if score_result.get("specificity_formats", 0) == 0:
+        gaps.append(
+            "Specify the desired output format explicitly "
+            "(e.g. 'Return the response as a numbered list', "
+            "'Output in JSON', 'Use markdown with headings')."
+        )
+    if score_result.get("specificity_entities", 0) == 0:
+        gaps.append(
+            "Include specific named entities, technologies, or concrete "
+            "references relevant to the task rather than generic terms."
+        )
+
+    # ── Clarity gaps: which sub-components are low? ────────────────────
+    clarity_actionability = score_result.get("clarity_actionability", 1.0)
+    if clarity_actionability < 0.5:
+        gaps.append(
+            "Use more direct action verbs (e.g. 'Explain', 'Create', "
+            "'List', 'Compare', 'Analyze') instead of vague phrasing."
+        )
+
+    clarity_structure = score_result.get("clarity_structure", 1.0)
+    if clarity_structure < 0.5:
+        gaps.append(
+            "Add structural formatting where it improves clarity "
+            "(e.g. numbered steps, bullet points, or labeled sections)."
+        )
+
+    clarity_completeness = score_result.get("clarity_completeness", 1.0)
+    if clarity_completeness < 0.6:
+        gaps.append(
+            "Ensure the prompt covers key instruction components: "
+            "objective/goal, specific requirements, and expected output."
+        )
+
+    if not gaps:
+        return None
+
+    # Build the refinement system prompt
+    gap_instructions = "\n".join(f"- {g}" for g in gaps)
+    return (
+        "You are an expert Prompt Rewriter and Prompt Quality Optimizer.\n\n"
+        "The prompt below has already been partially optimized but still has "
+        "specific quality gaps. Your task is to REFINE it by addressing the "
+        "gaps listed below while preserving everything that is already good.\n\n"
+        "Quality gaps to address:\n"
+        f"{gap_instructions}\n\n"
+        "Rules:\n"
+        "- Preserve the original intent and all existing good structure.\n"
+        "- Only ADD or IMPROVE the specific elements listed above.\n"
+        "- Do NOT remove existing constraints, sections, or details.\n"
+        "- Do NOT answer the prompt or generate the requested output.\n"
+        "- Do NOT add irrelevant requirements.\n"
+        "- Return only the refined prompt."
+    )
+
+
 # Initialize singleton tools (lightweight — no GPU models yet)
 scorer = HeuristicScorer()
 optimizer = PromptOptimizer()
@@ -234,6 +333,66 @@ async def optimize_prompt(request: PromptRequest):
         opt_score = raw_score
         improvement = 0.0
 
+    # 5b. Diagnostic-Guided Refinement (Pass 2)
+    # If Pass 1 produced a valid rewrite but quality is below the threshold,
+    # identify specific scorer gaps and run a targeted second pass.
+    pass2_attempted = False
+    if (
+        optimized != raw  # Pass 1 was accepted (not rejected/fallen-back)
+        and opt_score["candidate_quality"] < REFINEMENT_QUALITY_THRESHOLD
+    ):
+        refinement_sys_prompt = _build_refinement_prompt(opt_score)
+        if refinement_sys_prompt is not None:
+            logger.info(
+                f"Pass 1 quality={opt_score['candidate_quality']:.4f} < "
+                f"threshold={REFINEMENT_QUALITY_THRESHOLD}. Attempting "
+                f"diagnostic-guided refinement (Pass 2)."
+            )
+            pass2_attempted = True
+            try:
+                # Pass 2: refine the Pass 1 output with targeted instructions
+                pass2_candidate = await loop.run_in_executor(
+                    None,
+                    lambda: optimizer.rewrite(
+                        optimized,
+                        sys_prompt_override=refinement_sys_prompt,
+                        user_prompt_template=(
+                            "Current prompt to refine:\n{0}\n\n"
+                            "Refined prompt only:"
+                        ),
+                    ),
+                )
+
+                # Score Pass 2 against the original raw prompt
+                pass2_score = scorer.evaluate(raw, pass2_candidate)
+                pass2_quality = pass2_score["candidate_quality"]
+                pass1_quality = opt_score["candidate_quality"]
+
+                if (
+                    not pass2_score["rejected"]
+                    and pass2_quality > pass1_quality
+                ):
+                    logger.info(
+                        f"Pass 2 improved quality: {pass1_quality:.4f} → "
+                        f"{pass2_quality:.4f} (+{pass2_quality - pass1_quality:.4f}). "
+                        f"Accepting Pass 2 result."
+                    )
+                    optimized = pass2_candidate
+                    opt_score = pass2_score
+                    improvement = opt_score["quality_improvement"]
+                else:
+                    logger.info(
+                        f"Pass 2 did not improve (Pass 1={pass1_quality:.4f}, "
+                        f"Pass 2={pass2_quality:.4f}, rejected={pass2_score['rejected']}). "
+                        f"Keeping Pass 1 result."
+                    )
+
+            except Exception as e:
+                logger.warning(
+                    f"Pass 2 refinement failed: {e}. Keeping Pass 1 result.",
+                    exc_info=True,
+                )
+
     # 6. Post-rewrite validation (deterministic guard)
     validation = validate_rewrite(raw, optimized)
 
@@ -284,6 +443,7 @@ async def optimize_prompt(request: PromptRequest):
             "modularity": modularity.value,
             "adapter_safe_mode": True,
             "runtime_generation_policy": "structured_adapter_aligned",
+            "refinement_pass2_attempted": pass2_attempted,
         },
         issues=issues,
         recommendations=recommendation_result["recommendations"],
