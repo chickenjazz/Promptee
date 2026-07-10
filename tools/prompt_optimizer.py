@@ -216,7 +216,7 @@ class PromptOptimizer:
         raw_prompt: str,
         sys_prompt_override: str = None,
         user_prompt_template: str = None,
-        temperature: float = 0.0,
+        temperature: float = 0.8,
         top_p: float = 0.9,
     ) -> str:
         """

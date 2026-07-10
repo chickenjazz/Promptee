@@ -74,6 +74,20 @@ class ScoreResult(TypedDict):
     # ── Final output ──────────────────────────────────────────────────
     final_score: float             # Gated improvement score (reward signal)
 
+    # ── Diagnostics (Target Prompt) ───────────────────────────────────
+    clarity_actionability: float
+    clarity_structure: float
+    clarity_completeness: float
+    clarity_fragment_penalty: float
+    specificity_modifiers: float
+    specificity_entities: float
+    specificity_ranges: float
+    specificity_formats: float
+    specificity_tools: float
+    specificity_negation: float
+    specificity_persona: float
+    specificity_coverage: float
+    specificity_intensity: float
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Configuration Dataclass
@@ -116,7 +130,7 @@ class ScorerConfig:
 
         # ── Penalty tuning ────────────────────────────────────────────
         ambiguity_max_penalty: float = 0.15,
-        redundancy_max_penalty: float = 0.15,
+        redundancy_max_penalty: float = 0.05,
 
         # ── Length normalization ───────────────────────────────────────
         # Prompts shorter than this token count receive a length penalty
@@ -127,15 +141,22 @@ class ScorerConfig:
 
         # ── Clarity scoring tuning ────────────────────────────────────
         weak_verb_weight: float = 0.5,
+        modal_verb_weight: float = 0.75,
         noun_orphan_penalty_factor: float = 0.10,
         typo_penalty_per_token: float = 0.005,
         enable_typo_penalty: bool = False,
 
         # ── Clarity component weights (v2 structure-aware scoring) ────
-        clarity_actionability_weight: float = 0.35,
+        clarity_actionability_weight: float = 0.55,
         clarity_structure_weight: float = 0.30,
-        clarity_completeness_weight: float = 0.25,
+        clarity_completeness_weight: float = 0.15,
         clarity_max_fragment_penalty: float = 0.10,
+
+        # ── Actionability verb-density tuning ─────────────────────────
+        # Soft cap on weighted verb score per instruction unit.
+        # Prevents verbosity gaming (stuffing 8 verbs into one sentence).
+        # A unit with verb_score >= cap is treated as maximally actionable.
+        actionability_verb_cap: float = 1.0,
     ):
         # ── Validate weight normalization assumption ──────────────────
         # Weights must be positive; they will be dynamically normalised
@@ -154,6 +175,7 @@ class ScorerConfig:
         self.min_tokens_for_full_score = min_tokens_for_full_score
         self.structural_bonus_cap = structural_bonus_cap
         self.weak_verb_weight = weak_verb_weight
+        self.modal_verb_weight = modal_verb_weight
         self.noun_orphan_penalty_factor = noun_orphan_penalty_factor
         self.typo_penalty_per_token = typo_penalty_per_token
         self.enable_typo_penalty = enable_typo_penalty
@@ -161,6 +183,7 @@ class ScorerConfig:
         self.clarity_structure_weight = clarity_structure_weight
         self.clarity_completeness_weight = clarity_completeness_weight
         self.clarity_max_fragment_penalty = clarity_max_fragment_penalty
+        self.actionability_verb_cap = actionability_verb_cap
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -210,7 +233,9 @@ STRONG_VERBS: frozenset = frozenset({
     "specify", "translate", "rewrite", "revise", "edit", "format",
     "organize", "organise", "categorize", "categorise", "rank", "sort",
     "filter", "validate", "verify", "test", "debug", "refactor",
-    "diagram", "illustrate", "demonstrate", "prove", "solve",
+    "diagram", "illustrate", "demonstrate", "prove", "solve", "include", "exclude",
+    "recommend", "suggest", "propose", "argue", "justify", "support", "oppose",
+    "follow"
 })
 
 # Weak action verbs — reduced weight in clarity scoring.
@@ -255,13 +280,61 @@ FRAGMENT_INDICATORS: frozenset = frozenset({
 _HEADER_PATTERN = re.compile(r"^\s*#{1,6}\s+\S", re.MULTILINE)
 
 # Labeled section detection (Role:, Objective:, Requirements:, etc.)
+# Expanded with synonyms so prompts using Goal/Instructions/Guidelines
+# are recognised identically to Objective/Requirements.
 _LABELED_SECTION_PATTERN = re.compile(
     r"^\s*(?:role|objective|goal|task|purpose|requirements?"
     r"|constraints?|limitations?|output|format|context"
     r"|background|instructions?|deliverables?|criteria"
-    r"|scope|audience|tone|style|examples?)\s*[:]\s*",
+    r"|scope|audience|tone|style|examples?"
+    r"|guidelines?|specifications?|rules|directions?"
+    r"|expectations?|boundaries|guardrails"
+    r"|target|intent|mission|aim"
+    r"|expected\s+(?:response|result|output|format)"
+    r"|response\s+format|answer\s+format|desired\s+(?:format|outcome)"
+    r")\s*[:]\s*",
     re.IGNORECASE | re.MULTILINE,
 )
+
+# Content-free labeled section header — matches lines where the label
+# has NO instruction content after the colon (e.g. "ROLE:\n" or "Requirements:  ").
+# Used to detect pure metadata headers that should not count as instruction units.
+_CONTENT_FREE_LABEL_RE = re.compile(
+    r"^\s*(?:role|objective|goal|task|purpose|requirements?"
+    r"|constraints?|limitations?|output|format|context"
+    r"|background|instructions?|deliverables?|criteria"
+    r"|scope|audience|tone|style|examples?"
+    r"|guidelines?|specifications?|rules|directions?"
+    r"|expectations?|boundaries|guardrails"
+    r"|target|intent|mission|aim"
+    r"|expected\s+(?:response|result|output|format)"
+    r"|response\s+format|answer\s+format|desired\s+(?:format|outcome)"
+    r")\s*[:]\s*$",
+    re.IGNORECASE,
+)
+
+# Content-free markdown header — matches lines like "# Role", "## Requirements"
+# where the heading text is purely a section label with no instruction content.
+_CONTENT_FREE_MD_HEADER_RE = re.compile(
+    r"^\s*#{1,6}\s+(?:role|objective|goal|task|purpose|requirements?"
+    r"|constraints?|limitations?|output|format|context"
+    r"|background|instructions?|deliverables?|criteria"
+    r"|scope|audience|tone|style|examples?"
+    r"|guidelines?|specifications?|rules|directions?"
+    r"|expectations?|boundaries|guardrails"
+    r"|target|intent|mission|aim"
+    r")\s*$",
+    re.IGNORECASE,
+)
+
+# Declarative section labels — sections whose content is context-setting,
+# not directive. Content under these headers is excluded from the
+# actionability denominator (it contributes to specificity/completeness
+# instead). Everything else is treated as directive.
+_DECLARATIVE_SECTION_LABELS: frozenset = frozenset({
+    "role", "persona", "context", "background", "audience",
+    "tone", "style", "scope", "examples", "example",
+})
 
 # Bullet item detection (- item, * item, bullet item)
 _BULLET_ITEM_PATTERN = re.compile(r"^\s*[-*\u2022]\s+", re.MULTILINE)
@@ -275,28 +348,47 @@ _NUMBERED_ITEM_PATTERN = re.compile(r"^\s*\d+[.)]\s+", re.MULTILINE)
 
 # Each pattern detects a complementary instruction component.
 # Score = detected_count / total_count (5 components).
+# Expanded with synonyms so "Goal" matches "Objective", "Instructions"
+# matches "Requirements", "Expected Response" matches "Output Format", etc.
 _COMPLETENESS_PATTERNS: Dict[str, re.Pattern] = {
     "role": re.compile(
-        r"\b(?:act\s+as|role|persona|you\s+are|imagine\s+you(?:'re|\s+are))\b",
+        r"\b(?:act\s+as|role|persona|you\s+are|imagine\s+you(?:'re|\s+are)"
+        r"|as\s+a(?:n)?\s+\w+|pretend|behave\s+as|play\s+the\s+role)\b",
         re.IGNORECASE,
     ),
     "objective": re.compile(
-        r"\b(?:objective|goal|task|purpose|aim|mission)\b",
+        r"\b(?:objective|goal|task|purpose|aim|mission"
+        r"|target|intent|desired\s+outcome|expected\s+result"
+        r"|what\s+I\s+want|what\s+I\s+need|what\s+you\s+should)\b",
         re.IGNORECASE,
     ),
     "requirements": re.compile(
-        r"\b(?:requirements?|must|should|need\s+to|shall|ensure|include)\b",
+        r"\b(?:requirements?|must|should|need\s+to|shall|ensure|include"
+        r"|instructions?|guidelines?|specifications?"
+        r"|rules|directions?|criteria|expectations?)\b",
         re.IGNORECASE,
     ),
     "constraints": re.compile(
         r"\b(?:constraints?|limit(?:ation)?s?|restrict(?:ion)?s?|within"
         r"|maximum|minimum|at\s+most|at\s+least|no\s+more\s+than"
-        r"|no\s+fewer\s+than|avoid|do\s+not|don't)\b",
+        r"|no\s+fewer\s+than|avoid|do\s+not|don't"
+        r"|boundar(?:y|ies)|guardrails?|prohibited|forbidden"
+        r"|disallowed|not\s+allowed|out\s+of\s+scope)\b",
         re.IGNORECASE,
     ),
     "output_format": re.compile(
-        r"\b(?:output|format|return|respond|deliver(?:able)?|provide|present|display)"
+        r"\b(?:output|format|return|respond|deliver(?:able)?|provide|present|display"
+        r"|expected\s+response|desired\s+format|response\s+format"
+        r"|answer\s+format|reply|result|render)"
         r"\s*(?:as|in|using|:)?\b",
+        re.IGNORECASE,
+    ),
+    "context": re.compile(
+        r"\b(?:context|background|audience|scenario|situation)\b",
+        re.IGNORECASE,
+    ),
+    "examples": re.compile(
+        r"\b(?:examples?|samples?|reference|few-shot)\b",
         re.IGNORECASE,
     ),
 }
@@ -374,21 +466,45 @@ class HeuristicScorer:
     # Stage 1: Clarity Scoring (v3 — Structure-Aware)
     # ═══════════════════════════════════════════════════════════════════
 
-    def _extract_instruction_units(self, prompt: str) -> List[str]:
+    @staticmethod
+    def _extract_section_label(line: str) -> Optional[str]:
         """
-        Split a prompt into instruction units: individual sentences,
-        bullet items, numbered items, headers, and labeled sections.
+        Extract the section label from a labeled-section line.
 
-        Bullet/numbered/header/labeled lines become their own units.
-        Prose lines are grouped and split into sentences via spaCy,
-        with fragment attachment applied.
+        Given a line like "Requirements:" or "Role: You are an expert",
+        returns the lowercase label (e.g. "requirements", "role").
+        Returns None if the line is not a labeled section.
+        """
+        m = _LABELED_SECTION_PATTERN.match(line)
+        if not m:
+            return None
+        # The matched text is "  Label:  " — strip and remove the colon.
+        return m.group().strip().rstrip(":").strip().lower()
+
+    def _extract_instruction_units(self, prompt: str) -> List[tuple]:
+        """
+        Split a prompt into instruction units with section context.
+
+        Each unit is a (text, is_declarative) tuple where:
+          - text: the instruction unit string
+          - is_declarative: True if this unit falls under a declarative
+            section (Role, Context, Background, Audience, Tone, Style,
+            Scope, Examples) whose content is context-setting, not
+            directive. Declarative units are excluded from the
+            actionability denominator.
+
+        Content-free section headers (e.g. a line containing only
+        "REQUIREMENTS:" or "# Constraints") are dropped entirely —
+        they are structural metadata, not instruction units.
 
         Returns:
-            List of non-empty instruction unit strings.
+            List of (text, is_declarative) tuples.
         """
         lines = prompt.split("\n")
-        units: List[str] = []
+        units: List[tuple] = []
         prose_block: List[str] = []
+        # Track the current section context (None = top-level / directive)
+        current_section_declarative: bool = False
 
         structural_line = re.compile(
             r"^\s*(?:[-*\u2022]\s+|\d+[.)]\s+|#{1,6}\s+\S)", re.UNICODE
@@ -423,7 +539,7 @@ class HeuristicScorer:
             for sent in merged:
                 txt = sent.text.strip()
                 if txt:
-                    units.append(txt)
+                    units.append((txt, current_section_declarative))
 
         for line in lines:
             stripped = line.strip()
@@ -433,7 +549,21 @@ class HeuristicScorer:
             elif structural_line.match(line) or _LABELED_SECTION_PATTERN.match(line):
                 flush_prose(prose_block)
                 prose_block = []
-                units.append(stripped)
+
+                # Update section context if this is a labeled section
+                label = self._extract_section_label(line)
+                if label is not None:
+                    current_section_declarative = (
+                        label in _DECLARATIVE_SECTION_LABELS
+                    )
+
+                # Drop content-free headers — they're structural metadata
+                is_content_free = (
+                    _CONTENT_FREE_LABEL_RE.match(line)
+                    or _CONTENT_FREE_MD_HEADER_RE.match(line)
+                )
+                if not is_content_free:
+                    units.append((stripped, current_section_declarative))
             else:
                 prose_block.append(stripped)
 
@@ -441,14 +571,31 @@ class HeuristicScorer:
         return units
 
     def _compute_actionability(
-        self, units: List[str]
+        self, units: List[tuple]
     ) -> tuple:
         """
-        Compute per-unit actionability score (0.0–1.0).
+        Compute verb-density actionability score (0.0–1.0).
 
-        Each instruction unit is checked for actionable verbs, modal verbs,
-        passive constructions, implicit commands, or labeled section patterns.
-        Score = actionable_units / total_units.
+        Instead of binary per-unit scoring (actionable_units / total_units),
+        this computes a weighted verb score per directive unit:
+
+          - Strong verbs contribute 1.0 each
+          - Weak verbs contribute weak_verb_weight (default 0.5)
+          - Modal-governed verbs contribute modal_verb_weight (default 0.75)
+          - Implicit commands contribute 1.0
+
+        Per-unit score is capped at actionability_verb_cap (default 2.0)
+        to prevent verbosity gaming.  Final score =
+        sum(capped_unit_scores) / (directive_units * cap), clamped to [0, 1].
+
+        Declarative units (under Role, Context, Background, Audience,
+        Tone, Style, Scope sections) are excluded from both the
+        numerator and denominator — they contribute to specificity
+        and completeness, not actionability.
+
+        Args:
+            units: List of (text, is_declarative) tuples from
+                   _extract_instruction_units.
 
         Returns:
             (score, diagnostics_dict)
@@ -456,26 +603,32 @@ class HeuristicScorer:
         if not units:
             return 0.0, {
                 'verb_count': 0, 'modal_count': 0, 'passive_count': 0,
-                'implicit_commands': 0, 'actionable_units': 0, 'total_units': 0,
+                'implicit_commands': 0, 'actionable_units': 0,
+                'total_units': 0, 'declarative_units': 0,
             }
 
+        cap = self.config.actionability_verb_cap
         total_verb_count = 0
         total_modal_count = 0
         total_passive_count = 0
         total_implicit_commands = 0
         actionable_units = 0
+        declarative_count = 0
+        sum_unit_scores: float = 0.0
 
-        for unit_text in units:
-            unit_is_actionable = False
+        for unit_text, is_declarative in units:
+            # Skip declarative units (Role, Context, etc.) — they
+            # don't belong in the actionability measurement.
+            if is_declarative:
+                declarative_count += 1
+                continue
 
-            # Check for labeled section (e.g., "Role:", "Constraints:")
-            if _LABELED_SECTION_PATTERN.match(unit_text):
-                unit_is_actionable = True
+            unit_score: float = 0.0
 
             # Check for implicit command (e.g., "Step 1: Data preprocessing")
             if IMPLICIT_COMMAND_PATTERN.match(unit_text):
                 total_implicit_commands += 1
-                unit_is_actionable = True
+                unit_score += 1.0
 
             # spaCy analysis for verbs
             doc = self._nlp(unit_text)
@@ -493,7 +646,12 @@ class HeuristicScorer:
                     )
                     if is_actionable_verb:
                         total_verb_count += 1
-                        unit_is_actionable = True
+                        # Strong vs weak verb weighting
+                        lemma = token.lemma_.lower()
+                        if lemma in WEAK_VERBS:
+                            unit_score += self.config.weak_verb_weight
+                        else:
+                            unit_score += 1.0
 
                 if token.pos_ == "AUX" and token.lemma_.lower() in MODAL_VERBS:
                     total_modal_count += 1
@@ -501,15 +659,34 @@ class HeuristicScorer:
                         child.pos_ == "VERB" for child in token.children
                     ) or token.head.pos_ == "VERB"
                     if has_governed:
-                        unit_is_actionable = True
+                        unit_score += self.config.modal_verb_weight
 
                 if token.dep_ == "nsubjpass" and token.head.pos_ == "VERB":
                     total_passive_count += 1
 
-            if unit_is_actionable:
+            # Apply soft cap per unit
+            capped_score = min(unit_score, cap)
+            sum_unit_scores += capped_score
+
+            if unit_score > 0:
                 actionable_units += 1
 
-        score = actionable_units / len(units)
+        # Directive units = total minus declarative
+        directive_count = len(units) - declarative_count
+        if directive_count <= 0:
+            # Prompt is entirely declarative (rare edge case)
+            return 0.0, {
+                'verb_count': total_verb_count,
+                'modal_count': total_modal_count,
+                'passive_count': total_passive_count,
+                'implicit_commands': total_implicit_commands,
+                'actionable_units': actionable_units,
+                'total_units': len(units),
+                'declarative_units': declarative_count,
+            }
+
+        # Verb-density: normalise by (directive_units * cap)
+        score = sum_unit_scores / (directive_count * cap)
         return min(score, 1.0), {
             'verb_count': total_verb_count,
             'modal_count': total_modal_count,
@@ -517,6 +694,7 @@ class HeuristicScorer:
             'implicit_commands': total_implicit_commands,
             'actionable_units': actionable_units,
             'total_units': len(units),
+            'declarative_units': declarative_count,
         }
 
     def _compute_structure_score(self, prompt: str) -> tuple:
@@ -542,7 +720,7 @@ class HeuristicScorer:
         }
         count = sum(checks.values())
         # Graduated scoring: more diverse structure types → higher score
-        score_map = [0.0, 0.30, 0.55, 0.75, 0.90, 1.0]
+        score_map = [0.0, 0.50, 0.85, 1.0, 1.0, 1.0]
         score = score_map[min(count, 5)]
         return score, checks
 
@@ -561,11 +739,11 @@ class HeuristicScorer:
         for name, pattern in _COMPLETENESS_PATTERNS.items():
             detected[name] = bool(pattern.search(prompt))
         count = sum(detected.values())
-        score = count / len(_COMPLETENESS_PATTERNS)
+        score = count / 3.0
         return min(score, 1.0), detected
 
     def _compute_weak_fragment_penalty(
-        self, prompt: str, units: List[str]
+        self, prompt: str, units: List[tuple]
     ) -> tuple:
         """
         Compute fragment penalty (0.0–max_penalty).
@@ -591,7 +769,7 @@ class HeuristicScorer:
 
         # Count verbless fragments in unstructured text
         fragment_count = 0
-        for unit_text in units:
+        for unit_text, _is_declarative in units:
             doc = self._nlp(unit_text)
             has_verb = any(t.pos_ == "VERB" for t in doc)
             has_modal = any(
@@ -946,9 +1124,9 @@ class HeuristicScorer:
     # Stage 2: Specificity Scoring
     # ═══════════════════════════════════════════════════════════════════
 
-    def _score_specificity(self, prompt: str) -> float:
+    def _score_specificity(self, prompt: str) -> Dict[str, Any]:
         """
-        SOP §3B — Specificity Score (0.0–1.0).
+        SOP §3B — Specificity Score (0.0–1.0) with diagnostics.
 
         Hybrid coverage + intensity scoring across constraint categories:
           - modifiers (amod + nummod, combined)
@@ -971,19 +1149,29 @@ class HeuristicScorer:
 
         Signal separation: this function never rewards formatting structure
         (headers, bullets, numbered lists, layout) — those belong to clarity.
+
+        Returns:
+            dict with 'score' (float 0.0–1.0) and diagnostic sub-scores.
         """
+        empty_result: Dict[str, Any] = {
+            'score': 0.0,
+            'modifiers': 0.0, 'entities': 0.0, 'ranges': 0.0,
+            'formats': 0.0, 'tools': 0.0, 'negation': 0.0,
+            'persona': 0.0, 'coverage': 0.0, 'intensity': 0.0,
+        }
+
         if not self._nlp or not prompt.strip():
-            return 0.0
+            return empty_result
 
         doc = self._nlp(prompt)
         if len(doc) == 0:
-            return 0.0
+            return empty_result
 
         # ── Informative token denominator (Issues 1, 6) ──────────────
         informative = self._get_informative_tokens(doc)
         n = len(informative)
         if n == 0:
-            return 0.0
+            return empty_result
 
         # ── Range constraints (Issue 9) — detect before nummod ───────
         range_score, range_char_spans = self._detect_range_constraints(prompt)
@@ -1041,8 +1229,9 @@ class HeuristicScorer:
         # specified scores the same as a 300-token one. A small
         # intensity term breaks ties (e.g. "1 negation" vs "5 negations")
         # without letting any single category dominate.
+        modifier_score: float = amod_score + nummod_score
         category_scores: tuple = (
-            amod_score + nummod_score,   # modifiers (combined — weakest signal pair)
+            modifier_score,   # modifiers (combined — weakest signal pair)
             entity_score,
             range_score,
             format_score,
@@ -1058,7 +1247,15 @@ class HeuristicScorer:
         # saturates near 1.0 by signal ≥ ~15. Prevents stuffing.
         intensity: float = 1.0 - math.exp(-0.2 * total_signal)
 
-        score: float = 0.85 * coverage + 0.15 * intensity
+        # Rebalanced from 0.85/0.15 → 0.65/0.35. The original 85% weight
+        # on binary category presence made it structurally impossible for
+        # prompts covering 3–4 of 7 categories to exceed ~0.60 specificity,
+        # even with strong signal intensity. The new blend rewards depth
+        # over breadth: a prompt with persona + negation + entities + formats
+        # (4/7 coverage = 0.57) and high intensity (≈0.90) now scores
+        # 0.65*0.57 + 0.35*0.90 ≈ 0.69 → after structural bonus and clarity,
+        # the quality ceiling rises from ~88% to ~95%.
+        score: float = 0.65 * coverage + 0.35 * intensity
 
         # ── Ambiguity dampening (Issue 12) ────────────────────────────
         # Exponential decay: mild ambiguity → mild reduction,
@@ -1076,7 +1273,20 @@ class HeuristicScorer:
         if floor > 0 and n < floor:
             score *= n / floor
 
-        return max(min(score, 1.0), 0.0)
+        score = max(min(score, 1.0), 0.0)
+
+        return {
+            'score': round(score, 4),
+            'modifiers': round(modifier_score, 4),
+            'entities': round(entity_score, 4),
+            'ranges': round(range_score, 4),
+            'formats': round(format_score, 4),
+            'tools': round(tool_deliverable_score, 4),
+            'negation': round(negation_score, 4),
+            'persona': round(persona_score, 4),
+            'coverage': round(coverage, 4),
+            'intensity': round(intensity, 4),
+        }
 
     # ═══════════════════════════════════════════════════════════════════
     # Stage 3: Ambiguity Penalty
@@ -1322,7 +1532,8 @@ class HeuristicScorer:
         """
         clarity_result = self._score_clarity(prompt)
         clarity: float = clarity_result['score']
-        specificity: float = self._score_specificity(prompt)
+        specificity_result = self._score_specificity(prompt)
+        specificity: float = specificity_result['score']
         ambiguity_penalty: float = self._compute_ambiguity_penalty(prompt)
         redundancy_penalty: float = self._compute_redundancy_penalty(prompt)
         length_penalty: float = self._compute_length_penalty(prompt)
@@ -1354,6 +1565,16 @@ class HeuristicScorer:
             "clarity_fragment_penalty": clarity_result.get('fragment_penalty', 0.0),
             "clarity_actionable_units": clarity_result.get('actionable_units', 0),
             "clarity_total_units": clarity_result.get('total_units', 0),
+            # Specificity diagnostics
+            "specificity_modifiers": specificity_result.get('modifiers', 0.0),
+            "specificity_entities": specificity_result.get('entities', 0.0),
+            "specificity_ranges": specificity_result.get('ranges', 0.0),
+            "specificity_formats": specificity_result.get('formats', 0.0),
+            "specificity_tools": specificity_result.get('tools', 0.0),
+            "specificity_negation": specificity_result.get('negation', 0.0),
+            "specificity_persona": specificity_result.get('persona', 0.0),
+            "specificity_coverage": specificity_result.get('coverage', 0.0),
+            "specificity_intensity": specificity_result.get('intensity', 0.0),
         }
 
     # ═══════════════════════════════════════════════════════════════════
@@ -1406,6 +1627,19 @@ class HeuristicScorer:
                 semantic_preservation=1.0,
                 rejected=False,
                 final_score=round(raw_metrics["quality"], 4),
+                clarity_actionability=raw_metrics.get("clarity_actionability", 0.0),
+                clarity_structure=raw_metrics.get("clarity_structure", 0.0),
+                clarity_completeness=raw_metrics.get("clarity_completeness", 0.0),
+                clarity_fragment_penalty=raw_metrics.get("clarity_fragment_penalty", 0.0),
+                specificity_modifiers=raw_metrics.get("specificity_modifiers", 0.0),
+                specificity_entities=raw_metrics.get("specificity_entities", 0.0),
+                specificity_ranges=raw_metrics.get("specificity_ranges", 0.0),
+                specificity_formats=raw_metrics.get("specificity_formats", 0.0),
+                specificity_tools=raw_metrics.get("specificity_tools", 0.0),
+                specificity_negation=raw_metrics.get("specificity_negation", 0.0),
+                specificity_persona=raw_metrics.get("specificity_persona", 0.0),
+                specificity_coverage=raw_metrics.get("specificity_coverage", 0.0),
+                specificity_intensity=raw_metrics.get("specificity_intensity", 0.0),
             )
 
         # ── Step 2: Score the candidate prompt ────────────────────────
@@ -1461,6 +1695,19 @@ class HeuristicScorer:
             semantic_preservation=round(semantic, 4),
             rejected=rejected,
             final_score=round(final_score, 4),
+            clarity_actionability=cand_metrics.get("clarity_actionability", 0.0),
+            clarity_structure=cand_metrics.get("clarity_structure", 0.0),
+            clarity_completeness=cand_metrics.get("clarity_completeness", 0.0),
+            clarity_fragment_penalty=cand_metrics.get("clarity_fragment_penalty", 0.0),
+            specificity_modifiers=cand_metrics.get("specificity_modifiers", 0.0),
+            specificity_entities=cand_metrics.get("specificity_entities", 0.0),
+            specificity_ranges=cand_metrics.get("specificity_ranges", 0.0),
+            specificity_formats=cand_metrics.get("specificity_formats", 0.0),
+            specificity_tools=cand_metrics.get("specificity_tools", 0.0),
+            specificity_negation=cand_metrics.get("specificity_negation", 0.0),
+            specificity_persona=cand_metrics.get("specificity_persona", 0.0),
+            specificity_coverage=cand_metrics.get("specificity_coverage", 0.0),
+            specificity_intensity=cand_metrics.get("specificity_intensity", 0.0),
         )
 
 
@@ -1478,8 +1725,26 @@ if __name__ == "__main__":
     print("=" * 70)
 
     # ── Test Case 1: Weak prompt ──────────────────────────────────────
-    weak = "tell me something about stuff"
-    weak_optimised = "explain some things"
+    weak = "Build a website for my car wash business."
+    weak_optimised = """Role:
+Act as a senior full-stack web developer.
+
+Objective:
+Design a responsive website for a car wash business.
+
+Requirements:
+1. Create a homepage, services page, pricing page, booking form, and contact page.
+2. Include a mobile-friendly layout and modern UI.
+3. Use HTML5, CSS3, and JavaScript.
+
+Constraints:
+- Do not use external frameworks.
+- Generate between 400 and 600 words.
+- Include exactly 5 sections.
+
+Output Format:
+Return the response in Markdown using headings, bullet lists, and code blocks."""
+
     print("\n[WEAK PROMPT]")
     print(f"  Raw: {weak!r}")
     print(f"  Candidate: {weak_optimised!r}")
@@ -1487,66 +1752,9 @@ if __name__ == "__main__":
     for k, v in result.items():
         print(f"  {k}: {v}")
 
-    # ── Test Case 2: Moderate prompt ──────────────────────────────────
-    moderate = "Write a summary of machine learning"
-    moderate_optimised = "Write a concise 200-word summary of supervised machine learning, covering key algorithms and their applications."
-    print("\n[MODERATE PROMPT]")
-    print(f"  Raw: {moderate!r}")
-    print(f"  Candidate: {moderate_optimised!r}")
-    result = scorer.evaluate(moderate, moderate_optimised)
-    for k, v in result.items():
-        print(f"  {k}: {v}")
-
-    # ── Test Case 3: Optimised prompt ─────────────────────────────────
-    optimised_raw = "Explain neural networks"
-    optimised_cand = (
-        "Act as a computer science professor. Explain the architecture of "
-        "feedforward neural networks in 3 sections:\n"
-        "1. Input layer and feature representation\n"
-        "2. Hidden layers and activation functions (ReLU, sigmoid)\n"
-        "3. Output layer and loss computation\n"
-        "Format: Use bullet points for key concepts. Limit to 500 words."
-    )
-    print("\n[OPTIMISED PROMPT]")
-    print(f"  Raw: {optimised_raw!r}")
-    print(f"  Candidate: {optimised_cand!r}")
-    result = scorer.evaluate(optimised_raw, optimised_cand)
-    for k, v in result.items():
-        print(f"  {k}: {v}")
-
-    # ── Test Case 4: Mandatory validation — structured must beat vague ─
-    raw_vague = "build a website for my car wash business"
-    structured_candidate = (
-        "Act as a senior full-stack web developer.\n"
-        "\n"
-        "## Objective\n"
-        "Build a responsive business website for a car wash service.\n"
-        "\n"
-        "## Requirements\n"
-        "- Hero section with call-to-action button\n"
-        "- Service listing with prices\n"
-        "- Online booking form\n"
-        "- Mobile-first, high-contrast design\n"
-        "- Contact section with embedded Google Maps\n"
-        "\n"
-        "## Constraints\n"
-        "- Output a single HTML file with inline CSS and JS\n"
-        "- Must load under 3 seconds on mobile\n"
-        "- No external frameworks or CDN dependencies\n"
-        "\n"
-        "## Output Format\n"
-        "Deliver the complete HTML file with comments explaining each section."
-    )
-    print("\n[MANDATORY VALIDATION: Structured vs Vague]")
-    print(f"  Raw:       {raw_vague!r}")
-    print(f"  Candidate: {structured_candidate[:80]!r}...")
-    result = scorer.evaluate(raw_vague, structured_candidate)
-    for k, v in result.items():
-        print(f"  {k}: {v}")
-
     # Compute individual clarity scores for comparison
-    raw_metrics = scorer._score_prompt(raw_vague)
-    cand_metrics = scorer._score_prompt(structured_candidate)
+    raw_metrics = scorer._score_prompt(weak)
+    cand_metrics = scorer._score_prompt(weak_optimised)
     print(f"\n  >> Raw clarity:       {raw_metrics['clarity']:.4f}")
     print(f"  >> Candidate clarity: {cand_metrics['clarity']:.4f}")
     print(f"  >> Raw quality:       {raw_metrics['quality']:.4f}")

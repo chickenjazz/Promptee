@@ -13,3 +13,7 @@ fastapi
 uvicorn
 pydantic-settings
 pyspellchecker
+
+#pip install -r requirements.txt
+#python -m spacy download en_core_web_sm 
+# if you encouter this error "spaCy model 'en_core_web_sm' not found"
