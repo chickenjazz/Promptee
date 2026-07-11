@@ -14,6 +14,7 @@ uvicorn
 pydantic-settings
 pyspellchecker
 
-#pip install -r requirements.txt
+#pip install -r requirements.txt 
+#python must be 3.11.9, ps > winget install Python.Python.3.11
 #python -m spacy download en_core_web_sm 
 # if you encouter this error "spaCy model 'en_core_web_sm' not found"
