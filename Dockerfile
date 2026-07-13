@@ -19,7 +19,7 @@
 #                      6 GB merged model isn't re-downloaded on every cold start.
 #   HF_TOKEN           only needed if you switch the HF repo to private.
 
-FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \

@@ -11,12 +11,15 @@ assistant_only_loss=True, so gradients only flow through the generated
 rewrite — not the system or user text. (trl 1.3.0+ replaced the older
 DataCollatorForCompletionOnlyLM with this flag.)
 
-VRAM budget: tuned for an RTX 3070 (8GB).
+VRAM budget: defaults tuned for an 8 GB consumer GPU (e.g. RTX 3070 / RTX 4050).
   - per_device_train_batch_size=1
   - gradient_accumulation_steps=8 (effective batch 8)
   - gradient_checkpointing=True
   - paged_adamw_8bit
   - max_seq_length=1024
+
+On high-VRAM cards (e.g. RTX Pro 6000 Blackwell, 96 GB) you can safely raise
+--batch-size and --max-seq-length for faster throughput.
 
 OFFLINE-ONLY. Not imported by runtime code.
 """

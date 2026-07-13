@@ -1,6 +1,6 @@
---index-url https://download.pytorch.org/whl/cu121
+--index-url https://download.pytorch.org/whl/cu128
 --extra-index-url https://pypi.org/simple
-torch==2.5.1
+torch>=2.7.0
 transformers
 peft
 trl

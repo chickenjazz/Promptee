@@ -6,9 +6,17 @@ This guide gets you to a running Promptee instance with the same model the maint
 
 - **Python 3.10–3.12**
 - **NVIDIA GPU with ≥6 GB VRAM** (4-bit NF4 quantization at runtime). CPU-only works but inference will be slow.
-- **CUDA toolkit** matching your PyTorch build
+- **CUDA toolkit 12.8+** — required for Blackwell GPUs (RTX Pro 6000). CUDA 12.8 is also backward-compatible with Ada Lovelace (RTX 4050/4090) and Ampere cards.
 - **Node.js 20+** (for the frontend)
 - **~10 GB free disk** for the HF cache + dependencies
+
+### Tested GPUs
+
+| GPU | Architecture | Compute Capability |
+|---|---|---|
+| RTX 3070 / 3080 | Ampere | sm_86 |
+| RTX 4050 / 4090 | Ada Lovelace | sm_89 |
+| RTX Pro 6000 | Blackwell | sm_120 |
 
 ## 1. Clone and install
 
@@ -93,6 +101,7 @@ print(opt.rewrite("write a python function that reverses a list"))
 |---|---|
 | `CUDA out of memory` at load | Lower the batch size or run on CPU: `device_map="cpu"`. 4-bit NF4 needs ~3–4 GB of VRAM for inference. |
 | `bitsandbytes` import error on Windows | Install the prebuilt wheel: `pip install bitsandbytes --upgrade --force-reinstall --no-deps`. |
+| `no kernel image is available for sm_120` | Your PyTorch was built without Blackwell kernels. Recreate your venv and `pip install -r requirements.txt` — the current requirements pull PyTorch ≥2.7 with CUDA 12.8, which includes sm_120. |
 | First run hangs at "Loading tokenizer" | HF download in progress. Watch `~/.cache/huggingface/` — file should be growing. |
 | Output looks like vanilla Qwen, not refined | Confirm the log line `Loading model: chickenjazz/promptee-3b`. If it loaded `Qwen/Qwen2.5-3B-Instruct` instead, the default in `tools/prompt_optimizer.py` was overridden. |
 | Want to use a different base model | Pass it explicitly: `PromptOptimizer(base_model_id="my-org/my-model")`. |
