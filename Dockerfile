@@ -31,8 +31,13 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # binds to it. Keep them aligned so `pip install` and `python -m ...` use the
 # same interpreter — installing python3.11 alongside breaks this and produces
 # "No module named X" errors at runtime.
+#
+# gcc/g++ are needed because PyTorch ≥2.7 bundles Triton, which JIT-compiles
+# small CUDA helper modules at runtime during model.generate(). Without a C++
+# compiler the Triton codegen path throws at inference time.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 python3-pip python3-venv git \
+        gcc g++ \
     && ln -sf /usr/bin/python3 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 
