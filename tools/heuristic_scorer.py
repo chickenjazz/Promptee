@@ -137,7 +137,7 @@ class ScorerConfig:
         min_tokens_for_full_score: int = 8,
 
         # ── Structural bonus ──────────────────────────────────────────
-        structural_bonus_cap: float = 0.10,
+        structural_bonus_cap: float = 0.12,
 
         # ── Clarity scoring tuning ────────────────────────────────────
         weak_verb_weight: float = 0.5,
@@ -1240,21 +1240,22 @@ class HeuristicScorer:
             persona_score,
         )
         present: int = sum(1 for s in category_scores if s > 0)
-        coverage: float = present / len(category_scores)
+        # Saturate at 5 of 7 categories.  Not every prompt needs tool
+        # mentions (specificity_tools) or numeric bounds (specificity_ranges);
+        # those are domain-specific.  Requiring all 7 for full coverage
+        # made it structurally impossible for excellent prompts to reach
+        # quality ≈ 1.0 even with perfect clarity and structure.
+        coverage: float = min(present / 5.0, 1.0)
 
         total_signal: float = sum(category_scores)
-        # k = 0.2 → intensity ≈ 0.5 at signal weight ~3.5,
-        # saturates near 1.0 by signal ≥ ~15. Prevents stuffing.
-        intensity: float = 1.0 - math.exp(-0.2 * total_signal)
+        # k = 0.25 → intensity ≈ 0.5 at signal weight ~2.8,
+        # saturates near 1.0 by signal ≥ ~12. Prevents stuffing while
+        # letting thorough (but not absurdly dense) prompts reach 0.95+.
+        intensity: float = 1.0 - math.exp(-0.25 * total_signal)
 
-        # Rebalanced from 0.85/0.15 → 0.65/0.35. The original 85% weight
-        # on binary category presence made it structurally impossible for
-        # prompts covering 3–4 of 7 categories to exceed ~0.60 specificity,
-        # even with strong signal intensity. The new blend rewards depth
-        # over breadth: a prompt with persona + negation + entities + formats
-        # (4/7 coverage = 0.57) and high intensity (≈0.90) now scores
-        # 0.65*0.57 + 0.35*0.90 ≈ 0.69 → after structural bonus and clarity,
-        # the quality ceiling rises from ~88% to ~95%.
+        # Blend: 0.65 coverage + 0.35 intensity. Coverage (category
+        # breadth) dominates, but intensity (signal depth) breaks ties
+        # and rewards thoroughness within each category.
         score: float = 0.65 * coverage + 0.35 * intensity
 
         # ── Ambiguity dampening (Issue 12) ────────────────────────────
