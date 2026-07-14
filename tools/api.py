@@ -125,6 +125,7 @@ def _build_refinement_prompt(score_result: dict) -> str | None:
         f"{gap_instructions}\n\n"
         "Rules:\n"
         "- Preserve the original intent and all existing good structure.\n"
+        "- use MARKDOWN for the existing headers.\n"
         "- Only ADD or IMPROVE the specific elements listed above.\n"
         "- Do NOT remove existing constraints, sections, or details.\n"
         "- Do NOT answer the prompt or generate the requested output.\n"
