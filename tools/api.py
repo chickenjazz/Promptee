@@ -42,9 +42,11 @@ logger = logging.getLogger("promptee.api")
 # into the generic rewriter produces no improvement.
 REFINEMENT_QUALITY_THRESHOLD = 0.85
 
-# Maximum quality threshold for attempting refinement — if Pass 1 already
-# scores at or above this, no second pass is needed.
-REFINEMENT_MAX_ATTEMPTS = 1  # Additional attempts beyond Pass 1
+# Specificity / clarity sub-scores at or below this value are treated as
+# "effectively absent" and trigger a refinement gap instruction.  Using a
+# small threshold instead of exact-zero guards against floating-point
+# epsilon noise from the scorer's weighted detectors.
+_REFINEMENT_GAP_THRESHOLD = 0.1
 
 
 def _build_refinement_prompt(score_result: dict) -> str | None:
@@ -60,33 +62,43 @@ def _build_refinement_prompt(score_result: dict) -> str | None:
     """
     gaps: list[str] = []
 
-    # ── Specificity gaps: which categories scored zero? ────────────────
-    if score_result.get("specificity_persona", 0) == 0:
+    # ── Specificity gaps: which categories are effectively absent? ─────
+    if score_result.get("specificity_persona", 0) < _REFINEMENT_GAP_THRESHOLD:
         gaps.append(
             "Add a clear persona or role declaration at the start "
             "(e.g. 'You are a senior [relevant expert]')."
         )
-    if score_result.get("specificity_negation", 0) == 0:
+    if score_result.get("specificity_negation", 0) < _REFINEMENT_GAP_THRESHOLD:
         gaps.append(
             "Add at least one explicit constraint or boundary "
             "(e.g. 'Do not include...', 'Avoid...', 'Never...')."
         )
-    if score_result.get("specificity_ranges", 0) == 0:
+    if score_result.get("specificity_ranges", 0) < _REFINEMENT_GAP_THRESHOLD:
         gaps.append(
             "Add specific numeric bounds where appropriate "
             "(e.g. 'between 3 and 5 examples', 'at least 200 words', "
             "'no more than 10 items')."
         )
-    if score_result.get("specificity_formats", 0) == 0:
+    if score_result.get("specificity_formats", 0) < _REFINEMENT_GAP_THRESHOLD:
         gaps.append(
             "Specify the desired output format explicitly "
             "(e.g. 'Return the response as a numbered list', "
             "'Output in JSON', 'Use markdown with headings')."
         )
-    if score_result.get("specificity_entities", 0) == 0:
+    if score_result.get("specificity_entities", 0) < _REFINEMENT_GAP_THRESHOLD:
         gaps.append(
             "Include specific named entities, technologies, or concrete "
             "references relevant to the task rather than generic terms."
+        )
+    if score_result.get("specificity_tools", 0) < _REFINEMENT_GAP_THRESHOLD:
+        gaps.append(
+            "Mention specific tools, languages, or frameworks relevant to "
+            "the task (e.g. 'using Python', 'in React', 'with PostgreSQL')."
+        )
+    if score_result.get("specificity_modifiers", 0) < _REFINEMENT_GAP_THRESHOLD:
+        gaps.append(
+            "Add descriptive modifiers or quantifiers to key nouns "
+            "(e.g. 'concise summary', '3 examples', 'production-grade code')."
         )
 
     # ── Clarity gaps: which sub-components are low? ────────────────────
@@ -111,6 +123,18 @@ def _build_refinement_prompt(score_result: dict) -> str | None:
             "objective/goal, specific requirements, and expected output."
         )
 
+    # ── Penalty-driven gaps: high ambiguity or redundancy ──────────────
+    if score_result.get("ambiguity_penalty", 0) > 0.05:
+        gaps.append(
+            "Replace vague or ambiguous terms (e.g. 'something', 'various', "
+            "'stuff', 'etc.') with specific, concrete language."
+        )
+    if score_result.get("redundancy_penalty", 0) > 0.02:
+        gaps.append(
+            "Remove or consolidate redundant/repeated phrases to make "
+            "the prompt more concise without losing information."
+        )
+
     if not gaps:
         return None
 
@@ -125,7 +149,7 @@ def _build_refinement_prompt(score_result: dict) -> str | None:
         f"{gap_instructions}\n\n"
         "Rules:\n"
         "- Preserve the original intent and all existing good structure.\n"
-        "- use MARKDOWN for the existing headers.\n"
+        "- Use markdown formatting for structure (e.g. # headings, bullet lists, numbered steps).\n"
         "- Only ADD or IMPROVE the specific elements listed above.\n"
         "- Do NOT remove existing constraints, sections, or details.\n"
         "- Do NOT answer the prompt or generate the requested output.\n"
@@ -361,6 +385,7 @@ async def optimize_prompt(request: PromptRequest):
                             "Current prompt to refine:\n{0}\n\n"
                             "Refined prompt only:"
                         ),
+                        temperature=0.4,
                     ),
                 )
 
